@@ -26,7 +26,10 @@ pnpm typecheck                   # TypeScript estricto en cada paquete
 pnpm test                        # Vitest
 pnpm e2e                         # placeholder hasta la Tarea 8
 pnpm build                       # build de los paquetes que lo definan
+pnpm test:scripts                # pruebas de scripts/sync-from-xpand.sh (también en pnpm test)
 ```
+
+> **Por qué TypeScript está fijado a `~5.9.3`:** typescript-eslint 8.x no da soporte a TypeScript 7. Se sube a 7 cuando la versión de typescript-eslint en uso lo declare como compatible en su `peerDependencies` (y el lint y typecheck pasen).
 
 ## Sincronizar el contrato
 

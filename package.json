@@ -12,11 +12,12 @@
   "scripts": {
     "lint": "eslint .",
     "typecheck": "pnpm -r --if-present run typecheck",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run --passWithNoTests && bash scripts/sync-from-xpand.test.sh",
     "e2e": "echo \"e2e: sin pruebas todavia (Tarea 8)\"",
     "build": "pnpm -r --if-present run build",
     "sync:contracts": "scripts/sync-from-xpand.sh",
-    "check:contracts": "scripts/sync-from-xpand.sh --check"
+    "check:contracts": "scripts/sync-from-xpand.sh --check",
+    "test:scripts": "bash scripts/sync-from-xpand.test.sh"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

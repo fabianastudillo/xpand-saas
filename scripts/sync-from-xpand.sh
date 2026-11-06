@@ -5,14 +5,25 @@
 #   scripts/sync-from-xpand.sh --check  no escribe nada; sale con 1 si hay diferencias
 #
 # XPAND_SRC: raiz del repo xpand (por defecto ../xpand).
-# Codigos de salida: 0 sincronizado, 1 diferencias (--check), 2 no se encuentra el origen.
+# Codigos de salida: 0 sincronizado, 1 diferencias (--check), 2 no se encuentra el origen,
+# 64 argumentos no reconocidos (no se toca nada).
 #
 set -euo pipefail
 
+readonly USAGE_EXIT=64
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC="${XPAND_SRC:-$HERE/../xpand}"
-MODE="sync"
-[[ "${1:-}" == "--check" ]] && MODE="check"
+
+# Falla cerrado: cualquier argumento distinto de exactamente --check (o ninguno) es un error.
+if (( $# > 1 )); then
+  echo "uso: $0 [--check]" >&2
+  exit "$USAGE_EXIT"
+fi
+case "${1:-}" in
+  "") MODE="sync" ;;
+  --check) MODE="check" ;;
+  *) echo "uso: $0 [--check]" >&2; exit "$USAGE_EXIT" ;;
+esac
 
 [[ -d "$SRC/contracts/api" ]] || { echo "no encuentro el repo xpand en: $SRC" >&2; exit 2; }
 
@@ -22,7 +33,8 @@ SHARED=(
 )
 
 TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"' EXIT
+trap 'rm -rf "$TMP" "${STAGE_DIRS[@]:-}"' EXIT
+STAGE_DIRS=()
 EXP="$TMP/expected"
 mkdir -p "$EXP"
 
@@ -44,9 +56,19 @@ if [[ "$MODE" == "check" ]]; then
   exit 1
 fi
 
+# Sincronizacion atomica: se copia junto al destino y se intercambia con mv, de modo que el destino
+# nunca queda a medias y nada se borra antes de que la copia nueva este completa.
 for p in "${SHARED[@]}"; do
-  rm -rf "$HERE/$p"
-  mkdir -p "$HERE/$(dirname "$p")"
-  cp -R "$EXP/$p" "$HERE/$p"
+  target="$HERE/$p"
+  parent="$(dirname "$target")"
+  name="$(basename "$target")"
+  mkdir -p "$parent"
+  stage="$(mktemp -d "$parent/.sync-XXXXXX")"
+  STAGE_DIRS+=("$stage")
+  cp -R "$EXP/$p" "$stage/$name"
+  if [[ -e "$target" ]]; then
+    mv "$target" "$stage/previo"
+  fi
+  mv "$stage/$name" "$target"
 done
 echo "sincronizado desde $SRC"
