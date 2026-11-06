@@ -1,0 +1,268 @@
+{
+  "motores": [
+    {
+      "disponible": true,
+      "esquema_red": "misocp",
+      "familia": "convexo",
+      "formulacion": "La MISMA relajación cónica (Jabr) de los .mod de misocp_tnep y misocp_gtep, escrita en JuMP: Pajarito (HiGHS + SCS) para el MISOCP y certificacion NLP AC exacta con Ipopt",
+      "id": "jump_misocp",
+      "modelo_red": "soc",
+      "nombre": "MISOCP AC/DC",
+      "planificacion": [
+        "tnep",
+        "gtep",
+        "gep"
+      ],
+      "solvers": [
+        {
+          "entero": true,
+          "id": "pajarito",
+          "instalado": true,
+          "motivo": "",
+          "nombre": "Pajarito (HiGHS + SCS)",
+          "nota": "El único MISOCP exacto sin licencia de la máquina. Con Hypatia en vez de SCS aborta en OTHER_ERROR (rayo dual sin normalizar).",
+          "tipo": "misocp",
+          "verificable": true
+        }
+      ],
+      "tipo_ejecucion": "julia",
+      "sistemas": [
+        {
+          "barras": 6,
+          "dificultad": "rapido",
+          "disponible": true,
+          "eventos_dat": true,
+          "familia": "Garver 6 barras",
+          "fuente": "Garver (1970), IEEE Trans. PAS 89(7); datos y menús del proyecto MISOCP AC/DC FACTS",
+          "id": "tnep_garver6",
+          "modelo_datos": "ac",
+          "nombre": "Garver 6 — benchmark MISOCP AC/DC FACTS (Zenodo)",
+          "nota": "Datos del benchmark MISOCP AC/DC FACTS (Zenodo). No es el Garver clásico: solo con líneas AC el óptimo es 6212,45.",
+          "planif": [
+            "tnep"
+          ],
+          "referencias": [
+            {
+              "crf": null,
+              "formulacion": "MISOCP certificado en AC exacto",
+              "fuente": "misocp_tnep__garver6__ac.json",
+              "tecnologias": "ac",
+              "valor": 6212.454699999999
+            },
+            {
+              "crf": null,
+              "formulacion": "MISOCP certificado en AC exacto",
+              "fuente": "misocp_tnep__garver6__ac_bancos.json",
+              "tecnologias": "ac,bancos",
+              "valor": 4368.9538999999995
+            },
+            {
+              "crf": null,
+              "formulacion": "MISOCP certificado en AC exacto",
+              "fuente": "misocp_tnep__garver6__ac_facts.json",
+              "tecnologias": "ac,statcom,sssc",
+              "valor": 4430.983900000001
+            },
+            {
+              "crf": null,
+              "formulacion": "MISOCP certificado en AC exacto",
+              "fuente": "misocp_tnep__garver6__ac_hvdc.json",
+              "tecnologias": "ac,hvdc",
+              "valor": 2970.3176469999994
+            },
+            {
+              "crf": null,
+              "formulacion": "MISOCP certificado en AC exacto",
+              "fuente": "misocp_tnep__garver6__ac_sssc.json",
+              "tecnologias": "ac,sssc",
+              "valor": 6069.810200000001
+            },
+            {
+              "crf": null,
+              "formulacion": "MISOCP certificado en AC exacto",
+              "fuente": "misocp_tnep__garver6__ac_statcom.json",
+              "tecnologias": "ac,statcom",
+              "valor": 4430.983900000001
+            },
+            {
+              "crf": null,
+              "formulacion": "MISOCP certificado en AC exacto",
+              "fuente": "misocp_tnep__garver6__todas.json",
+              "tecnologias": "ac,hvdc,bancos,statcom,sssc",
+              "valor": 2574.909299999999
+            }
+          ],
+          "tecnologias_datos": [
+            "ac",
+            "hvdc",
+            "bancos",
+            "facts",
+            "tcsc",
+            "svc"
+          ],
+          "variante": "benchmark MISOCP AC/DC FACTS (Zenodo), no el clásico"
+        },
+        {
+          "barras": 6,
+          "dificultad": "rapido",
+          "disponible": true,
+          "eventos_dat": false,
+          "familia": "Garver 6 barras - prueba con todas las tecnologías",
+          "fuente": "",
+          "id": "tnep_garver6_todas",
+          "modelo_datos": "ac",
+          "nombre": "Garver 6 barras - prueba con todas las tecnologías",
+          "nota": "Caso de prueba, no de estudio: datos agregados supuestos. Sirve para comprobar que una formulación admite cada tecnología.",
+          "planif": [
+            "tnep",
+            "gep"
+          ],
+          "tecnologias_datos": [
+            "ac",
+            "hvdc",
+            "bancos",
+            "facts",
+            "tcsc",
+            "svc",
+            "bess",
+            "genexp",
+            "ibr",
+            "subest"
+          ],
+          "variante": ""
+        }
+      ]
+    },
+    {
+      "disponible": true,
+      "esquema_red": "matpower",
+      "familia": "convexo",
+      "formulacion": "TNEP de FlexPlan sobre flujo DC, con inversion en lineas AC, enlaces DC y almacenamiento; MILP con HiGHS.",
+      "id": "fp_dc",
+      "modelo_red": "dc",
+      "nombre": "FlexPlan · DC con almacenamiento",
+      "planificacion": [
+        "tnep"
+      ],
+      "solvers": [
+        {
+          "entero": true,
+          "id": "highs",
+          "instalado": true,
+          "motivo": "",
+          "nombre": "HiGHS (MILP)",
+          "nota": "Libre. Lo exige la formulación DC.",
+          "tipo": "milp",
+          "verificable": true
+        }
+      ],
+      "tipo_ejecucion": "julia",
+      "sistemas": [
+        {
+          "barras": 6,
+          "dificultad": "rapido",
+          "disponible": true,
+          "eventos_dat": true,
+          "familia": "Garver 6 barras",
+          "fuente": "Garver (1970), IEEE Trans. PAS 89(7); datos y menús del proyecto MISOCP AC/DC FACTS",
+          "id": "tnep_garver6",
+          "modelo_datos": "ac",
+          "nombre": "Garver 6 — benchmark MISOCP AC/DC FACTS (Zenodo)",
+          "nota": "Datos del benchmark MISOCP AC/DC FACTS (Zenodo). No es el Garver clásico: solo con líneas AC el óptimo es 6212,45.",
+          "planif": [
+            "tnep"
+          ],
+          "referencias": [
+            {
+              "crf": null,
+              "formulacion": "MISOCP certificado en AC exacto",
+              "fuente": "misocp_tnep__garver6__ac.json",
+              "tecnologias": "ac",
+              "valor": 6212.454699999999
+            },
+            {
+              "crf": null,
+              "formulacion": "MISOCP certificado en AC exacto",
+              "fuente": "misocp_tnep__garver6__ac_bancos.json",
+              "tecnologias": "ac,bancos",
+              "valor": 4368.9538999999995
+            },
+            {
+              "crf": null,
+              "formulacion": "MISOCP certificado en AC exacto",
+              "fuente": "misocp_tnep__garver6__ac_facts.json",
+              "tecnologias": "ac,statcom,sssc",
+              "valor": 4430.983900000001
+            },
+            {
+              "crf": null,
+              "formulacion": "MISOCP certificado en AC exacto",
+              "fuente": "misocp_tnep__garver6__ac_hvdc.json",
+              "tecnologias": "ac,hvdc",
+              "valor": 2970.3176469999994
+            },
+            {
+              "crf": null,
+              "formulacion": "MISOCP certificado en AC exacto",
+              "fuente": "misocp_tnep__garver6__ac_sssc.json",
+              "tecnologias": "ac,sssc",
+              "valor": 6069.810200000001
+            },
+            {
+              "crf": null,
+              "formulacion": "MISOCP certificado en AC exacto",
+              "fuente": "misocp_tnep__garver6__ac_statcom.json",
+              "tecnologias": "ac,statcom",
+              "valor": 4430.983900000001
+            },
+            {
+              "crf": null,
+              "formulacion": "MISOCP certificado en AC exacto",
+              "fuente": "misocp_tnep__garver6__todas.json",
+              "tecnologias": "ac,hvdc,bancos,statcom,sssc",
+              "valor": 2574.909299999999
+            }
+          ],
+          "tecnologias_datos": [
+            "ac",
+            "hvdc",
+            "bancos",
+            "facts",
+            "tcsc",
+            "svc"
+          ],
+          "variante": "benchmark MISOCP AC/DC FACTS (Zenodo), no el clásico"
+        },
+        {
+          "barras": 6,
+          "dificultad": "rapido",
+          "disponible": true,
+          "eventos_dat": false,
+          "familia": "Garver 6 barras - prueba con todas las tecnologías",
+          "fuente": "",
+          "id": "tnep_garver6_todas",
+          "modelo_datos": "ac",
+          "nombre": "Garver 6 barras - prueba con todas las tecnologías",
+          "nota": "Caso de prueba, no de estudio: datos agregados supuestos. Sirve para comprobar que una formulación admite cada tecnología.",
+          "planif": [
+            "tnep",
+            "gep"
+          ],
+          "tecnologias_datos": [
+            "ac",
+            "hvdc",
+            "bancos",
+            "facts",
+            "tcsc",
+            "svc",
+            "bess",
+            "genexp",
+            "ibr",
+            "subest"
+          ],
+          "variante": ""
+        }
+      ]
+    }
+  ]
+}

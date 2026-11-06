@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://xpand.local/contracts/api/sesion.schema.json",
+  "title": "Sesion",
+  "description": "Respuesta de GET /api/sesion. Solo se exigen los campos que lee la interfaz de M0; ver contracts/api/README.md.",
+  "type": "object",
+  "required": ["dentro", "local", "nombre"],
+  "additionalProperties": true,
+  "properties": {
+    "dentro": { "type": "boolean" },
+    "local": { "type": "boolean" },
+    "nombre": { "type": "string" },
+    "exigida": { "type": "boolean" },
+    "correo": { "type": "string" },
+    "usuarios": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

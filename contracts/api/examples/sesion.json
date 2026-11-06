@@ -1,0 +1,10 @@
+{
+  "correo": "",
+  "dentro": true,
+  "exigida": true,
+  "local": true,
+  "nombre": "Administrador",
+  "usuarios": [
+    "Usuario de ejemplo"
+  ]
+}

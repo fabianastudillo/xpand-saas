@@ -1,0 +1,21 @@
+{
+  "base_salidas": "/ejemplo/xpand/base_salidas",
+  "cupo": {
+    "ambito": "servidor",
+    "en_curso": 0,
+    "max_corridas": 4,
+    "ram_libre_gb": 8.5,
+    "ram_min_gb": 3.0,
+    "reserva_usuario": 1,
+    "virtual_libre_gb": null,
+    "virtual_min_gb": 4.0
+  },
+  "julia": "/ejemplo/xpand/julia",
+  "proyectos": [],
+  "raiz": "/ejemplo/xpand/raiz",
+  "raiz_valida": false,
+  "temp": "/ejemplo/xpand/temp",
+  "version": "1.0.0",
+  "web": "/ejemplo/xpand/web",
+  "workdir": "/ejemplo/xpand/workdir"
+}
