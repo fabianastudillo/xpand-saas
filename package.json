@@ -1,0 +1,29 @@
+{
+  "name": "xpand-saas",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Interfaz nueva de XPAND (M0): monorepo pnpm con paquetes y aplicaciones.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "packageManager": "pnpm@12.14.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "test": "vitest run --passWithNoTests",
+    "e2e": "echo \"e2e: sin pruebas todavia (Tarea 8)\"",
+    "build": "pnpm -r --if-present run build",
+    "sync:contracts": "scripts/sync-from-xpand.sh",
+    "check:contracts": "scripts/sync-from-xpand.sh --check"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^5.1.0"
+  }
+}

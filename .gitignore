@@ -1,0 +1,16 @@
+# Dependencias y salidas de build
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+playwright-report/
+test-results/
+
+# Ficheros locales de herramientas (no se versionan)
+.claude/
+.playwright-mcp/
+
+# Secretos y entorno local
+.env
+.env.*
+!.env.example

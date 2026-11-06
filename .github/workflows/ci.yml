@@ -1,0 +1,53 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+# Minimo privilegio: el token del workflow solo lee el repositorio.
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm e2e
+
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Comprobar que existe el secreto XPAND_REPO_TOKEN
+        env:
+          HAS_CONTRACT_TOKEN: ${{ secrets.XPAND_REPO_TOKEN != '' }}
+        run: |
+          if [ "$HAS_CONTRACT_TOKEN" != "true" ]; then
+            echo "::error::Falta el secreto XPAND_REPO_TOKEN (PAT de solo lectura sobre XPAND-PLEXSYS/xpand). Sin el no se puede comprobar el contrato."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+        with:
+          repository: XPAND-PLEXSYS/xpand
+          ref: ${{ vars.XPAND_CONTRACT_REF || 'main' }}
+          token: ${{ secrets.XPAND_REPO_TOKEN }}
+          persist-credentials: false
+          path: xpand
+      - name: Comprobar que contracts/api coincide con xpand
+        env:
+          XPAND_SRC: ${{ github.workspace }}/xpand
+        run: scripts/sync-from-xpand.sh --check

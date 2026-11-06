@@ -1,0 +1,13 @@
+{
+  "name": "@xpand/api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Cliente tipado de la API de XPAND (solo lectura en M0).",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}
