@@ -164,13 +164,13 @@
 
 | Task | Implementador | Revisión ECC |
 |---|---|---|
-| 2 | fable | typescript-reviewer + security-reviewer (auth, secretos, terceros) |
+| 2 | opus | typescript-reviewer + security-reviewer (auth, secretos, terceros) |
 | 3 | haiku | code-reviewer (+ comprobación de datos internos) |
 | 4 | sonnet | security-reviewer + typescript-reviewer |
-| 5 | fable | code-reviewer (paridad con Julia) + security-reviewer |
+| 5 | opus | code-reviewer (paridad con Julia) + security-reviewer |
 | 6 | sonnet | e2e-runner + react-reviewer |
-| 7 | fable | security-reviewer (datos internos, escritura en xpand) |
+| 7 | opus | security-reviewer (datos internos, escritura en xpand) |
 | 8 | haiku | code-reviewer |
 | 9 | sonnet | security-reviewer (release) |
 
-Revisión final de rama: fable. Rondas de arreglo 4–5: fable.
+Revisión final de rama: opus. Rondas de arreglo 4–5: opus.
