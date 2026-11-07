@@ -164,6 +164,12 @@ describe("importarCasos: caso publico", () => {
     expect(JSON.stringify(m)).not.toContain(tmp);
   });
 
+  it("la raiz del almacen queda legible por otros usuarios (0755), no 0700 como la deja mkdtemp", async () => {
+    await importar(volcado([sistema("tnep_garver6", archivosGarver())]));
+
+    expect(statSync(almacen).mode & 0o777).toBe(0o755);
+  });
+
   it("copia los ficheros declarados y los que el lector abre junto al base, y nada mas", async () => {
     const informe = await importar(volcado([sistema("tnep_garver6", archivosGarver())]));
 

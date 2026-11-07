@@ -4,6 +4,7 @@
 //
 // Nunca escribe dentro del checkout de xpand: solo lo lee (realpath, stat y copia de los ficheros del caso).
 import {
+  chmodSync,
   copyFileSync,
   existsSync,
   mkdirSync,
@@ -209,8 +210,12 @@ async function verificar(dir: string, esperados: number): Promise<void> {
 /** Carpeta hermana de `final` con nombre impredecible (mkdtemp, modo 0700). */
 const hermanaTemporal = (final: string, sufijo: string) => mkdtempSync(path.join(path.dirname(final), `.${path.basename(final)}.${sufijo}-`));
 
+/** Modo de la raiz del almacen: legible por el servidor aunque corra con otro usuario (mkdtemp la crea 0700). */
+const MODO_RAIZ_ALMACEN = 0o755;
+
 /** Sustituye `final` por `preparado` (las dos en la misma carpeta padre) y borra la version anterior. */
 function sustituir(preparado: string, final: string): void {
+  chmodSync(preparado, MODO_RAIZ_ALMACEN);
   if (!existsSync(final)) {
     renameSync(preparado, final);
     return;
