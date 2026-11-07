@@ -17,6 +17,11 @@ if (typeof globalThis.ResizeObserver === "undefined") {
   globalThis.ResizeObserver = ResizeObserverStub;
 }
 
+// jsdom has no layout, so it does not implement scrollIntoView; the palette calls it on the active option.
+if (typeof Element.prototype.scrollIntoView !== "function") {
+  Element.prototype.scrollIntoView = (): void => {};
+}
+
 afterEach(() => {
   cleanup();
 });

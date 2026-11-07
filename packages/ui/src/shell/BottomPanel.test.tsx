@@ -15,13 +15,22 @@ beforeEach(() => {
 });
 
 describe("<BottomPanel>", () => {
-  it("has Problems, Log and Output tabs and shows the number of problems on its tab", () => {
+  it("has Problems, Log and Output tabs and says the number of problems on its tab with a separator", () => {
     render(<BottomPanel problems={problems} log="registro" output="salida" />);
     const tablist = screen.getByRole("tablist");
-    const tabs = within(tablist).getAllByRole("tab");
-    expect(tabs.map((tab) => tab.textContent)).toEqual(["Problemas2", "Registro", "Salida"]);
-    expect(tabs[0]).toHaveAttribute("aria-selected", "true");
+    expect(within(tablist).getAllByRole("tab")).toHaveLength(3);
+    const problemsTab = screen.getByRole("tab", { name: "Problemas, 2" });
+    expect(problemsTab).toHaveAttribute("aria-selected", "true");
+    expect(within(problemsTab).getByText("2")).toHaveAttribute("aria-hidden", "true");
     expect(screen.getByRole("tabpanel")).toHaveTextContent("Sesión caducada");
+  });
+
+  it("gives the log a live log role and each panel a heading under the shell's h1", async () => {
+    const user = userEvent.setup();
+    render(<BottomPanel problems={[]} log="línea" />);
+    expect(screen.getByRole("heading", { level: 2, name: "Problemas" }).className).toMatch(/sr-only/);
+    await user.click(screen.getByRole("tab", { name: "Registro" }));
+    expect(screen.getByRole("log")).toHaveTextContent("línea");
   });
 
   it("switches to the log and the output", async () => {
@@ -50,11 +59,14 @@ describe("<BottomPanel>", () => {
     expect(onTabChange).toHaveBeenCalledWith("output");
   });
 
-  it("collapses the bottom zone of the shell with its own button", async () => {
+  it("collapses the bottom zone of the shell with its own button and keeps its tab while hidden", async () => {
     const user = userEvent.setup();
-    render(<AppShell bottom={<BottomPanel problems={[]} />} />);
+    render(<AppShell bottom={<BottomPanel problems={[]} log="registro" />} />);
     expect(screen.getByRole("region", { name: "Panel inferior" })).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Registro" }));
     await user.click(screen.getByRole("button", { name: "Plegar panel" }));
     expect(screen.queryByRole("region", { name: "Panel inferior" })).toBeNull();
+    await user.keyboard("{Control>}j{/Control}");
+    expect(screen.getByRole("tab", { name: "Registro" })).toHaveAttribute("aria-selected", "true");
   });
 });

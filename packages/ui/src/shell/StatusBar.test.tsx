@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { AppShell } from "./AppShell";
+import { BottomPanel } from "./BottomPanel";
 import { StatusBar } from "./StatusBar";
 import type { Problem } from "./problems";
 
@@ -21,24 +22,52 @@ describe("<StatusBar>", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Catálogo cargado");
   });
 
+  it("shows progress (timers, counters) next to the message without announcing it", () => {
+    render(<StatusBar message="Resolviendo" progress="12 s" />);
+    const progress = screen.getByText("12 s");
+    expect(progress).toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByRole("status")).not.toContainElement(progress);
+  });
+
   it("summarises the problems in words, with text for each severity", () => {
     render(<StatusBar problems={problems} />);
-    const summary = screen.getByRole("button", { name: "1 error, 2 avisos" });
-    expect(summary).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "1 error, 2 avisos" })).toBeInTheDocument();
   });
 
-  it("says «Sin problemas» when the list is empty", () => {
+  it("keeps the button, saying «Sin problemas», when the list is empty", () => {
     render(<StatusBar problems={[]} />);
-    expect(screen.getByText("Sin problemas")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sin problemas" })).toBeInTheDocument();
   });
 
-  it("opens the bottom panel when the problems summary is activated", async () => {
+  it("toggles the bottom panel: closed → opens on Problems; on Log → selects Problems; on Problems → closes", async () => {
     const user = userEvent.setup();
-    render(<AppShell bottom={<span>panel</span>} status={<StatusBar problems={problems} />} />);
+    render(
+      <AppShell
+        bottom={<BottomPanel problems={problems} log="registro" />}
+        status={<StatusBar problems={problems} />}
+      />,
+    );
+    const summary = screen.getByRole("button", { name: "1 error, 2 avisos" });
+    const panel = screen.getByRole("region", { name: "Panel inferior" });
+    expect(summary).toHaveAttribute("aria-controls", panel.id);
+
+    await user.click(screen.getByRole("tab", { name: "Registro" }));
     await user.keyboard("{Control>}j{/Control}");
     expect(screen.queryByRole("region", { name: "Panel inferior" })).toBeNull();
-    await user.click(screen.getByRole("button", { name: "1 error, 2 avisos" }));
+    expect(summary).toHaveAttribute("aria-expanded", "false");
+
+    await user.click(summary);
     expect(screen.getByRole("region", { name: "Panel inferior" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Problemas/ })).toHaveAttribute("aria-selected", "true");
+    expect(summary).toHaveAttribute("aria-expanded", "true");
+
+    await user.click(screen.getByRole("tab", { name: "Registro" }));
+    await user.click(summary);
+    expect(screen.getByRole("region", { name: "Panel inferior" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Problemas/ })).toHaveAttribute("aria-selected", "true");
+
+    await user.click(summary);
+    expect(screen.queryByRole("region", { name: "Panel inferior" })).toBeNull();
   });
 
   it("renders extra content on the right", () => {

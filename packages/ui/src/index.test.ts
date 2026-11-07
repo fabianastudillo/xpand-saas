@@ -44,6 +44,9 @@ const PUBLIC_EXPORTS = [
   "countBySeverity",
   "useShortcuts",
   "shortcutLabel",
+  "ProblemsAnnouncer",
+  "useShellCommands",
+  "useMediaQuery",
 ] as const;
 
 describe("@xpand/ui", () => {

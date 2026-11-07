@@ -13,6 +13,13 @@ describe("computeWindow", () => {
     expect(range.totalHeight).toBe(938 * ROW);
   });
 
+  it("includes the partially visible last row when the scroll is not row-aligned", () => {
+    // 290px of scroll shows the end of row 10 and the start of row 20 (10 × 28 = 280 < 290 + 280 = 570 < 21 × 28).
+    const range = computeWindow({ scrollTop: 290, viewportHeight: 280, rowHeight: ROW, count: 938, overscan: 0 });
+    expect(range.start).toBe(10);
+    expect(range.end).toBe(21);
+  });
+
   it("clamps to the list bounds", () => {
     const top = computeWindow({ scrollTop: 0, viewportHeight: 100, rowHeight: ROW, count: 50, overscan: 4 });
     expect(top.start).toBe(0);

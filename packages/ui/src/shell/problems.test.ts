@@ -36,6 +36,16 @@ describe("createProblemsStore", () => {
     expect(store.getList()).toHaveLength(0);
   });
 
+  it("does not publish when an identical problem is added again (a retry that reports the same error)", () => {
+    const store = createProblemsStore([reserve]);
+    const listener = vi.fn();
+    store.subscribe(listener);
+    store.add({ ...reserve }); // same fields, new object
+    expect(listener).not.toHaveBeenCalled();
+    store.add({ ...reserve, cause: "1200 MW de 1457,8 MW exigidos" });
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
   it("notifies subscribers once per change and stops after unsubscribe", () => {
     const store = createProblemsStore();
     const listener = vi.fn();

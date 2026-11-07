@@ -19,7 +19,7 @@ export function Inspector({ title, children, className }: InspectorProps): React
   const headingId = useId();
   const heading = title === undefined ? t("shell.inspector.title") : `${t("shell.inspector.title")} · ${title}`;
   return (
-    <div data-slot="inspector" aria-labelledby={headingId} className={cn("flex flex-col gap-3 p-3", className)}>
+    <div data-slot="inspector" role="group" aria-labelledby={headingId} className={cn("flex flex-col gap-3 p-3", className)}>
       <h2 id={headingId} className="xp-label">
         {heading}
       </h2>

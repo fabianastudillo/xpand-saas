@@ -28,8 +28,12 @@ export {
 } from "./i18n";
 
 // Shell (IDE frame)
-export { AppShell, useShellLayout, type AppShellProps, type ShellLayout, type ZoneState } from "./shell/AppShell";
-export { BottomPanel, type BottomPanelProps, type BottomTab } from "./shell/BottomPanel";
+export { AppShell, NARROW_QUERY, type AppShellProps } from "./shell/AppShell";
+export { useShellLayout, type BottomTab, type ShellLayout, type ZoneState } from "./shell/shellLayoutContext";
+export { BottomPanel, type BottomPanelProps } from "./shell/BottomPanel";
+export { ProblemsAnnouncer, type ProblemsAnnouncerProps } from "./shell/ProblemsAnnouncer";
+export { useShellCommands, type ShellCommandOptions } from "./shell/shellCommands";
+export { useMediaQuery } from "./shell/useMediaQuery";
 export { CaseTree, type CaseTreeProps, type TreeSelection } from "./shell/CaseTree";
 export { CommandPalette, type CommandPaletteProps } from "./shell/CommandPalette";
 export { DocumentTabs, type DocumentTabsProps, type ShellDocument } from "./shell/DocumentTabs";

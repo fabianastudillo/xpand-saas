@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { ProblemsList } from "./ProblemsList";
 import type { Problem } from "./problems";
@@ -17,6 +18,19 @@ const problems: readonly Problem[] = [
   { id: "tension", severity: "warn", title: "Tensión fuera de rango" },
 ];
 
+/** A consumer whose actions remove their own problem (a retry that succeeds). */
+function SelfClearing(): React.JSX.Element {
+  const [list, setList] = useState<readonly Problem[]>(() =>
+    ["a", "b", "c"].map((id) => ({
+      id,
+      severity: "error",
+      title: `Error ${id}`,
+      action: { label: "Reintentar", run: () => { setList((current) => current.filter((p) => p.id !== id)); } },
+    })),
+  );
+  return <ProblemsList problems={list} />;
+}
+
 describe("<ProblemsList>", () => {
   it("groups by severity, errors first, with counts in the headings", () => {
     render(<ProblemsList problems={problems} />);
@@ -28,8 +42,7 @@ describe("<ProblemsList>", () => {
     render(<ProblemsList problems={[problems[1] as Problem]} />);
     const item = screen.getByRole("listitem");
     expect(within(item).getByText("Error:").className).toMatch(/sr-only/);
-    const icon = item.querySelector("[aria-hidden='true']");
-    expect(icon).not.toBeNull();
+    expect(item.querySelector("[aria-hidden='true']")).not.toBeNull();
   });
 
   it("renders the cause under the title", () => {
@@ -37,16 +50,24 @@ describe("<ProblemsList>", () => {
     expect(screen.getByText("1140 MW de 1457,8 MW exigidos")).toBeInTheDocument();
   });
 
-  it("shows the action of a problem as a button and runs it", async () => {
+  it("shows the action of a problem as a button, runs it with no arguments, and describes it by the title", async () => {
     const user = userEvent.setup();
     const run = vi.fn();
     render(
       <ProblemsList
-        problems={[{ id: "sesion", severity: "error", title: "Sesión caducada", action: { label: "Entrar", run } }]}
+        problems={[
+          { id: "sesion", severity: "error", title: "Sesión caducada", action: { label: "Reintentar", run } },
+          { id: "red", severity: "error", title: "Red no cargada", action: { label: "Reintentar", run: vi.fn() } },
+        ]}
       />,
     );
-    await user.click(screen.getByRole("button", { name: "Entrar" }));
+    const buttons = screen.getAllByRole("button", { name: "Reintentar" });
+    expect(buttons).toHaveLength(2);
+    const described = document.getElementById(buttons[0]?.getAttribute("aria-describedby") ?? "");
+    expect(described).toHaveTextContent("Sesión caducada");
+    await user.click(buttons[0] as HTMLElement);
     expect(run).toHaveBeenCalledTimes(1);
+    expect(run).toHaveBeenCalledWith();
   });
 
   it("offers to go to the target element and calls onNavigate with it", async () => {
@@ -60,6 +81,19 @@ describe("<ProblemsList>", () => {
   it("does not offer navigation without a target or without a handler", () => {
     render(<ProblemsList problems={problems} />);
     expect(screen.queryByRole("button", { name: /Ir a/ })).toBeNull();
+  });
+
+  it("moves the focus to the next problem's action when the activated one disappears, then to the list", async () => {
+    const user = userEvent.setup();
+    render(<SelfClearing />);
+    const [first] = screen.getAllByRole("button", { name: "Reintentar" });
+    await user.click(first as HTMLElement);
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    const [next] = screen.getAllByRole("button", { name: "Reintentar" });
+    expect(next).toHaveFocus();
+    await user.click(next as HTMLElement);
+    await user.click(screen.getByRole("button", { name: "Reintentar" }));
+    expect(screen.getByText("Sin problemas")).toHaveFocus();
   });
 
   it("says «Sin problemas» when the list is empty", () => {

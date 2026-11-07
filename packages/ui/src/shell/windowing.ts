@@ -29,9 +29,10 @@ export interface WindowRange {
 export function computeWindow({ scrollTop, viewportHeight, rowHeight, count, overscan }: WindowInput): WindowRange {
   if (count === 0) return { start: 0, end: 0, offsetTop: 0, totalHeight: 0 };
   const firstVisible = Math.floor(scrollTop / rowHeight);
-  const visibleRows = Math.ceil(viewportHeight / rowHeight);
+  // ceil: a row cut by the bottom edge is still visible and must be rendered.
+  const lastVisible = Math.ceil((scrollTop + viewportHeight) / rowHeight);
   const start = Math.max(0, Math.min(firstVisible, count - 1) - overscan);
-  const end = Math.min(count, firstVisible + visibleRows + overscan);
+  const end = Math.min(count, lastVisible + overscan);
   return { start, end, offsetTop: start * rowHeight, totalHeight: count * rowHeight };
 }
 
@@ -64,13 +65,23 @@ export interface UseWindowedRowsOptions {
 
 export interface WindowedRows {
   scrollRef: RefObject<HTMLDivElement | null>;
-  /** Attach to the first rendered row so the real row height is measured (compact density is shorter). */
+  /** Attach to the first rendered row: its height is measured and watched (compact density is shorter). */
   measureRowRef: (element: HTMLElement | null) => void;
   range: WindowRange;
+  rowHeight: number;
   windowed: boolean;
   onScroll: () => void;
   /** Scrolls so that the row is fully visible; the next render mounts it. */
   reveal: (index: number) => void;
+}
+
+function observeSize(element: Element, onChange: () => void): () => void {
+  if (typeof ResizeObserver === "undefined") return () => {};
+  const observer = new ResizeObserver(onChange);
+  observer.observe(element);
+  return () => {
+    observer.disconnect();
+  };
 }
 
 export function useWindowedRows({
@@ -92,10 +103,25 @@ export function useWindowedRows({
   const [viewportHeight, setViewportHeight] = useState(defaultViewportHeight);
   const windowed = count > threshold;
 
+  // The first rendered row is measured when attached and whenever it resizes (density change).
+  const stopRowObserver = useRef<() => void>(() => {});
   const measureRowRef = useCallback((element: HTMLElement | null) => {
-    const measured = element?.getBoundingClientRect().height ?? 0;
-    if (measured > 0) setRowHeight((current) => (current === measured ? current : measured));
+    stopRowObserver.current();
+    stopRowObserver.current = () => {};
+    if (!element) return;
+    const measure = (): void => {
+      const measured = element.getBoundingClientRect().height;
+      if (measured > 0) setRowHeight((current) => (current === measured ? current : measured));
+    };
+    measure();
+    stopRowObserver.current = observeSize(element, measure);
   }, []);
+  useEffect(
+    () => () => {
+      stopRowObserver.current();
+    },
+    [],
+  );
 
   useLayoutEffect(() => {
     const element = scrollRef.current;
@@ -104,11 +130,7 @@ export function useWindowedRows({
       if (element.clientHeight > 0) setViewportHeight(element.clientHeight);
     };
     apply();
-    const observer = new ResizeObserver(apply);
-    observer.observe(element);
-    return () => {
-      observer.disconnect();
-    };
+    return observeSize(element, apply);
   }, [windowed]);
 
   // When the list shrinks under the current offset, pull the offset back into range.
@@ -138,5 +160,5 @@ export function useWindowedRows({
     ? computeWindow({ scrollTop, viewportHeight, rowHeight, count, overscan })
     : { start: 0, end: count, offsetTop: 0, totalHeight: count * rowHeight };
 
-  return { scrollRef, measureRowRef, range, windowed, onScroll, reveal };
+  return { scrollRef, measureRowRef, range, rowHeight, windowed, onScroll, reveal };
 }

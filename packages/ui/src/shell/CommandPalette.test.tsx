@@ -125,7 +125,7 @@ describe("<CommandPalette>", () => {
     await user.keyboard("{Control>}k{/Control}");
     await user.keyboard("zzz");
     expect(screen.queryByRole("option")).toBeNull();
-    expect(screen.getByRole("status")).toHaveTextContent("Sin resultados para «zzz»");
+    expect(screen.getByText("Sin resultados para «zzz»")).toBeInTheDocument();
   });
 
   it("can be controlled from outside", async () => {

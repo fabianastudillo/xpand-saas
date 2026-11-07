@@ -74,6 +74,45 @@ describe("useShortcuts", () => {
     expect(run).not.toHaveBeenCalled();
   });
 
+  it("evaluates `when` before preventing the default, so a declined event reaches the browser", () => {
+    const run = vi.fn();
+    render(<Harness bindings={[{ key: "k", run, whileTyping: true, when: () => false }]} />);
+    const event = new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true, cancelable: true });
+    document.body.dispatchEvent(event);
+    expect(run).not.toHaveBeenCalled();
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  it("is silent while a modal dialog is open, unless the binding allows it", () => {
+    const zone = vi.fn();
+    const palette = vi.fn();
+    render(
+      <>
+        <div role="dialog" aria-modal="true" aria-label="Confirmar" />
+        <Harness
+          bindings={[
+            { key: "b", run: zone },
+            { key: "k", run: palette, whileModal: true },
+          ]}
+        />
+      </>,
+    );
+    document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "b", ctrlKey: true, bubbles: true }));
+    document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true }));
+    expect(zone).not.toHaveBeenCalled();
+    expect(palette).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses the bindings of the latest render", () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    const { rerender } = render(<Harness bindings={[{ key: "j", run: first }]} />);
+    rerender(<Harness bindings={[{ key: "j", run: second }]} />);
+    document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "j", ctrlKey: true, bubbles: true }));
+    expect(first).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalledTimes(1);
+  });
+
   it("stops listening when unmounted", () => {
     const run = vi.fn();
     const { unmount } = render(<Harness bindings={[{ key: "j", run }]} />);

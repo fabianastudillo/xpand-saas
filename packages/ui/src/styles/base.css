@@ -63,7 +63,8 @@
   }
 
   /* Visually hidden, still read by assistive technology. */
-  .xp-sr-only {
+  .xp-sr-only,
+  .xp-skip-link:not(:focus) {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -73,5 +74,38 @@
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
+  }
+
+  /* «Saltar al contenido»: the first tab stop of the shell, visible only while focused. */
+  .xp-skip-link:focus {
+    position: fixed;
+    top: var(--space-2);
+    left: var(--space-2);
+    z-index: 100;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-md);
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  /*
+   * Forced colors (Windows high contrast): backgrounds are flattened, so selection and the highlighted
+   * option keep a border in the system Highlight color and the active tab keeps its underline.
+   */
+  @media (forced-colors: active) {
+    [data-slot="case-tree"] [role="treeitem"][aria-selected="true"],
+    [data-slot="command-palette"] [role="option"][aria-selected="true"] {
+      border-inline-start: 3px solid Highlight;
+      forced-color-adjust: none;
+      background: Highlight;
+      color: HighlightText;
+    }
+
+    [data-slot="tabs-trigger"][data-state="active"] {
+      border-bottom-color: Highlight;
+      text-decoration: underline;
+    }
   }
 }

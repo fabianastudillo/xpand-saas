@@ -40,6 +40,20 @@ export interface ProblemsStore {
 
 export const SEVERITIES: readonly ProblemSeverity[] = ["error", "warn", "info"];
 
+/** Same report, field by field; `action.run` is a closure that changes on every render and is not compared. */
+function sameProblem(a: Problem, b: Problem): boolean {
+  return (
+    a.id === b.id &&
+    a.severity === b.severity &&
+    a.title === b.title &&
+    a.cause === b.cause &&
+    a.source === b.source &&
+    a.action?.label === b.action?.label &&
+    a.target?.kind === b.target?.kind &&
+    a.target?.id === b.target?.id
+  );
+}
+
 /** A small immutable store; the list is replaced on every change, never mutated. */
 export function createProblemsStore(initial: readonly Problem[] = []): ProblemsStore {
   let list: readonly Problem[] = initial;
@@ -60,6 +74,8 @@ export function createProblemsStore(initial: readonly Problem[] = []): ProblemsS
     },
     add: (problem) => {
       const index = list.findIndex((entry) => entry.id === problem.id);
+      const existing = list[index];
+      if (existing && sameProblem(existing, problem)) return; // a retry reporting the same thing: no churn
       publish(index === -1 ? [...list, problem] : list.with(index, problem));
     },
     remove: (id) => {

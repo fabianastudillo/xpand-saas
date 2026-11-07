@@ -3,9 +3,10 @@ import { describe, expect, it } from "vitest";
 import { Inspector, InspectorRow, InspectorRows } from "./Inspector";
 
 describe("<Inspector>", () => {
-  it("shows an empty message when nothing is selected", () => {
+  it("shows an empty message when nothing is selected, inside a group named by its heading", () => {
     render(<Inspector />);
     expect(screen.getByRole("heading", { name: "Propiedades" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Propiedades" })).toBeInTheDocument();
     expect(screen.getByText("Selecciona un elemento para ver sus propiedades.")).toBeInTheDocument();
   });
 

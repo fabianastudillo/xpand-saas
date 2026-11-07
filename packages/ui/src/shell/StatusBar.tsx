@@ -1,13 +1,18 @@
 import type { ReactElement, ReactNode } from "react";
 import { t, useLocale } from "../i18n";
 import { cn } from "../lib/cn";
-import { useShellLayout } from "./AppShell";
 import { countBySeverity, type Problem } from "./problems";
+import { useShellLayout } from "./shellLayoutContext";
 
 export interface StatusBarProps {
-  /** Short, truthful state: «Catálogo cargado», «Resolviendo… 12 s». Announced politely. */
+  /**
+   * Short, truthful state: «Catálogo cargado», «Resolviendo…». It lives in a polite live region, so every
+   * change is announced: put only state changes here, never a ticking timer (that goes in `progress`).
+   */
   message?: ReactNode;
-  /** When given, a summary («1 error, 2 avisos») that opens the bottom panel. */
+  /** Timers, counters, percentages: shown next to the message but hidden from assistive technology. */
+  progress?: ReactNode;
+  /** When given, a summary («1 error, 2 avisos» or «Sin problemas») that toggles the Problems panel. */
   problems?: readonly Problem[];
   /** Right side: language, density… */
   children?: ReactNode;
@@ -24,35 +29,54 @@ function problemsSummary(problems: readonly Problem[]): string {
   return parts.length === 0 ? t("shell.problems.empty") : parts.join(", ");
 }
 
-/** One 28px row: the live message on the left, the problems summary, and the trailing slot on the right. */
-export function StatusBar({ message, problems, children, className }: StatusBarProps): ReactElement {
+function summaryTone(problems: readonly Problem[]): string {
+  if (problems.some((problem) => problem.severity === "error")) return "text-error-ink";
+  if (problems.some((problem) => problem.severity === "warn")) return "text-warn-ink";
+  return "text-ink-muted";
+}
+
+/** One 28px row: the live message on the left, the problems toggle, and the trailing slot on the right. */
+export function StatusBar({ message, progress, problems, children, className }: StatusBarProps): ReactElement {
   useLocale();
-  const { bottom } = useShellLayout();
-  const summary = problems === undefined ? null : problemsSummary(problems);
-  const hasProblems = problems !== undefined && problems.length > 0;
+  const { bottom, panelTab, setPanelTab } = useShellLayout();
+
+  // Closed → open on Problems; open on another tab → select Problems; open on Problems → close.
+  const toggleProblems = (): void => {
+    if (!bottom.open) {
+      setPanelTab("problems");
+      bottom.setOpen(true);
+    } else if (panelTab !== "problems") {
+      setPanelTab("problems");
+    } else {
+      bottom.setOpen(false);
+    }
+  };
+
   return (
     <div data-slot="statusbar" className={cn("flex h-full items-center gap-3 px-3 text-sm", className)}>
-      <p role="status" aria-live="polite" className="m-0 min-w-0 flex-1 truncate text-ink-muted">
+      <p role="status" aria-live="polite" className="m-0 min-w-0 truncate text-ink-muted">
         {message}
       </p>
-      {summary === null ? null : hasProblems ? (
+      {progress !== undefined ? (
+        <span aria-hidden="true" className="font-mono text-ink-muted tabular-nums">
+          {progress}
+        </span>
+      ) : null}
+      <span className="flex-1" />
+      {problems !== undefined ? (
         <button
           type="button"
           className={cn(
             "rounded-sm px-1 hover:bg-surface-raised focus-visible:outline-2 focus-visible:outline-accent",
-            problems.some((problem) => problem.severity === "error") ? "text-error-ink" : "text-warn-ink",
+            summaryTone(problems),
           )}
           aria-controls={bottom.id || undefined}
-          aria-expanded={bottom.open}
-          onClick={() => {
-            bottom.setOpen(true);
-          }}
+          aria-expanded={bottom.open && panelTab === "problems"}
+          onClick={toggleProblems}
         >
-          {summary}
+          {problemsSummary(problems)}
         </button>
-      ) : (
-        <span className="text-ink-muted">{summary}</span>
-      )}
+      ) : null}
       {children}
     </div>
   );

@@ -3,26 +3,31 @@ import { Button } from "../components/Button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/Tabs";
 import { t, useLocale } from "../i18n";
 import { cn } from "../lib/cn";
-import { useShellLayout } from "./AppShell";
 import { ProblemsList } from "./ProblemsList";
 import type { Problem, ProblemTarget } from "./problems";
+import { useShellLayout, type BottomTab } from "./shellLayoutContext";
 import { shortcutLabel } from "./shortcuts";
 
-export type BottomTab = "problems" | "log" | "output";
+export type { BottomTab } from "./shellLayoutContext";
 
 export interface BottomPanelProps {
   problems: readonly Problem[];
   onNavigate?: (target: ProblemTarget) => void;
-  /** Live log of the runs. */
+  /** Live log of the runs; rendered in a `role="log"` region. */
   log?: ReactNode;
   output?: ReactNode;
-  /** Controlled tab; uncontrolled (starting on Problems) when omitted. */
+  /**
+   * Controlled tab. Uncontrolled when omitted: inside an AppShell the tab is shared through the layout (so
+   * the status bar can select «Problemas»); outside it is local.
+   */
   tab?: BottomTab;
   onTabChange?: (tab: BottomTab) => void;
   className?: string;
 }
 
 const TABS: readonly BottomTab[] = ["problems", "log", "output"];
+const PANEL = "min-h-0 flex-1 overflow-auto";
+const MONO_PANEL = "p-3 font-mono text-xs whitespace-pre-wrap";
 
 function isBottomTab(value: string): value is BottomTab {
   return (TABS as readonly string[]).includes(value);
@@ -39,13 +44,16 @@ export function BottomPanel({
   className,
 }: BottomPanelProps): ReactElement {
   useLocale();
-  const [ownTab, setOwnTab] = useState<BottomTab>("problems");
-  const activeTab = tab ?? ownTab;
-  const { bottom } = useShellLayout();
+  const layout = useShellLayout();
+  const [localTab, setLocalTab] = useState<BottomTab>("problems");
+  const activeTab = tab ?? (layout.attached ? layout.panelTab : localTab);
 
   const onValueChange = (value: string): void => {
     if (!isBottomTab(value)) return;
-    if (tab === undefined) setOwnTab(value);
+    if (tab === undefined) {
+      if (layout.attached) layout.setPanelTab(value);
+      else setLocalTab(value);
+    }
     onTabChange?.(value);
   };
 
@@ -56,15 +64,18 @@ export function BottomPanel({
           <TabsTrigger value="problems">
             {t("shell.panel.problems")}
             {problems.length > 0 ? (
-              <span className="ml-1.5 rounded-sm bg-surface-sunken px-1 font-mono text-xs tabular-nums">
-                {String(problems.length)}
-              </span>
+              <>
+                <span aria-hidden="true" className="ml-1.5 rounded-sm bg-surface-sunken px-1 font-mono text-xs tabular-nums">
+                  {String(problems.length)}
+                </span>
+                <span className="xp-sr-only">{t("shell.panel.problemsCount", { n: problems.length })}</span>
+              </>
             ) : null}
           </TabsTrigger>
           <TabsTrigger value="log">{t("shell.panel.log")}</TabsTrigger>
           <TabsTrigger value="output">{t("shell.panel.output")}</TabsTrigger>
         </TabsList>
-        {bottom.id !== "" ? (
+        {layout.attached && layout.bottom.present ? (
           <Button
             variant="ghost"
             size="sm"
@@ -72,20 +83,25 @@ export function BottomPanel({
             aria-label={t("shell.panel.collapse")}
             aria-keyshortcuts="Control+J Meta+J"
             title={`${t("shell.panel.collapse")} (${shortcutLabel("J")})`}
-            onClick={bottom.toggle}
+            onClick={layout.bottom.toggle}
           >
             <span aria-hidden="true">▾</span>
           </Button>
         ) : null}
       </div>
-      <TabsContent value="problems" className="min-h-0 flex-1 overflow-auto">
+      <TabsContent value="problems" className={PANEL}>
+        <h2 className="xp-sr-only">{t("shell.panel.problems")}</h2>
         <ProblemsList problems={problems} {...(onNavigate ? { onNavigate } : {})} />
       </TabsContent>
-      <TabsContent value="log" className="min-h-0 flex-1 overflow-auto p-3 font-mono text-xs whitespace-pre-wrap">
-        {log}
+      <TabsContent value="log" className={PANEL}>
+        <h2 className="xp-sr-only">{t("shell.panel.log")}</h2>
+        <div role="log" className={MONO_PANEL}>
+          {log}
+        </div>
       </TabsContent>
-      <TabsContent value="output" className="min-h-0 flex-1 overflow-auto p-3 font-mono text-xs whitespace-pre-wrap">
-        {output}
+      <TabsContent value="output" className={PANEL}>
+        <h2 className="xp-sr-only">{t("shell.panel.output")}</h2>
+        <div className={MONO_PANEL}>{output}</div>
       </TabsContent>
     </Tabs>
   );
