@@ -7,12 +7,11 @@ comparten. El contrato de la API vive aquí (`contracts/api`); el repositorio `x
 
 | Ruta | Qué es |
 |---|---|
-| `apps/web` | App Next (`@xpand/web`): la plantilla open-micro-saas (público, cuentas, administración) sobre la que se monta la plataforma. Ver «App web (`apps/web`)». |
-| `apps/ide-spa` | SPA Vite de la zona IDE de M0 (`@xpand/ide-spa`); convive con `apps/web` hasta que la zona IDE pase a Next. |
+| `apps/web` | App Next (`@xpand/web`): la plantilla open-micro-saas (público, cuentas, administración), las rutas `/api` de los casos y la zona IDE «Explorar casos» (`/casos`). Ver «App web (`apps/web`)». |
 | `packages/ui` | Componentes compartidos (`@xpand/ui`). |
 | `packages/api` | Cliente tipado de la API (`@xpand/api`). |
 | `contracts/api` | Contrato JSON Schema de la API. Es la fuente: se edita aquí y `packages/api` genera sus tipos. |
-| `scripts/package-dist.sh` | Empaqueta la build de `apps/ide-spa` para el release. |
+| `scripts/package-dist.sh` | Empaqueta una build estática para el release (pendiente de adaptar al despliegue de la app Next: Task 9). |
 
 ## Desarrollo local
 
@@ -21,14 +20,13 @@ Requisitos: Node 22 (ver `.nvmrc`) y pnpm. El proyecto fija `pnpm@12.14.0` en `p
 
 ```bash
 pnpm install --frozen-lockfile   # instalar dependencias
-pnpm dev                         # app Next (apps/web) en http://127.0.0.1:8870/; necesita Postgres (ver «App web»)
-pnpm --filter @xpand/ide-spa dev # SPA Vite de la zona IDE en http://127.0.0.1:5173/ con recarga en caliente
+pnpm dev                         # app Next (apps/web) en http://localhost:8870/ (escucha en 127.0.0.1)
 ```
 
-La SPA (`apps/ide-spa`) pide los datos a un servidor que corra en la misma máquina en el puerto `XPAND_SERVER_PORT`
-(por defecto `8870`). Su `vite.config.ts` reenvía **solo `/api`** a `http://127.0.0.1:${XPAND_SERVER_PORT}`; los recursos de la
-aplicación los sirve Vite. Si el servidor no está, la interfaz muestra el error en «Problemas» con un botón para
-reintentar.
+«Explorar casos» está en `http://localhost:8870/casos` y no necesita Postgres: lee los casos de la carpeta del
+almacén (`XPAND_ALMACEN`, por defecto `~/.xpand-saas/almacen`; la llenan los importadores). Si la carpeta no existe o está
+vacía, el catálogo sale vacío y «Problemas» explica cómo importarlos. Las cuentas (entrada, perfil, administración) sí
+necesitan Postgres (ver «App web»).
 
 Otros comandos de la raíz:
 
@@ -50,6 +48,14 @@ Tailwind 4. Da las zonas pública, de usuario y de administración, cuentas con 
 correo y Google opcional), Prisma con Postgres y, apagados mientras no tengan claves, pagos (Stripe), analítica y
 soporte. Sin claves ninguna página falla ni habla con terceros (lo prueba `tests/**/sin-terceros*.spec.ts`).
 
+**Zona IDE «Explorar casos» (`/casos`, `/casos/<motor>/<sistema>`).** Es un grupo de rutas con su **propio layout raíz**
+(`src/app/(ide)`): su documento, su hoja de estilos (`src/ide/ide.css`: Tailwind + tokens de `@xpand/ui`) y ninguna
+dependencia de sesión ni de base de datos; el resto del sitio vive en `src/app/(site)`. Así los estilos de una zona no
+llegan a la otra, y ir del sitio a la zona es una navegación completa. La zona se pinta solo en el navegador
+(`dynamic` sin SSR, como era la SPA): el servidor entrega un armazón estático. Su código está en `src/ide` (pantallas
+en `features/explorar`, marco y rutas en `app`, textos ES/EN en `i18n`); usa `@xpand/ui`, `@xpand/api` (con
+validación de esquema también en producción) y las rutas `/api` de la app.
+
 ```bash
 cp apps/web/.env.example apps/web/.env   # rellena NEXTAUTH_SECRET y la contraseña de Postgres
 pnpm db:start                            # Postgres de desarrollo (docker compose) en 127.0.0.1:6500
@@ -68,7 +74,7 @@ Pruebas de la app: `pnpm --filter @xpand/web test` (Vitest) y, con Postgres de p
 pnpm --filter @xpand/web test:db:start    # Postgres de prueba en 127.0.0.1:5433 (apps/web/.env.test)
 pnpm --filter @xpand/web test:db:prepare  # migraciones
 pnpm --filter @xpand/web exec playwright install chromium firefox   # una vez
-pnpm e2e:web                              # Playwright de apps/web (levanta `pnpm dev` y un SMTP de prueba)
+pnpm e2e                                  # Playwright de apps/web (levanta `pnpm dev` y un SMTP de prueba)
 pnpm --filter @xpand/web test:db:stop     # parar el contenedor
 ```
 
@@ -79,23 +85,25 @@ Los valores de `apps/web/.env.test` (secreto de sesión, contraseña de Postgres
 | Comando | Qué prueba | Dónde corre |
 |---|---|---|
 | `pnpm test` | Vitest (unitarias de los paquetes y de las aplicaciones), pruebas de `scripts/` y `gen:check` | Local y CI |
-| `pnpm e2e:web` | Playwright de `apps/web` (plantilla: entrada, perfil, administración, accesibilidad, sin terceros). Necesita el Postgres de prueba (ver «App web»). | Local y CI (job `e2e-web`) |
-| `pnpm e2e` | Playwright contra la build de `apps/ide-spa` (`vite build` + `vite preview` en `127.0.0.1:4173`), con la API simulada de `apps/ide-spa/e2e/mock-api.ts` y `contracts/api/examples`. No hace falta el servidor. | Local y CI |
+| `pnpm e2e` | Playwright de `apps/web`: la plantilla (entrada, perfil, administración, accesibilidad, sin terceros) y la zona IDE (`tests/ide`, proyecto «chromium - ide»), esta última contra la app real y el almacén de prueba `packages/casos/test/almacen`; `tests/ide/mock-api.ts` solo tuerce las respuestas de `/api` para los fallos (401, 500, 503, esquema, red caída) y el catálogo grande. Necesita el Postgres de prueba (ver «App web»). | Local y CI (job `e2e-web`) |
 
-Antes del primer `pnpm e2e` instala Chromium una vez: `pnpm --filter @xpand/ide-spa exec playwright install chromium`.
+Antes del primer `pnpm e2e` instala los navegadores una vez: `pnpm --filter @xpand/web exec playwright install chromium firefox`.
+Solo la zona IDE: `pnpm --filter @xpand/web exec playwright test --project="chromium - ide"`. La prueba
+`tests/ide/sin-postgres.spec.ts` levanta un segundo servidor (puerto `XPAND_WEB_PORT_SIN_POSTGRES`, 8871) con la base
+de datos apuntando a un puerto muerto y comprueba que la zona sigue funcionando.
 
-**Pruebas de capturas (`@visual`).** Sus líneas base viven en `apps/ide-spa/e2e/explorar.spec.ts-snapshots/` y dependen
+**Pruebas de capturas (`@visual`).** Sus líneas base viven en `apps/web/tests/ide/explorar.spec.ts-snapshots/` y dependen
 de la máquina y de la versión de Chromium. Por eso CI las excluye (`--grep-invert @visual` cuando existe la variable
 `CI`) hasta que se generen en una imagen fijada. Localmente sí corren:
 
-- Para comprobar: `pnpm --filter @xpand/ide-spa exec playwright test --grep @visual`.
+- Para comprobar: `pnpm --filter @xpand/web exec playwright test --project="chromium - ide" --grep @visual`.
 - Para regenerar las líneas base en la imagen oficial, con la misma versión de `@playwright/test` (1.65.0):
 
   ```bash
-  docker run --rm -v "$PWD":/work -w /work mcr.microsoft.com/playwright:v1.65.0-noble bash -c "npm i -g pnpm@12.14.0 && pnpm install --frozen-lockfile && pnpm --filter @xpand/ide-spa exec playwright test --grep @visual --update-snapshots"
+  docker run --rm -v "$PWD":/work -w /work mcr.microsoft.com/playwright:v1.65.0-noble bash -c "npm i -g pnpm@12.14.0 && pnpm install --frozen-lockfile && pnpm --filter @xpand/web exec playwright test --project=\"chromium - ide\" --grep @visual --update-snapshots"
   ```
 
-- Localmente, `pnpm --filter @xpand/ide-spa exec playwright test --grep @visual --update-snapshots` sirve para ver
+- Localmente, `pnpm --filter @xpand/web exec playwright test --project="chromium - ide" --grep @visual --update-snapshots` sirve para ver
   cambios, pero no sustituye a la imagen fijada.
 
 Revisa las imágenes antes de comprometer las líneas base.
@@ -109,21 +117,23 @@ de terceros.
 
 ## Release
 
-Un release publica la build de `apps/ide-spa` como `dist.tar.gz` y su `dist.tar.gz.sha256` en GitHub.
+Un release publica una build estática como `dist.tar.gz` y su `dist.tar.gz.sha256` en GitHub. **Pendiente (Task 9):** la
+SPA que empaquetaba ya no existe (la zona IDE es parte de la app Next); el workflow y `scripts/package-dist.sh` se
+adaptan al despliegue de la app Next.
 
 1. En `main`, añade la sección `## vX.Y.Z` a `CHANGELOG.md` con las notas. Sin esa sección con contenido, el
    workflow falla antes de publicar.
 2. Crea y sube el tag sobre ese commit: `git tag vX.Y.Z && git push origin vX.Y.Z`. La versión del tag debe ser la de
-   `apps/ide-spa/package.json`; el workflow lo comprueba.
+   `apps/web/package.json`; el workflow lo comprueba (pendiente de actualizar en la Task 9).
 3. El workflow `.github/workflows/release.yml` se dispara con el tag `v*`:
    - el job `build` instala con el lockfile, construye, empaqueta con `scripts/package-dist.sh` (rechaza mapas,
      enlaces y ficheros especiales) y sube el artefacto; no tiene token de escritura;
    - el job `release` (único con `contents: write`) crea el release con las notas de `CHANGELOG.md`.
 
-Probar el empaquetado sin publicar: `pnpm build && scripts/package-dist.sh apps/ide-spa/dist /ruta/de/salida`.
+Probar el empaquetado sin publicar: `scripts/package-dist.sh <directorio de build> /ruta/de/salida`.
 
 ## CI
 
 El workflow `.github/workflows/ci.yml` corre en cada push y pull request: instalación con lockfile congelado,
-lint, typecheck, test y e2e. No necesita secretos. El release tampoco: usa el token del propio workflow, con permiso
+lint, typecheck, test y, en el job `e2e-web`, los e2e de `apps/web`. No necesita secretos. El release tampoco: usa el token del propio workflow, con permiso
 de escritura solo en el job `release`.

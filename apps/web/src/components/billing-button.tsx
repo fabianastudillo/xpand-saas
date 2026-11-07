@@ -1,6 +1,6 @@
 import { toast } from "sonner";
 
-import { createPortalSession } from "@/app/(public)/pricing/actions";
+import { createPortalSession } from "@/app/(site)/(public)/pricing/actions";
 
 export const BillingButton = () => {
   const openCustomerPortal = async () => {

@@ -1,0 +1,8 @@
+{
+  // The Playwright tests of the IDE zone, to the strict standard of the monorepo (see src/ide/tsconfig.json).
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["./**/*.ts"]
+}

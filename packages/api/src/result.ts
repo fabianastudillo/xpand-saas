@@ -4,6 +4,12 @@ export type ApiError = {
   status?: number;
   route: string;
   message: string;
+  /**
+   * Machine code of the server's error body (`{ "error": { "codigo", "mensaje" } }`): «caso_no_encontrado»,
+   * «almacen_no_disponible»… Absent when the body does not have that shape. Only the code is kept: the interface
+   * words every message itself, in the user's language.
+   */
+  code?: string;
 };
 
 export type Result<T> = { ok: true; data: T } | { ok: false; error: ApiError };

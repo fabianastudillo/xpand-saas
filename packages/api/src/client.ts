@@ -67,11 +67,32 @@ function failure(error: ApiError): Result<never> {
   return { ok: false, error };
 }
 
-function statusError(route: RouteSpec, status: number): ApiError {
-  if (status === HTTP_UNAUTHORIZED || status === HTTP_FORBIDDEN) {
-    return { kind: "auth", status, route: route.path, message: `Session required or expired (HTTP ${String(status)})` };
+/** The `codigo` of a `{ "error": { "codigo": string } }` body, if the response has that shape. Never throws. */
+async function errorCodeOf(response: Response): Promise<string | undefined> {
+  try {
+    const body: unknown = await response.json();
+    if (typeof body !== "object" || body === null || !("error" in body)) return undefined;
+    const { error } = body;
+    if (typeof error !== "object" || error === null || !("codigo" in error)) return undefined;
+    return typeof error.codigo === "string" && error.codigo !== "" ? error.codigo : undefined;
+  } catch {
+    // An error body that is not JSON (a proxy's HTML page, an interrupted read) has no code to offer.
+    return undefined;
   }
-  return { kind: "http", status, route: route.path, message: `Server responded with HTTP ${String(status)}` };
+}
+
+function statusError(route: RouteSpec, status: number, code: string | undefined): ApiError {
+  const withCode = code === undefined ? {} : { code };
+  if (status === HTTP_UNAUTHORIZED || status === HTTP_FORBIDDEN) {
+    return {
+      kind: "auth",
+      status,
+      route: route.path,
+      message: `Session required or expired (HTTP ${String(status)})`,
+      ...withCode,
+    };
+  }
+  return { kind: "http", status, route: route.path, message: `Server responded with HTTP ${String(status)}`, ...withCode };
 }
 
 /** A body that dies while being read (server crash, dropped connection) is retryable; bad JSON is not. */
@@ -133,7 +154,7 @@ export function createClient(options: ClientOptions = {}): ApiClient {
       if (signal?.aborted === true) throw cause;
       return failure({ kind: "network", route: route.path, message: `Could not reach the server: ${String(cause)}` });
     }
-    if (!response.ok) return failure(statusError(route, response.status));
+    if (!response.ok) return failure(statusError(route, response.status, await errorCodeOf(response)));
 
     let body: unknown;
     try {

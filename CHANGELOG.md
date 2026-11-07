@@ -12,7 +12,12 @@ Formato por versión. Cada release de GitHub toma sus notas de la sección `## v
   no sobre la cabecera Host (obligatorio en producción).
 - **Arranque:** Next escucha solo en `127.0.0.1:8870` (`XPAND_WEB_PORT`); otra dirección exige
   `XPAND_PERMITIR_RED=1`.
-- La SPA Vite de M0 pasa a `apps/ide-spa` hasta que la zona IDE se monte en la app Next.
+- **Zona IDE en la app Next:** «Explorar casos» (`/casos`, `/casos/<motor>/<sistema>`) vive en `apps/web` con su propio
+  layout raíz, hoja de estilos y sin base de datos; usa las rutas `/api` reales. Se retira la SPA Vite (`apps/ide-spa`).
+  Nuevo en la interfaz: «Problemas» explica un catálogo vacío (`XPAND_ALMACEN`, `importar-casos`), un caso que no
+  existe (con enlace al catálogo, sin «Reintentar»), un caso que el lector no puede leer y un almacén no disponible
+  (503); pie «Plataforma X · Interfaz Y» (una sola versión si coinciden).
+- `@xpand/api`: los errores del servidor (`{ error: { codigo, mensaje } }`) conservan su `codigo` en `ApiError.code`.
 
 ## v0.1.0
 

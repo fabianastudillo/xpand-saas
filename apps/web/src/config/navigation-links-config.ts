@@ -2,6 +2,11 @@
 // production, prefetches from the navbar that never settle).
 export const publicNavLinks = [
   {
+    // The IDE zone ("Explorar casos"): its own document and stylesheet, open to visitors.
+    title: "Explore cases",
+    url: "/casos",
+  },
+  {
     title: "Pricing",
     url: "/pricing",
   },

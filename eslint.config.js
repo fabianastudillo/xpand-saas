@@ -6,8 +6,9 @@ import jsxA11y from "eslint-plugin-jsx-a11y";
 import reactHooks from "eslint-plugin-react-hooks";
 import tseslint from "typescript-eslint";
 
-// The M0 code (design system, API client, IDE SPA) is linted with the strict type-checked rules.
-const STRICT_BROWSER_PATHS = ["packages/ui/**/*.{ts,tsx}", "apps/ide-spa/**/*.{ts,tsx}"];
+// The M0 code (design system, API client, IDE zone) is linted with the strict type-checked rules.
+const IDE_ZONE_PATHS = ["apps/web/src/ide/**/*.{ts,tsx}", "apps/web/tests/ide/**/*.ts"];
+const STRICT_BROWSER_PATHS = ["packages/ui/**/*.{ts,tsx}", ...IDE_ZONE_PATHS];
 // The Next app is the open-micro-saas template: it keeps the recommended (non type-checked) rules so the
 // template's code is not rewritten to satisfy rules it was not written for. New XPAND code under it should
 // still be written to the strict standard.
@@ -23,14 +24,26 @@ export default tseslint.config(
       "contracts/**",
       "**/test-results/**",
       "**/playwright-report/**",
-      "apps/web/.next/**",
+      "apps/web/.next*/**",
       "apps/web/next-env.d.ts",
     ],
   },
   js.configs.recommended,
   {
+    // Strict rules for everything but the template; the IDE zone, which lives inside the template's app, gets them
+    // back in the next block.
     files: ["**/*.{ts,tsx,mts,cts}"],
     ignores: TEMPLATE_PATHS,
+    extends: [...tseslint.configs.strictTypeChecked],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+  {
+    files: IDE_ZONE_PATHS,
     extends: [...tseslint.configs.strictTypeChecked],
     languageOptions: {
       parserOptions: {

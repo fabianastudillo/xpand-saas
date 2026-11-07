@@ -11,6 +11,7 @@
 
 # next.js
 /.next/
+/.next-sin-postgres/
 /out/
 
 # production

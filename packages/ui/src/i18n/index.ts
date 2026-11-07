@@ -30,7 +30,8 @@ function interpolate(message: string, vars: TranslationVars): string {
 }
 
 function missingKey(key: string): string {
-  if (import.meta.env.DEV) {
+  // Vite and Vitest define `import.meta.env`; webpack (the Next app) does not: there a missing key renders itself.
+  if (import.meta.env?.DEV === true) {
     throw new Error(`Missing i18n key "${key}" for locale "${getLocale()}".`);
   }
   return key;

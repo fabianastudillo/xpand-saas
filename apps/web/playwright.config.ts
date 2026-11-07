@@ -1,5 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 import dotenv from "dotenv";
+import path from "node:path";
 
 import { adminUser } from "./tests/data/admin-user";
 
@@ -21,6 +22,10 @@ if (!process.env.CI) {
 // links, redirects) on `localhost` and the tests' `toHaveURL` must agree with it.
 const PORT = process.env.XPAND_WEB_PORT ?? "8870";
 const BASE_URL = `http://localhost:${PORT}`;
+
+// The IDE zone ("Explorar casos") reads its cases from a store folder: the tests use the one of packages/casos
+// (two public Garver 6, a synthetic internal case that must never appear, a truncated case and an invalid one).
+const TEST_STORE = path.resolve(__dirname, "../../packages/casos/test/almacen");
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -78,11 +83,26 @@ export default defineConfig({
       dependencies: ["login users - setup"],
       testIgnore: [
         "**/unauthenticated/**",
+        "**/ide/**",
         "**/authenticated/dashboard/admin-dashboard-access.spec.ts",
       ],
       use: {
         ...devices["Desktop Chrome"],
         storageState: adminUser.storageSessionPath,
+      },
+    },
+
+    // The IDE zone has no accounts and no database: its own project, with no login dependency. The captures
+    // (@visual) need the pinned Playwright image (README, "E2E y capturas"): CI skips them until then.
+    {
+      name: "chromium - ide",
+      testMatch: "**/ide/**/*.spec.ts",
+      ...(process.env.CI ? { grepInvert: /@visual/ } : {}),
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 1440, height: 900 },
+        locale: "es-ES",
+        colorScheme: "light",
       },
     },
 
@@ -129,5 +149,6 @@ export default defineConfig({
     command: process.env.CI ? "pnpm build && pnpm start" : "pnpm dev",
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
+    env: { XPAND_ALMACEN: TEST_STORE },
   },
 });

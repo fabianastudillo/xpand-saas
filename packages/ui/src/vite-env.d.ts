@@ -7,7 +7,8 @@ interface ImportMetaEnv {
 }
 
 interface ImportMeta {
-  readonly env: ImportMetaEnv;
+  /** Absent under bundlers that do not inject it (webpack). */
+  readonly env?: ImportMetaEnv;
 }
 
 /** Vite's raw import of a stylesheet (used by the token tests). */

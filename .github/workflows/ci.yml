@@ -29,8 +29,6 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
-      - run: pnpm --filter @xpand/ide-spa exec playwright install --with-deps chromium
-      - run: pnpm e2e
 
   # Pruebas Playwright de la app Next (plantilla open-micro-saas): necesitan Postgres y un servidor SMTP de
   # prueba que levanta la propia suite. Los valores de apps/web/.env.test son locales y regenerables, no secretos.

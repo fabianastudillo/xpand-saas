@@ -176,6 +176,54 @@ describe("createClient: errores explícitos", () => {
     expect(result.error.message).not.toBe("");
   });
 
+  it("un error con la forma única del servidor conserva su código", async () => {
+    const cuerpo = { error: { codigo: "caso_no_encontrado", mensaje: "No existe el caso pedido." } };
+    const client = createClient({ fetch: fetchReturning(jsonResponse(cuerpo, 404)) });
+
+    const result = await client.getRed({ motor: "m", sistema: "s", tec: ["ac"] });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toMatchObject({ kind: "http", status: 404, route: "/api/red", code: "caso_no_encontrado" });
+  });
+
+  it("el código también llega con 503 y con 401", async () => {
+    const unavailable = { error: { codigo: "almacen_no_disponible", mensaje: "No disponible." } };
+    const noSession = { error: { codigo: "sesion_requerida", mensaje: "Entra." } };
+
+    const first = await createClient({ fetch: fetchReturning(jsonResponse(unavailable, 503)) }).getCatalogo();
+    const second = await createClient({ fetch: fetchReturning(jsonResponse(noSession, 401)) }).getSesion();
+
+    expect(first.ok || first.error).toMatchObject({ kind: "http", status: 503, code: "almacen_no_disponible" });
+    expect(second.ok || second.error).toMatchObject({ kind: "auth", status: 401, code: "sesion_requerida" });
+  });
+
+  it.each([
+    ["una cadena", { error: "Caso no encontrado" }],
+    ["un código que no es texto", { error: { codigo: 7 } }],
+    ["un cuerpo vacío", null],
+  ])("un error con %s no inventa código", async (_name, cuerpo) => {
+    const client = createClient({ fetch: fetchReturning(jsonResponse(cuerpo, 500)) });
+
+    const result = await client.getConfig();
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).not.toHaveProperty("code");
+    expect(result.error.kind).toBe("http");
+  });
+
+  it("un error cuyo cuerpo no es JSON sigue siendo http sin código", async () => {
+    const client = createClient({ fetch: fetchReturning(new Response("<html>502</html>", { status: 502 })) });
+
+    const result = await client.getConfig();
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toMatchObject({ kind: "http", status: 502 });
+    expect(result.error).not.toHaveProperty("code");
+  });
+
   it("un fetch que lanza se reporta como network sin estado", async () => {
     const fetchMock = vi.fn<typeof fetch>().mockRejectedValue(new TypeError("fetch failed"));
     const client = createClient({ fetch: fetchMock });
