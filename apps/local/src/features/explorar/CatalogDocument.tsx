@@ -1,6 +1,6 @@
 import type { Catalogo } from "@xpand/api";
 import { Field, Input, Skeleton, formatNumber, t, useWindowedRows } from "@xpand/ui";
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactElement, type SyntheticEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactElement, type SyntheticEvent } from "react";
 import { Link } from "react-router";
 import { casePath, FROM_CATALOG } from "../../lib/casePath";
 import { useAppText, type AppMessageKey } from "../../i18n/messages";
@@ -181,7 +181,23 @@ function CatalogList({ entries, label }: CatalogListProps): ReactElement {
   });
   // Clamped on every render: a filter that shortens the list moves the tab stop to its last row.
   const current = Math.min(focusIndex, Math.max(0, entries.length - 1));
-  const pinnedIndex = windowed && entries.length > 0 ? current : null;
+  // Pinned only while the focused row lies outside the window: inside it, the row keeps its place in the flow.
+  const pinnedIndex = windowed && entries.length > 0 && (current < range.start || current >= range.end) ? current : null;
+  // A scroll can remount the focused row (it moves between the window and the pinned slot), and the browser drops
+  // the focus when the node goes. Remember the focused row when the user scrolls, and focus it again after the render.
+  const restoreFocus = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    const index = restoreFocus.current;
+    restoreFocus.current = null;
+    const focusLost = document.activeElement === null || document.activeElement === document.body;
+    if (index === null || !focusLost) return;
+    scrollRef.current?.querySelector<HTMLElement>(`[data-index="${String(index)}"] a`)?.focus({ preventScroll: true });
+  });
+  const handleScroll = (): void => {
+    const focusInside = scrollRef.current?.contains(document.activeElement) ?? false;
+    restoreFocus.current = focusInside ? current : null;
+    onScroll();
+  };
 
   // After a key moved the focus, the target row is mounted in the same batch: give it the focus.
   useEffect(() => {
@@ -200,13 +216,10 @@ function CatalogList({ entries, label }: CatalogListProps): ReactElement {
     setFocusIndex(target);
   };
 
-  const visible = entries
-    .slice(range.start, range.end)
-    .map((entry, offset) => ({ entry, index: range.start + offset }))
-    .filter(({ index }) => index !== pinnedIndex);
+  const visible = entries.slice(range.start, range.end).map((entry, offset) => ({ entry, index: range.start + offset }));
   const pinned = pinnedIndex === null ? undefined : entries[pinnedIndex];
   return (
-    <div ref={scrollRef} onScroll={windowed ? onScroll : undefined} className="min-h-0 flex-1 overflow-auto">
+    <div ref={scrollRef} onScroll={windowed ? handleScroll : undefined} className="min-h-0 flex-1 overflow-auto">
       <div style={windowed ? { height: range.totalHeight, position: "relative" } : undefined}>
         <ul
           aria-label={label}
@@ -219,15 +232,10 @@ function CatalogList({ entries, label }: CatalogListProps): ReactElement {
               entry={entry}
               index={index}
               total={entries.length}
-              tabbable={!windowed && index === current}
-              // Only in the flow layout: a focused row that becomes pinned would be remounted, and lose the focus.
-              onFocusRow={
-                windowed
-                  ? undefined
-                  : () => {
-                      setFocusIndex(index);
-                    }
-              }
+              tabbable={index === current}
+              onFocusRow={() => {
+                setFocusIndex(index);
+              }}
               onMove={moveFocus}
               rowRef={offset === 0 ? measureRowRef : undefined}
             />
@@ -239,7 +247,9 @@ function CatalogList({ entries, label }: CatalogListProps): ReactElement {
               index={pinnedIndex}
               total={entries.length}
               tabbable
-              onFocusRow={undefined}
+              onFocusRow={() => {
+                setFocusIndex(pinnedIndex);
+              }}
               onMove={moveFocus}
               rowRef={undefined}
               style={{ position: "absolute", top: pinnedIndex * rowHeight - range.offsetTop, left: 0, right: 0 }}
@@ -269,8 +279,7 @@ interface CatalogRowProps {
   index: number;
   total: number;
   tabbable: boolean;
-  /** Set when the row is in the flow layout (see CatalogList). */
-  onFocusRow: (() => void) | undefined;
+  onFocusRow: () => void;
   onMove: (event: KeyboardEvent<HTMLAnchorElement>, from: number) => void;
   rowRef: ((element: HTMLElement | null) => void) | undefined;
   style?: CSSProperties;

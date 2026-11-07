@@ -71,6 +71,46 @@ async function focusListTabStop(page: Page): Promise<void> {
   await page.locator('ul[aria-label="Sistemas"] a[tabindex="0"]').focus();
 }
 
+/** Tab from the search field until the focus is in the catalog list (the three filters come first). */
+async function tabIntoList(page: Page): Promise<void> {
+  await page.getByRole("searchbox", { name: "Buscar sistema" }).focus();
+  for (let step = 0; step < 8; step += 1) {
+    await page.keyboard.press("Tab");
+    if (await page.evaluate(() => document.activeElement?.closest('ul[aria-label="Sistemas"]') !== null)) return;
+  }
+  throw new Error("Tab never reached the catalog list");
+}
+
+interface RowBox {
+  posinset: number;
+  top: number;
+  bottom: number;
+}
+
+/** The rendered rows of the catalog list, with their boxes, in DOM order. */
+async function renderedRows(page: Page): Promise<RowBox[]> {
+  return page.evaluate(() =>
+    Array.from(document.querySelectorAll<HTMLElement>('ul[aria-label="Sistemas"] > li')).map((row) => {
+      const box = row.getBoundingClientRect();
+      return { posinset: Number(row.getAttribute("aria-posinset")), top: box.top, bottom: box.bottom };
+    }),
+  );
+}
+
+/** Rows laid out one under the other: sorted by height, no two overlap and the positions increase. */
+function expectRowsInOrderWithoutOverlap(rows: readonly RowBox[]): void {
+  const byHeight = [...rows].sort((a, b) => a.top - b.top);
+  for (let index = 1; index < byHeight.length; index += 1) {
+    const previous = byHeight[index - 1];
+    const current = byHeight[index];
+    if (previous === undefined || current === undefined) continue;
+    expect(current.top, `row ${String(current.posinset)} overlaps row ${String(previous.posinset)}`).toBeGreaterThanOrEqual(
+      previous.bottom - 0.5,
+    );
+    expect(current.posinset, "posinset follows the vertical order").toBeGreaterThan(previous.posinset);
+  }
+}
+
 function catalogList(page: Page): Locator {
   return page.getByRole("list", { name: "Sistemas" });
 }
@@ -343,5 +383,55 @@ test.describe("Explore cases", () => {
     const target = ARROW_STEPS_PAST_FIRST_WINDOW + 1;
     await expect(catalogList(page).locator(`:scope > li[aria-posinset="${String(target)}"] a`)).toBeFocused();
     expect(await rows.count(), "rendered rows after scrolling").toBeLessThanOrEqual(MAX_RENDERED_ROWS);
+  });
+
+  test("large catalog: rows keep their flow and order when the focus is inside the window", async ({ page }) => {
+    await mockApi(page, "large");
+    await page.goto(CATALOG_PATH);
+    await expect(catalogList(page).locator(':scope > li[aria-posinset="1"]')).toBeAttached();
+
+    await tabIntoList(page);
+    const rows = await renderedRows(page);
+    expect(rows.length, "rendered rows").toBeGreaterThan(2);
+    // In DOM order, the rendered rows are the window's rows, in position order (no pinned row moves away).
+    const dom = rows.map((row) => row.posinset);
+    expect(dom).toEqual([...dom].sort((a, b) => a - b));
+    expectRowsInOrderWithoutOverlap(rows);
+  });
+
+  test("large catalog: rows stay in order after scrolling far away and tabbing back", async ({ page }) => {
+    await mockApi(page, "large");
+    await page.goto(CATALOG_PATH);
+    await tabIntoList(page);
+    await page.evaluate(() => {
+      const list = document.querySelector<HTMLElement>('ul[aria-label="Sistemas"]');
+      const scroller = list?.closest<HTMLElement>(".overflow-auto");
+      if (scroller) scroller.scrollTop = 20000;
+    });
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Shift+Tab");
+    await expect(page.locator('ul[aria-label="Sistemas"] a:focus')).toHaveCount(1);
+    expectRowsInOrderWithoutOverlap(await renderedRows(page));
+  });
+
+  test("large catalog: a row clicked with the mouse becomes the tab stop", async ({ page }) => {
+    await mockApi(page, "large");
+    await page.goto(CATALOG_PATH);
+    const target = catalogList(page).locator(':scope > li[aria-posinset="3"] a');
+    await target.scrollIntoViewIfNeeded();
+    const box = await target.boundingBox();
+    if (box === null) throw new Error("row 3 has no box");
+
+    // Press on the row and release elsewhere: the focus moves to the row, and no click reaches its link.
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2, 4);
+    await page.mouse.up();
+    await expect(target).toBeFocused();
+
+    await page.keyboard.press("Tab");
+    await expect(page.locator('ul[aria-label="Sistemas"] a:focus')).toHaveCount(0);
+    await page.keyboard.press("Shift+Tab");
+    await expect(target).toBeFocused();
   });
 });
