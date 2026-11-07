@@ -1,0 +1,35 @@
+{
+  "descripcion": "Lista blanca de casos publicos para scripts/importar-casos.ts. Un sistema del catalogo de xpand se importa como publico solo si su id y la carpeta de sus datos (relativa al checkout, la del primer fichero base) figuran aqui; todo lo demas es interno. Cada entrada declara su fuente publica. Ante la duda, un caso no entra.",
+  "sistemas": [
+    {
+      "sistema": "tnep_garver6",
+      "datos": "data/casos/misocp_tnep/garver6",
+      "fuente": "Garver (1970), IEEE Trans. PAS 89(7); benchmark MISOCP AC/DC FACTS TNEP publicado en Zenodo"
+    },
+    {
+      "sistema": "tnep_garver6_clasico",
+      "datos": "data/casos/misocp_tnep/garver6_clasico",
+      "fuente": "Garver (1970), IEEE Trans. PAS 89(7); Romero, Monticelli, Garcia y Haffner (2002), IEE Proc. GTD 149(1)"
+    },
+    {
+      "sistema": "tnep_ieee24",
+      "datos": "data/casos/misocp_tnep/ieee24",
+      "fuente": "IEEE RTS (1979), IEEE Trans. PAS 98(6); menu de corredores del articulo MISOCP AC/DC FACTS TNEP"
+    },
+    {
+      "sistema": "tnep_ieee24_clasico",
+      "datos": "data/casos/misocp_tnep/ieee24_clasico",
+      "fuente": "Repositorio publico STNEP (github.com/EdgarMorquecho/STNEP, commit 8626a71); Morquecho, Torres, Astudillo et al. (2023), IEEE Trans. Power Syst., DOI 10.1109/TPWRS.2023.3305431"
+    },
+    {
+      "sistema": "tnep_ieee118",
+      "datos": "data/casos/misocp_tnep/ieee118",
+      "fuente": "IEEE 118 barras (CDF 1993/2004); menu de corredores del articulo MISOCP AC/DC FACTS TNEP"
+    },
+    {
+      "sistema": "tnep_ieee118_clasico",
+      "datos": "data/casos/misocp_tnep/ieee118_clasico",
+      "fuente": "Repositorio publico STNEP (github.com/EdgarMorquecho/STNEP, commit 8626a71); Morquecho, Torres, Astudillo et al. (2023), IEEE Trans. Power Syst., DOI 10.1109/TPWRS.2023.3305431"
+    }
+  ]
+}

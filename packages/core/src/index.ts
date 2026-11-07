@@ -4,7 +4,7 @@ export { readPlan } from "./plan";
 export type { Plan, PlanRecord, PlanValue } from "./plan";
 export { readMatpowerTables, readRows, readTextTable, splitComment, tokenizeRow } from "./matpower";
 export type { MatpowerFields, MatpowerRow, MatpowerTables, MatpowerValue } from "./matpower";
-export { redMisocp } from "./red-misocp";
+export { FICHEROS_JUNTO_AL_BASE, redMisocp } from "./red-misocp";
 export { redGfmgfl } from "./red-gfmgfl";
 export { redMatpower } from "./red-matpower";
 export {

@@ -4,6 +4,6 @@ import { defineConfig } from "vitest/config";
 // setup files). Packages without one run with the defaults.
 export default defineConfig({
   test: {
-    projects: ["packages/*", "apps/*"],
+    projects: ["packages/*", "apps/*", "scripts"],
   },
 });

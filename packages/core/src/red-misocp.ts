@@ -48,6 +48,18 @@ const TABLAS_JUNTO_AL_BASE = [
   "gen_ctrl_puntos.dat", "inom.dat", "lineas_abiertas.dat", "ref_local_desempate.dat", "iec_datos.dat",
 ] as const;
 
+/**
+ * Every file the reader opens beside the base `.dat` without it being declared in the case (the two lists above plus
+ * the renewable-site tables of sitios.ts). The case importer copies these when they exist, so an imported case builds
+ * the same network as in the reference.
+ */
+export const FICHEROS_JUNTO_AL_BASE: readonly string[] = [
+  ...DATOS_JUNTO_AL_BASE,
+  ...TABLAS_JUNTO_AL_BASE,
+  "ibr_sitios.dat",
+  "gen_candidatos.dat",
+];
+
 type Registro = Dict;
 
 // `_nivel`: the higher voltage of the two ends of a branch, and whether they differ

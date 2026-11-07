@@ -28,6 +28,18 @@ almacén (`XPAND_ALMACEN`, por defecto `~/.xpand-saas/almacen`; la llenan los im
 vacía, el catálogo sale vacío y «Problemas» explica cómo importarlos. Las cuentas (entrada, perfil, administración) sí
 necesitan Postgres (ver «App web»).
 
+Para llenar el almacén desde un checkout de xpand (necesita Julia y las dependencias de ese checkout instaladas):
+
+```bash
+pnpm importar-casos --xpand ../xpand [--almacen <dir>] [--incluir-internos] [--volcado <catalogo.json>]
+```
+
+El checkout solo se lee: el catálogo se vuelca con `scripts/julia/volcar-catalogo.jl` y todas las salidas de Julia van a
+una carpeta temporal; si `git status --ignored` del checkout cambia, se aborta. Solo entran como públicos los sistemas de
+`config/casos-publicos.json` (id, carpeta de datos y fuente pública de cada uno); con `--incluir-internos` entra el resto
+como `interno`, que la plataforma no sirve. El almacén se sustituye entero en cada importación (solo una carpeta vacía o
+escrita por el importador).
+
 Otros comandos de la raíz:
 
 ```bash
