@@ -4,7 +4,8 @@ import { cargarPaginaVigilada, vigilarTerceros } from "../utils";
 
 // With Stripe, Google and outgoing mail unconfigured (.env.test leaves every third-party key empty), the
 // public pages must load without console errors and without a single request to a host other than the app's.
-const PAGINAS_PUBLICAS = ["/", "/pricing", "/privacy", "/terms", "/login"];
+// /pricing is not here: without payments it answers 404, which the browser logs as a console error (zona-publica.spec.ts).
+const PAGINAS_PUBLICAS = ["/", "/privacy", "/terms", "/login"];
 
 test.describe("Public pages without third-party keys", () => {
   for (const ruta of PAGINAS_PUBLICAS) {

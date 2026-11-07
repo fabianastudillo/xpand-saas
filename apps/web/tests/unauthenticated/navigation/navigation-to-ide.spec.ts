@@ -5,7 +5,7 @@ test("the public navbar leads to the case explorer, which lists the public cases
   await page.goto("/");
 
   // act
-  await page.getByRole("link", { name: "Explore cases" }).first().click();
+  await page.getByRole("navigation", { name: "main navbar" }).getByRole("link", { name: "Explorar casos" }).first().click();
 
   // assert: the zone is its own document, so this is a full navigation
   await expect(page).toHaveURL(/\/casos$/);

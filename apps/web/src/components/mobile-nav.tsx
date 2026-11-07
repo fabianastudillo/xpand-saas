@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "./ui/separator";
 import { Button } from "@/components/ui/button";
+import { siteMetadata } from "@/config/site-metadata-config";
 
 type Link = {
   title: string;
@@ -41,7 +42,7 @@ export const MobileNav = ({ links }: MobileNavProps) => {
       </SheetTrigger>
       <SheetContent side="left">
         <SheetHeader>
-          <SheetTitle>Open Micro Saas</SheetTitle>
+          <SheetTitle>{siteMetadata.title}</SheetTitle>
           <Separator />
         </SheetHeader>
         <div className="text-sm dark:text-muted-foreground">

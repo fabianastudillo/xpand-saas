@@ -43,7 +43,10 @@ menores aparcados de la revisión final.
 - **[HIGH] Webhook de Stripe sin implementar.** La plantilla traía `apps/web/src/app/api/webhooks/stripe.ts` al estilo
   Pages Router (NextApiRequest, `micro`), que el App Router no sirve; se borró en la Task 2. Antes de activar los pagos
   hay que escribirlo como `apps/web/src/app/api/webhooks/stripe/route.ts` con `req.text()`, verificación de firma
-  obligatoria (`stripe.webhooks.constructEvent`) y 503 si falta `STRIPE_ENDPOINT_SECRET`, y probarlo.
+  obligatoria (`stripe.webhooks.constructEvent`) y 503 si falta `STRIPE_ENDPOINT_SECRET`, y probarlo. También antes:
+  los planes de `apps/web/src/config/payments-config.ts` son los de ejemplo de la plantilla (Basic/Pro/Teams, precios
+  y `priceId` de relleno) y la sección de precios (`pricing.tsx`) sigue en inglés con «Anual (save %)»; hoy no se ven
+  porque `/pricing` es 404 sin claves (ruling R20). Definir los planes reales antes de poner las claves.
 - **[MEDIUM] Cabecera Content-Security-Policy en apps/web.** `next.config.js` pone nosniff, X-Frame-Options, Referrer-Policy y
   Permissions-Policy; falta una CSP (exige enumerar los scripts en línea de Next y los terceros cuando se activen).
 - **[LOW] Un administrador puede degradarse a sí mismo o al último administrador** (`updateUserRoleAction` sin esa guardia);

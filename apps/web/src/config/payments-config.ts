@@ -1,6 +1,8 @@
+// Example plans of the template: they are shown only while payments are on (pagosActivos(), /pricing is a 404
+// otherwise). Before turning payments on, replace them with the real plans and Stripe price ids (TODO.md).
 export const paymentsConfig = {
-  title: "Choose the plan that suits you best",
-  description: "Start with a 14-day free trial. No credit card needed.",
+  title: "Planes",
+  description: "Planes de pago de XPAND.",
   defaultCurrency: "USD",
   pricingPlans: [
     {

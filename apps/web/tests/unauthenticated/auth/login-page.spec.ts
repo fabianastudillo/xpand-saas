@@ -66,13 +66,14 @@ test.describe("Login page", () => {
     ).toBeVisible();
   });
 
-  test("should display the policies and terms link", async ({ page }) => {
+  test("links to what XPAND keeps (privacy and terms, provisional drafts) without asking to accept them", async ({
+    page,
+  }) => {
     await page.goto(authConfig.loginUrl);
 
-    await expect(
-      page.getByText(
-        /By creating an account, you agree to our Terms of Service and Privacy Policy/i,
-      ),
-    ).toBeVisible();
+    await expect(page.getByText(/Qué guarda XPAND al entrar/)).toBeVisible();
+    await expect(page.getByRole("link", { name: "Privacidad" })).toHaveAttribute("href", "/privacy");
+    await expect(page.getByRole("link", { name: "Términos" })).toHaveAttribute("href", "/terms");
+    await expect(page.getByText(/you agree|aceptas/i)).toHaveCount(0);
   });
 });

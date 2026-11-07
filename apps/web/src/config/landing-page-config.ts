@@ -1,77 +1,19 @@
+// Texts of the home page (ruling R20): what XPAND is, what can be done today, and the two ways in. No marketing,
+// testimonials or sections that describe things the platform does not do. Spanish; the template pages are
+// translated in M1.
 export const landingPageContent = {
-  heroSection: {
-    headline: "Lorem Ipsum Dolor Sit Amet",
-    subheadline:
-      "Consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    cta: "Inceptos Gratuit",
-    figureImage: "/hero.svg",
-  },
-  featuresOverview: {
-    title: "Ut Enim ad Minima Veniam",
-    features: [
-      {
-        title: "User Authenticatio",
-        description:
-          "Quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea.",
-        icon: "lock",
-      },
-      {
-        title: "Billing System",
-        description:
-          "Commodi consequatur quis autem vel eum iure reprehenderit qui in ea voluptate velit esse.",
-        icon: "credit-card",
-      },
-      {
-        title: "Admin Dashboard",
-        description:
-          "Quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?",
-        icon: "dashboard",
-      },
-    ],
-  },
-  howItWorks: {
-    title: "Quis Autem Vel Eum Iure Reprehenderit",
-    steps: [
-      "Lorem ipsum dolor sit amet.",
-      "Sed do eiusmod tempor incididunt.",
-      "Ut labore et dolore magna aliqua.",
-    ],
-  },
-  whyChooseUs: {
-    title: "Nemo Enim Ipsam Voluptatem",
-    reasons: [
-      "Quia voluptas sit aspernatur aut odit aut fugit.",
-      "Sed quia consequuntur magni dolores eos qui ratione.",
-      "Voluptatem sequi nesciunt.",
-      "Neque porro quisquam est, qui dolorem ipsum.",
-      "Quia dolor sit amet, consectetur, adipisci velit.",
-    ],
-  },
-  testimonials: {
-    title: "Hear from Our Ipsum",
-    feedbacks: [
-      {
-        quote:
-          "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque.",
-        author: "Lorem Name",
-      },
-      {
-        quote:
-          "Laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi.",
-        author: "Ipsum Name",
-      },
-    ],
-  },
-  callToAction: {
-    text: "Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi.",
-    cta: "Cum Soluta Nobis",
+  hero: {
+    headline: "XPAND",
+    subheadline: "Planificador de expansión de sistemas eléctricos.",
+    today:
+      "En esta versión se pueden explorar los casos de estudio públicos: su red, sus barras y sus líneas, sin cuenta.",
+    explore: { title: "Explorar casos", url: "/casos" },
+    signIn: { title: "Entrar", url: "/login" },
   },
   footer: {
     links: [
-      { title: "About", url: "#" },
-      { title: "Contact", url: "#" },
-      { title: "Privacy Policy", url: "/privacy" },
-      { title: "Terms of Service", url: "/terms" },
+      { title: "Privacidad", url: "/privacy" },
+      { title: "Términos", url: "/terms" },
     ],
   },
 };

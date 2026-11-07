@@ -83,7 +83,7 @@ test.describe("without Postgres", () => {
   });
 
   test("a public page of the site still loads", async ({ page }) => {
-    const response = await page.goto(`${BASE}/pricing`);
+    const response = await page.goto(`${BASE}/privacy`);
 
     expect(response?.status()).toBe(200);
     await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();

@@ -147,19 +147,21 @@ export function LoginForm({ proveedores }: LoginFormProps) {
 
           <AuthProviders proveedores={proveedores} />
 
-          <div className="mt-2">
+          {/* Informs, does not ask to accept: both texts are provisional drafts (ruling R20). */}
+          <div className="mt-2" lang="es">
             <Typography
               component="small"
               className="dark:text-gray-300 text-gray-700"
             >
-              By creating an account, you agree to our{" "}
-              <Link href="/terms" className="font-extrabold">
-                Terms of Service
-              </Link>{" "}
-              and{" "}
+              Qué guarda XPAND al entrar:{" "}
               <Link className="font-extrabold" href="/privacy">
-                Privacy Policy.
-              </Link>
+                Privacidad
+              </Link>{" "}
+              y{" "}
+              <Link href="/terms" className="font-extrabold">
+                Términos
+              </Link>{" "}
+              (borradores provisionales).
             </Typography>
           </div>
         </div>

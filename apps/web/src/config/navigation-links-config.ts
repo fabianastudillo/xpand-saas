@@ -3,14 +3,16 @@
 export const publicNavLinks = [
   {
     // The IDE zone ("Explorar casos"): its own document and stylesheet, open to visitors.
-    title: "Explore cases",
+    title: "Explorar casos",
     url: "/casos",
   },
-  {
-    title: "Pricing",
-    url: "/pricing",
-  },
 ];
+
+/** Only while payments are on: without them /pricing is a 404 and nothing links to it (ruling R20). */
+export const pricingNavLink = {
+  title: "Pricing",
+  url: "/pricing",
+};
 
 export const adminNavLinks = [
   {
