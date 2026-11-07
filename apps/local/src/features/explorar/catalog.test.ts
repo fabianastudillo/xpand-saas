@@ -1,4 +1,4 @@
-import type { Catalogo } from "@xpand/api";
+import type { Catalogo, Sistema } from "@xpand/api";
 import { describe, expect, it } from "vitest";
 import {
   EMPTY_FILTERS,
@@ -7,6 +7,7 @@ import {
   filtersToParams,
   filterEntries,
   catalogEntries,
+  referenceFor,
   sizeOf,
   type CatalogFilters,
 } from "./catalog";
@@ -79,6 +80,32 @@ describe("tamanoDe", () => {
     expect(sizeOf(21)).toBe("medium");
     expect(sizeOf(100)).toBe("medium");
     expect(sizeOf(101)).toBe("large");
+  });
+});
+
+describe("referenceFor", () => {
+  // The seven references of Garver 6 as the server publishes them (contracts/api/examples/catalogo.json), reordered.
+  const system: Sistema = {
+    id: "tnep_garver6",
+    nombre: "Garver 6",
+    barras: 6,
+    referencias: [
+      { tecnologias: "ac,hvdc", valor: 2970.32 },
+      { tecnologias: "ac,bancos", valor: 4201.3 },
+      { tecnologias: "ac", valor: 6212.4547 },
+      { formulacion: "sin tecnologías", valor: 1 },
+    ],
+  };
+
+  it("picks the reference whose technologies are exactly the ones the case is opened with", () => {
+    expect(referenceFor(system, ["ac"])).toBe(6212.4547);
+    expect(referenceFor(system, ["hvdc", "ac"])).toBe(2970.32);
+  });
+
+  it("gives nothing when no reference names those technologies, or none says which it is", () => {
+    expect(referenceFor(system, ["ac", "bess"])).toBeUndefined();
+    expect(referenceFor({ id: "x", nombre: "x", barras: 1, referencias: [{ valor: 5 }] }, ["ac"])).toBeUndefined();
+    expect(referenceFor({ id: "x", nombre: "x", barras: 1 }, ["ac"])).toBeUndefined();
   });
 });
 

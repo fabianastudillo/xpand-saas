@@ -66,6 +66,11 @@ function problemList(page: Page): Locator {
   return page.getByRole("group", { name: "Lista de problemas" });
 }
 
+/** The live message of the status bar (what a screen reader hears when the state changes). */
+function statusMessage(page: Page): Locator {
+  return page.locator('[data-slot="statusbar"] [role="status"]');
+}
+
 /** The one focusable row of the catalog list (roving tab stop), as a keyboard user reaches it with Tab. */
 async function focusListTabStop(page: Page): Promise<void> {
   await page.locator('ul[aria-label="Sistemas"] a[tabindex="0"]').focus();
@@ -174,12 +179,80 @@ test.describe("Explore cases", () => {
     await expect(page.getByRole("link", { name: /Garver 6/ }).first()).toBeVisible({ timeout: SLOW_LOAD_TIMEOUT_MS });
   });
 
-  test("session missing (401): explains it and links to the classic interface", async ({ page }) => {
-    await mockApi(page, "401");
+  test("session missing (401): explains it, links to the classic interface, offers to retry, and the status bar says so", async ({
+    page,
+  }) => {
+    const mock = await mockApi(page, "401");
     await page.goto(CATALOG_PATH);
 
     await expect(problemList(page)).toContainText("Sesión requerida");
     await expect(page.getByRole("link", { name: "Abrir la interfaz clásica" })).toHaveAttribute("href", "/");
+    // The live region never says «Cargando…» after a failure.
+    await expect(statusMessage(page)).toHaveText("Catálogo no disponible. Revisa «Problemas».");
+
+    // Signed in elsewhere (another tab): retry from here, no reload.
+    mock.setMode("ok");
+    await page.getByRole("button", { name: "Reintentar" }).click();
+    await expect(page.getByRole("link", { name: /Garver 6/ }).first()).toBeVisible();
+    await expect(statusMessage(page)).toContainText("Catálogo: ");
+  });
+
+  test("the case of the «real» engine: integer ids and buses without name read as text, labelled by etiqueta", async ({
+    page,
+  }) => {
+    await mockApi(page, "enteros");
+    await page.goto(CASE_PATH);
+
+    // Production validates every body: this shape must pass the contract (no «schema» problem) and render.
+    await expect(firstBusItem(page)).toBeVisible();
+    await expect(problemList(page)).not.toContainText("contrato");
+    const bus2 = caseTree(page).getByRole("treeitem", { name: "Barra SE-2", exact: true });
+    await bus2.click();
+    const inspector = page.getByRole("group", { name: /Propiedades/ });
+    await expect(inspector).toContainText("Barra SE-2");
+    await expect(inspector).toContainText("Demanda activa (dato del caso)");
+    await expect(inspector).toContainText("240,0 MW");
+    await expect(page).toHaveURL(/sel=buses%3A2$/);
+
+    // Lines are labelled «de – a» with the ids as text (the group starts closed: open it).
+    await caseTree(page).getByRole("treeitem", { name: /^Líneas existentes/ }).click();
+    await expect(caseTree(page).getByRole("treeitem", { name: "1 – 2", exact: true })).toBeVisible();
+  });
+
+  test("document tabs by keyboard: arrows move the focus without navigating, Enter activates and keeps it", async ({
+    page,
+  }) => {
+    await mockApi(page);
+    await page.goto(CASE_PATH);
+    await expect(firstBusItem(page)).toBeVisible();
+    const caseTab = page.getByRole("tab", { name: /Garver 6/ });
+    const catalogTab = page.getByRole("tab", { name: "Catálogo de casos" });
+
+    await caseTab.focus();
+    await page.keyboard.press("ArrowLeft");
+    await expect(catalogTab).toBeFocused();
+    await expect(page).toHaveURL(/\/app\/casos\/jump_misocp\/tnep_garver6$/); // moved, not activated
+
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/app\/?$/);
+    await expect(page.getByRole("searchbox", { name: "Buscar sistema" })).toBeVisible();
+    await expect(catalogTab).toBeFocused(); // the catalog's search does not steal the focus
+
+    await page.keyboard.press("ArrowRight");
+    await expect(caseTab).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/app\/casos\/jump_misocp\/tnep_garver6$/);
+    await expect(caseTab).toBeFocused();
+  });
+
+  test("the catalog row labels the reference with its technology", async ({ page }) => {
+    await mockApi(page);
+    await page.goto(CATALOG_PATH);
+
+    const row = page.getByRole("link", { name: /Garver 6 — benchmark/ }).first();
+    // Garver 6 publishes seven references; the row shows the one of the variant the case opens with (ac).
+    await expect(row).toContainText("Referencia (ac): 6212,45");
+    await expect(page.getByText("sin unidad declarada")).toHaveCount(0);
   });
 
   test("server down: shows the error with Retry, and loads after retrying", async ({ page }) => {
@@ -196,12 +269,15 @@ test.describe("Explore cases", () => {
     await expect(page.getByRole("button", { name: "Reintentar" })).toHaveCount(0);
   });
 
-  test("server error (500): names the HTTP status, and loads after retrying", async ({ page }) => {
+  test("server error (500): names the HTTP status, the status bar says the catalog is unavailable, and loads after retrying", async ({
+    page,
+  }) => {
     const mock = await mockApi(page, "500");
     await page.goto(CATALOG_PATH);
 
     await expect(problemList(page)).toContainText("El servidor respondió con error");
     await expect(problemList(page)).toContainText("HTTP 500");
+    await expect(statusMessage(page)).toHaveText("Catálogo no disponible. Revisa «Problemas».");
     const retry = page.getByRole("button", { name: "Reintentar" });
     await expect(retry).toBeVisible();
 
@@ -209,6 +285,7 @@ test.describe("Explore cases", () => {
     await retry.click();
     await expect(page.getByRole("link", { name: /Garver 6/ }).first()).toBeVisible();
     await expect(page.getByRole("button", { name: "Reintentar" })).toHaveCount(0);
+    await expect(statusMessage(page)).toContainText("Catálogo: ");
   });
 
   test("reload keeps the case open", async ({ page }) => {

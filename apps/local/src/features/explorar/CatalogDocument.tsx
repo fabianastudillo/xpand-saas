@@ -5,7 +5,8 @@ import { Link } from "react-router";
 import { casePath, FROM_CATALOG } from "../../lib/casePath";
 import { useAppText, type AppMessageKey } from "../../i18n/messages";
 import { difficultyLabel } from "./difficulty";
-import { SIZE_BANDS, type CatalogEntry, type CatalogFilters, type SizeBand } from "./catalog";
+import { referenceFor, SIZE_BANDS, type CatalogEntry, type CatalogFilters, type SizeBand } from "./catalog";
+import { CASE_TECHNOLOGIES, technologiesKey } from "./technologies";
 
 const ROW_HEIGHT_PX = 60;
 const VIEWPORT_FALLBACK_PX = 480;
@@ -44,9 +45,12 @@ export function CatalogDocument({
   const engines = catalog?.motores ?? [];
   const searchRef = useRef<HTMLInputElement | null>(null);
 
-  // The search is the primary action of this page: the focus goes there when the page is entered.
+  // The search is the primary action of this page: the focus goes there when the page is entered by its address
+  // (nothing is focused then). Entered from a control that keeps the focus (the «Catálogo» tab, by keyboard or
+  // mouse), the focus stays where the user put it: stealing it would strand a keyboard user in the search box.
   useEffect(() => {
-    searchRef.current?.focus();
+    const active = document.activeElement;
+    if (active === null || active === document.body) searchRef.current?.focus();
   }, []);
 
   const handleSubmit = (event: SyntheticEvent<HTMLFormElement>): void => {
@@ -138,9 +142,6 @@ export function CatalogDocument({
               ? translate("catalog.count.one")
               : translate("catalog.count", { n: formatNumber(visibleEntries.length, { digits: 0 }) })}
           </p>
-          {visibleEntries.some((entry) => entry.system.referencias?.[0] !== undefined) ? (
-            <p className="text-xs text-ink-muted">{translate("catalog.referenceLegend")}</p>
-          ) : null}
           <CatalogList entries={visibleEntries} label={translate("catalog.list")} />
         </>
       )}
@@ -289,7 +290,8 @@ function CatalogRow({ entry, index, total, tabbable, onFocusRow, onMove, rowRef,
   const translate = useAppText();
   const { engine, system } = entry;
   const difficulty = difficultyLabel(system.dificultad, translate);
-  const reference = system.referencias?.[0]?.valor;
+  // The reference of the variant the case opens with (CASE_TECHNOLOGIES), labelled with it; none if unknown.
+  const reference = referenceFor(system, CASE_TECHNOLOGIES);
   return (
     <li
       ref={rowRef}
@@ -318,7 +320,9 @@ function CatalogRow({ entry, index, total, tabbable, onFocusRow, onMove, rowRef,
         <span className="text-xs text-ink-muted">
           {engine.nombre}
           {difficulty === null ? "" : ` · ${translate("catalog.difficulty", { value: difficulty })}`}
-          {reference === undefined ? "" : ` · ${translate("catalog.reference")} ${formatNumber(reference, { digits: 2 })}`}
+          {reference === undefined
+            ? ""
+            : ` · ${translate("catalog.reference", { tec: technologiesKey(CASE_TECHNOLOGIES) })} ${formatNumber(reference, { digits: 2 })}`}
         </span>
       </Link>
     </li>

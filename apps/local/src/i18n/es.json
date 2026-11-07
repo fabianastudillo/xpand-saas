@@ -17,7 +17,7 @@
   "catalog.empty": "Ningún sistema coincide con los filtros.",
   "catalog.error": "No se pudo cargar el catálogo. Revisa «Problemas».",
   "catalog.difficulty": "Esfuerzo: {value}",
-  "catalog.reference": "Valor de referencia",
+  "catalog.reference": "Referencia ({tec}):",
   "unit.buses": "barras",
   "case.error": "No se pudo cargar el caso. Revisa «Problemas».",
   "case.tree.buses": "Barras",
@@ -25,8 +25,8 @@
   "case.tree.candidates": "Corredores candidatos",
   "case.tree.error": "El árbol no está disponible.",
   "case.bus": "Barra {name}",
-  "case.bus.activeLoad": "Demanda activa",
-  "case.bus.reactiveLoad": "Demanda reactiva",
+  "case.bus.activeLoad": "Demanda activa (dato del caso)",
+  "case.bus.reactiveLoad": "Demanda reactiva (dato del caso)",
   "case.bus.minVoltage": "Tensión mínima",
   "case.bus.maxVoltage": "Tensión máxima",
   "case.bus.maxGeneration": "Generación máxima",
@@ -42,6 +42,7 @@
   "case.summary.refBus": "Barra de referencia",
   "case.note": "Nota del caso",
   "state.catalog": "Catálogo: {n} sistemas",
+  "state.catalog.error": "Catálogo no disponible. Revisa «Problemas».",
   "state.session.local": "Sesión local",
   "state.session.of": "Sesión de {name}",
   "state.session.none": "Sin sesión",
@@ -63,6 +64,5 @@
   "difficulty.medium": "medio",
   "difficulty.heavy": "pesado",
   "problems.route.title": "La pantalla no se pudo mostrar",
-  "problems.route.cause": "Esta pantalla no se pudo preparar. Revisa el aviso en «Problemas».",
-  "catalog.referenceLegend": "Valor de referencia: sin unidad declarada en el contrato."
+  "problems.route.cause": "Esta pantalla no se pudo preparar. Revisa el aviso en «Problemas»."
 }

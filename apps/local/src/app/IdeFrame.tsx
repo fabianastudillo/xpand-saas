@@ -5,15 +5,14 @@ import {
   CommandPalette,
   StatusBar,
   TopBar,
-  t,
   useProblems,
   useShellCommands,
   type Command,
 } from "@xpand/ui";
 import { useMemo, useState, type ReactElement, type ReactNode } from "react";
 import { useNavigate } from "react-router";
-import { countSystems } from "../features/explorar/catalog";
 import { useAppText } from "../i18n/messages";
+import { catalogStatusMessage } from "./catalogStatus";
 import { UI_VERSION } from "./uiVersion";
 import { LocaleSwitch } from "./LocaleSwitch";
 import { useApiProblems } from "./useApiProblems";
@@ -50,7 +49,7 @@ export function IdeFrame({ title, path, left, right, center, errors = NO_ERRORS,
   useApiProblems(shellErrors);
   const problems = useProblems().list;
 
-  const catalogMessage = catalog.data === undefined ? t("common.loading") : translate("state.catalog", { n: countSystems(catalog.data) });
+  const catalogMessage = catalogStatusMessage(catalog, translate);
   const sessionMessage =
     session.data === undefined
       ? null

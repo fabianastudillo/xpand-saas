@@ -1,5 +1,7 @@
 import type { Catalogo, Motor, Sistema } from "@xpand/api";
 import { normalizeText } from "@xpand/ui";
+import { textOf } from "../../lib/values";
+import { technologiesKey } from "./technologies";
 
 /** Size bands in buses: up to 20, up to 100, the rest. */
 const SMALL_MAX_BUSES = 20;
@@ -89,6 +91,21 @@ export function filtersFromSearch(params: URLSearchParams): CatalogFilters {
     family: emptyToNull(params.get("family")),
     size: parseSizeBand(params.get("size")),
   };
+}
+
+/**
+ * The reference value of a system for one set of technologies, or undefined. A system publishes several references
+ * (Garver 6 has seven: ac, ac+hvdc, all…), the contract fixes neither their order nor a unit, and only `tecnologias`
+ * (an extra field, text like "ac,bancos") says which variant each one is. A reference that does not say is never
+ * shown: a figure without its variant would read as «the» optimum of the case.
+ */
+export function referenceFor(system: Sistema, technologies: readonly string[]): number | undefined {
+  const wanted = technologiesKey(technologies);
+  const match = system.referencias?.find((reference) => {
+    const declared = textOf(reference["tecnologias"]);
+    return declared !== undefined && technologiesKey(declared.split(",")) === wanted;
+  });
+  return match?.valor;
 }
 
 export function countSystems(catalog: Catalogo): number {

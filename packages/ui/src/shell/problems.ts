@@ -21,6 +21,8 @@ export interface Problem {
   title: string;
   cause?: string;
   action?: ProblemAction;
+  /** A second way out, shown after `action` (a missing session: open the classic interface, or retry). */
+  secondaryAction?: ProblemAction;
   target?: ProblemTarget;
   source?: string;
 }
@@ -47,6 +49,7 @@ function sameProblem(a: Problem, b: Problem): boolean {
     a.cause === b.cause &&
     a.source === b.source &&
     a.action?.label === b.action?.label &&
+    a.secondaryAction?.label === b.secondaryAction?.label &&
     a.target?.kind === b.target?.kind &&
     a.target?.id === b.target?.id
   );

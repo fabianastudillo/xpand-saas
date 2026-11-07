@@ -1,7 +1,8 @@
 import type { Catalogo } from "./generated/catalogo";
 import type { Config } from "./generated/config";
-import type { Red } from "./generated/red";
+import type { Red as RedWire } from "./generated/red";
 import type { Sesion } from "./generated/sesion";
+import { normalizeRed, type Red } from "./red";
 import type { ApiError, Result } from "./result";
 import type { ContractName, SchemaValidator } from "./validate";
 
@@ -14,7 +15,11 @@ export interface RedQuery {
 export interface ClientOptions {
   /** Route prefix; empty means same origin (the UI is served by the server itself). */
   baseUrl?: string;
-  /** Validates every body with ajv. Intended for development; disabled by default. */
+  /**
+   * Validates every body against contracts/api with ajv (loaded on demand, in its own chunk). The app enables it in
+   * development AND in production (spec §5.3): a response off the contract is a `schema` error that names its
+   * route, never a crash. Disabled by default only for callers that bring their own guarantees (tests).
+   */
   validate?: boolean;
   fetch?: typeof fetch;
 }
@@ -91,6 +96,13 @@ export function createClient(options: ClientOptions = {}): ApiClient {
     validatorPromise ??= import("./validate").then(({ createSchemaValidator }) => createSchemaValidator());
     return validatorPromise;
   };
+  // With validation on, the chunk starts downloading now, alongside the first request, instead of after it.
+  // A failed warm-up is forgotten here and reported by the request that needs the validator.
+  if (shouldValidate) {
+    loadValidator().catch(() => {
+      validatorPromise = undefined;
+    });
+  }
 
   /** Returns the schema error for a non-conforming body, or undefined when it conforms or validation is off. */
   async function schemaProblem(route: RouteSpec, body: unknown): Promise<ApiError | undefined> {
@@ -138,8 +150,10 @@ export function createClient(options: ClientOptions = {}): ApiClient {
 
   return {
     getCatalogo: (request) => requestJson<Catalogo>(CATALOGO_ROUTE, CATALOGO_ROUTE.path, request?.signal),
-    getRed: (query, request) =>
-      requestJson<Red>(RED_ROUTE, `${RED_ROUTE.path}?${redQueryString(query)}`, request?.signal),
+    getRed: async (query, request) => {
+      const result = await requestJson<RedWire>(RED_ROUTE, `${RED_ROUTE.path}?${redQueryString(query)}`, request?.signal);
+      return result.ok ? { ok: true, data: normalizeRed(result.data) } : result;
+    },
     getConfig: (request) => requestJson<Config>(CONFIG_ROUTE, CONFIG_ROUTE.path, request?.signal),
     getSesion: (request) => requestJson<Sesion>(SESION_ROUTE, SESION_ROUTE.path, request?.signal),
   };

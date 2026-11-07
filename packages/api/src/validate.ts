@@ -1,5 +1,6 @@
 // Runtime validation against the same schemas that generate the types.
-// Loaded only with createClient({ validate: true }) (development): ajv stays out of the production path.
+// Loaded only with createClient({ validate: true }); the app turns it on in development and in production, as a
+// lazy chunk (~36 kB gz), so that a response off the contract becomes a «Problemas» entry instead of a crash.
 import Ajv, { type ValidateFunction } from "ajv";
 import catalogoSchema from "../../../contracts/api/catalogo.schema.json";
 import configSchema from "../../../contracts/api/config.schema.json";
@@ -15,7 +16,8 @@ export interface SchemaValidator {
 
 export function createSchemaValidator(): SchemaValidator {
   // strictRequired is disabled: motor uses anyOf with required (formulacion or familia), which ajv flags spuriously.
-  const ajv = new Ajv({ strict: true, strictRequired: false, allErrors: false });
+  // allowUnionTypes: red.schema.json types a bus identifier as ["string", "integer"] (idBarra).
+  const ajv = new Ajv({ strict: true, strictRequired: false, allowUnionTypes: true, allErrors: false });
   const validators: Record<ContractName, ValidateFunction> = {
     catalogo: ajv.compile(catalogoSchema),
     red: ajv.compile(redSchema),

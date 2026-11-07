@@ -41,16 +41,24 @@ describe("<DocumentTabs>", () => {
     expect(screen.getByRole("tabpanel")).toHaveTextContent("unifilar");
   });
 
-  it("activates on click and with the arrow keys", async () => {
+  it("activates on click, Enter and Space; the arrow keys only move the focus (manual activation)", async () => {
     const user = userEvent.setup();
     const onActivate = vi.fn();
     render(<DocumentTabs documents={documents} activeId="study" onActivate={onActivate} onClose={vi.fn()} />);
     await user.tab();
     expect(screen.getByRole("tab", { name: /Estudio/ })).toHaveFocus();
     await user.keyboard("{ArrowRight}");
+    expect(screen.getByRole("tab", { name: /Red/ })).toHaveFocus();
+    expect(onActivate).not.toHaveBeenCalled();
+    await user.keyboard("{Enter}");
     expect(onActivate).toHaveBeenLastCalledWith("network");
-    await user.click(screen.getByRole("tab", { name: /Plan/ }));
+    await user.keyboard("{ArrowRight}");
+    expect(screen.getByRole("tab", { name: /Plan/ })).toHaveFocus();
+    await user.keyboard(" ");
     expect(onActivate).toHaveBeenLastCalledWith("plan");
+    expect(onActivate).toHaveBeenCalledTimes(2);
+    await user.click(screen.getByRole("tab", { name: /Red/ }));
+    expect(onActivate).toHaveBeenLastCalledWith("network");
   });
 
   it("marks unsaved documents in text, after a separator, not only with a dot", () => {

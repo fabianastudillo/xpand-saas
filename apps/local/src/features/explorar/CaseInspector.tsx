@@ -3,7 +3,7 @@ import { Inspector, InspectorRow, InspectorRows } from "@xpand/ui";
 import type { ReactElement } from "react";
 import { useAppText, type Translate } from "../../i18n/messages";
 import { figureOf } from "../../lib/values";
-import { selectedElement, type SelectedElement, type Selection } from "./caseTree";
+import { busLabel, selectedElement, type SelectedElement, type Selection } from "./caseTree";
 
 const MW = "MW";
 const MVAR = "MVAr";
@@ -30,7 +30,7 @@ export function CaseInspector({ red, selection }: CaseInspectorProps): ReactElem
 function titleOf(element: SelectedElement, translate: Translate): string {
   switch (element.kind) {
     case "bus":
-      return translate("case.bus", { name: element.bus.nombre });
+      return translate("case.bus", { name: busLabel(element.bus) });
     case "line":
       return `${element.line.de} – ${element.line.a}`;
     case "candidate":

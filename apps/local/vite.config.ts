@@ -8,8 +8,8 @@ export default defineConfig({
   base: "/app/",
   define: BUILD_DEFINE,
   plugins: [react(), tailwindcss()],
-  // ajv is loaded lazily in development (the API client validates there): pre-bundle it, so that Vite does not
-  // discover it mid-session and reload the page.
+  // ajv is loaded lazily by the API client (it validates every response, in development and in production):
+  // pre-bundle it, so that Vite does not discover it mid-session and reload the page.
   optimizeDeps: { include: ["ajv"] },
   // `pnpm dev` talks to a local XPAND server (INICIAR_GUI.bat, port 8850). Only /api is proxied: the app's own
   // assets come from Vite.

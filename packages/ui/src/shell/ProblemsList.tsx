@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, type ReactElement } from "react";
 import { Button } from "../components/Button";
 import { t, useLocale, type MessageKey } from "../i18n";
 import { cn } from "../lib/cn";
-import { SEVERITIES, type Problem, type ProblemSeverity, type ProblemTarget } from "./problems";
+import { SEVERITIES, type Problem, type ProblemAction, type ProblemSeverity, type ProblemTarget } from "./problems";
 
 export interface ProblemsListProps {
   problems: readonly Problem[];
@@ -127,10 +127,38 @@ interface ProblemItemProps {
   onActivate: () => void;
 }
 
+interface ActionButtonProps {
+  action: ProblemAction;
+  titleId: string;
+  onActivate: () => void;
+}
+
+/** A link when the action leaves the app (href), a button when it runs something here. */
+function ActionButton({ action, titleId, onActivate }: ActionButtonProps): ReactElement {
+  if ("href" in action) {
+    return (
+      <Button size="sm" asChild aria-describedby={titleId}>
+        <a href={action.href}>{action.label}</a>
+      </Button>
+    );
+  }
+  return (
+    <Button
+      size="sm"
+      aria-describedby={titleId}
+      onClick={() => {
+        onActivate();
+        action.run();
+      }}
+    >
+      {action.label}
+    </Button>
+  );
+}
+
 function ProblemItem({ problem, titleId, onNavigate, onActivate }: ProblemItemProps): ReactElement {
   const style = SEVERITY[problem.severity];
   const target = problem.target;
-  const action = problem.action;
   return (
     <li className="flex items-start gap-2 rounded-md border border-line bg-surface px-2 py-1.5 text-sm">
       <span aria-hidden="true" className={cn("w-4 shrink-0 text-center", style.className)}>
@@ -143,21 +171,9 @@ function ProblemItem({ problem, titleId, onNavigate, onActivate }: ProblemItemPr
         </span>
         {problem.cause !== undefined ? <span className="text-ink-muted">{problem.cause}</span> : null}
       </div>
-      {action === undefined ? null : "href" in action ? (
-        <Button size="sm" asChild aria-describedby={titleId}>
-          <a href={action.href}>{action.label}</a>
-        </Button>
-      ) : (
-        <Button
-          size="sm"
-          aria-describedby={titleId}
-          onClick={() => {
-            onActivate();
-            action.run();
-          }}
-        >
-          {action.label}
-        </Button>
+      {problem.action === undefined ? null : <ActionButton action={problem.action} titleId={titleId} onActivate={onActivate} />}
+      {problem.secondaryAction === undefined ? null : (
+        <ActionButton action={problem.secondaryAction} titleId={titleId} onActivate={onActivate} />
       )}
       {target && onNavigate ? (
         <Button

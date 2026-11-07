@@ -11,7 +11,11 @@ import type { Page, Route } from "@playwright/test";
  * their own tests, so they record nothing.
  */
 
-export type MockMode = "ok" | "slow" | "401" | "500" | "down" | "large";
+/**
+ * `enteros`: the case comes in the shape of the «real» engine of the server (fixtures/red-ids-enteros.json): integer
+ * bus ids and line ends, buses without «nombre». The contract admits it; the interface must read it as text.
+ */
+export type MockMode = "ok" | "slow" | "401" | "500" | "down" | "large" | "enteros";
 
 export interface MockApi {
   /** Changes the answer for the requests that arrive from now on. */
@@ -26,6 +30,7 @@ interface Answer {
 
 const SLOW_MS = 5000;
 const EXAMPLES_DIR = new URL("../../../contracts/api/examples/", import.meta.url);
+const FIXTURES_DIR = new URL("./fixtures/", import.meta.url);
 const CATALOGO_ROUTE = "/api/catalogo";
 const RED_ROUTE = "/api/red";
 const CONFIG_ROUTE = "/api/config";
@@ -57,6 +62,7 @@ const EXAMPLES: Readonly<Record<string, string>> = {
   [CONFIG_ROUTE]: example("config.json"),
   [SESION_ROUTE]: example("sesion.json"),
 };
+const RED_ENTEROS = readFileSync(new URL("red-ids-enteros.json", FIXTURES_DIR), "utf8");
 
 function json(status: number, body: unknown): Answer {
   return { status, contentType: "application/json", body: JSON.stringify(body) };
@@ -121,7 +127,8 @@ function answerRed(url: URL, mode: MockMode): Answer {
   }
   const matches = engine === GARVER_MOTOR && system === GARVER_SISTEMA && tec === GARVER_TEC;
   if (!matches) return json(404, { error: "Caso no encontrado" });
-  return { status: 200, contentType: "application/json", body: EXAMPLES[RED_ROUTE] ?? "{}" };
+  const body = mode === "enteros" ? RED_ENTEROS : (EXAMPLES[RED_ROUTE] ?? "{}");
+  return { status: 200, contentType: "application/json", body };
 }
 
 /** The answer for a request that the healthy server would give. */
@@ -139,7 +146,7 @@ function failure(mode: "401" | "500"): Answer {
 }
 
 function isServerHealthy(mode: MockMode): boolean {
-  return mode === "ok" || mode === "large" || mode === "slow";
+  return mode === "ok" || mode === "large" || mode === "slow" || mode === "enteros";
 }
 
 /**

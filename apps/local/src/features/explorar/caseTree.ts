@@ -29,6 +29,18 @@ function lineLabel(de: string, a: string): string {
   return `${de}${LINE_SEPARATOR}${a}`;
 }
 
+function nonEmpty(text: string | undefined): string | undefined {
+  return text === undefined || text === "" ? undefined : text;
+}
+
+/**
+ * What a bus is called everywhere in the interface: the operator's name when the case has a names file, else the
+ * label every engine emits, else the identifier. An empty text counts as absent (the «real» engine may send "").
+ */
+export function busLabel(bus: Pick<Barra, "id" | "etiqueta" | "nombre">): string {
+  return nonEmpty(bus.nombre) ?? nonEmpty(bus.etiqueta) ?? bus.id;
+}
+
 /** The case as the tree shows it: buses, existing lines and candidate corridors, each with its count. */
 export function caseTreeGroups(red: Red, labels: TreeLabels): TreeGroup[] {
   return [
@@ -36,7 +48,7 @@ export function caseTreeGroups(red: Red, labels: TreeLabels): TreeGroup[] {
       id: GROUP_BUSES,
       label: labels.buses,
       count: red.barras.length,
-      items: red.barras.map((bus) => ({ id: bus.id, label: labels.bus(bus.nombre) })),
+      items: red.barras.map((bus) => ({ id: bus.id, label: labels.bus(busLabel(bus)) })),
     },
     {
       id: GROUP_LINES,

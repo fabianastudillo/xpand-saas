@@ -17,7 +17,7 @@
   "catalog.empty": "No system matches the filters.",
   "catalog.error": "The catalog could not be loaded. Check “Problems”.",
   "catalog.difficulty": "Effort: {value}",
-  "catalog.reference": "Reference value",
+  "catalog.reference": "Reference ({tec}):",
   "unit.buses": "buses",
   "case.error": "The case could not be loaded. Check “Problems”.",
   "case.tree.buses": "Buses",
@@ -25,8 +25,8 @@
   "case.tree.candidates": "Candidate corridors",
   "case.tree.error": "The tree is not available.",
   "case.bus": "Bus {name}",
-  "case.bus.activeLoad": "Active load",
-  "case.bus.reactiveLoad": "Reactive load",
+  "case.bus.activeLoad": "Active load (case datum)",
+  "case.bus.reactiveLoad": "Reactive load (case datum)",
   "case.bus.minVoltage": "Minimum voltage",
   "case.bus.maxVoltage": "Maximum voltage",
   "case.bus.maxGeneration": "Maximum generation",
@@ -42,6 +42,7 @@
   "case.summary.refBus": "Reference bus",
   "case.note": "Case note",
   "state.catalog": "Catalog: {n} systems",
+  "state.catalog.error": "Catalog unavailable. Check “Problems”.",
   "state.session.local": "Local session",
   "state.session.of": "Session of {name}",
   "state.session.none": "No session",
@@ -63,6 +64,5 @@
   "difficulty.medium": "medium",
   "difficulty.heavy": "heavy",
   "problems.route.title": "The screen could not be shown",
-  "problems.route.cause": "This screen could not be prepared. Check the notice in “Problems”.",
-  "catalog.referenceLegend": "Reference value: no unit declared in the contract."
+  "problems.route.cause": "This screen could not be prepared. Check the notice in “Problems”."
 }

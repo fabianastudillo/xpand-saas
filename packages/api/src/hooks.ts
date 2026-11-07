@@ -3,8 +3,8 @@ import { createContext, createElement, useContext, type ReactElement, type React
 import type { ApiClient, RedQuery } from "./client";
 import type { Catalogo } from "./generated/catalogo";
 import type { Config } from "./generated/config";
-import type { Red } from "./generated/red";
 import type { Sesion } from "./generated/sesion";
+import type { Red } from "./red";
 import { ApiFailure, unwrapResult } from "./result";
 
 const MINUTE_MS = 60 * 1000;

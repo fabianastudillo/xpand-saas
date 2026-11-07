@@ -22,12 +22,14 @@ export function apiProblems(errors: readonly ApiError[], retry: () => void, tran
 function problemFor(error: ApiError, retry: () => void, translate: Translate): Problem {
   switch (error.kind) {
     case "auth":
+      // Sign in happens in the classic interface (another tab); the retry is for when the user comes back.
       return {
         id: "api.auth",
         severity: "error",
         title: translate("problems.auth.title"),
         cause: translate("problems.auth.cause"),
         action: { label: translate("problems.auth.action"), href: CLASSIC_INTERFACE_HREF },
+        secondaryAction: { label: t("common.retry"), run: retry },
       };
     case "network":
       return {

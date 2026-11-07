@@ -44,6 +44,24 @@ describe("<ProblemsList>", () => {
     expect(screen.queryByRole("button", { name: "Abrir la interfaz clásica" })).toBeNull();
   });
 
+  it("offers a second action next to the first: a link to leave and a button to retry", async () => {
+    const user = userEvent.setup();
+    const retry = vi.fn();
+    const sessionProblem: Problem = {
+      id: "sesion",
+      severity: "error",
+      title: "Sesión requerida",
+      action: { label: "Abrir la interfaz clásica", href: "/" },
+      secondaryAction: { label: "Reintentar", run: retry },
+    };
+    render(<ProblemsList problems={[sessionProblem]} />);
+    expect(screen.getByRole("link", { name: "Abrir la interfaz clásica" })).toHaveAttribute("href", "/");
+    const button = screen.getByRole("button", { name: "Reintentar" });
+    expect(document.getElementById(button.getAttribute("aria-describedby") ?? "")).toHaveTextContent("Sesión requerida");
+    await user.click(button);
+    expect(retry).toHaveBeenCalledTimes(1);
+  });
+
   it("groups by severity, errors first, with counts in the headings", () => {
     render(<ProblemsList problems={problems} />);
     const headings = screen.getAllByRole("heading");

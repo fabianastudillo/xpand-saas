@@ -54,7 +54,9 @@ function isCloseKey(event: KeyboardEvent): boolean {
 
 /**
  * The open documents (Estudio, Red, Plan · corrida…) as a tablist over the center zone.
- * Arrows, Home and End move and activate (Radix Tabs). Keyboard users close the focused tab with Delete or
+ * Arrows, Home and End only move the focus; Enter and Space activate (Radix Tabs, manual activation): activating
+ * a document navigates and mounts a page, and that must not happen on every arrow press, nor take the focus away
+ * from the tablist. Keyboard users close the focused tab with Delete or
  * Ctrl+Backspace (announced through aria-keyshortcuts and a described-by hint; the palette offers «Cerrar
  * documento activo» too). The «×» is a decorative pointer target (aria-hidden, not focusable): a button
  * inside a tablist is not allowed. After closing the focused tab, the focus moves to its neighbour.
@@ -100,6 +102,7 @@ export function DocumentTabs({
   return (
     <Tabs
       value={activeId === null ? "" : tabValue(activeId)}
+      activationMode="manual"
       onValueChange={(value) => {
         const document = documentOf(value);
         if (document !== undefined) onActivate(document.id);

@@ -21,13 +21,25 @@
     }
   },
   "definitions": {
+    "idBarra": {
+      "description": "Identificador de barra (en la barra y en los extremos de una línea): cadena en los casos .dat/.m, entero en el motor «real» (red.jl, red_real). La interfaz lo normaliza a cadena.",
+      "type": ["string", "integer"],
+      "minLength": 1
+    },
     "barra": {
       "type": "object",
-      "required": ["id", "nombre", "kv", "pd", "qd", "vmin", "vmax"],
+      "required": ["id", "etiqueta", "kv", "pd", "qd", "vmin", "vmax"],
       "additionalProperties": true,
       "properties": {
-        "id": { "type": "string", "minLength": 1 },
-        "nombre": { "type": "string" },
+        "id": { "$ref": "#/definitions/idBarra" },
+        "etiqueta": {
+          "type": "string",
+          "description": "Rótulo de la barra; lo emiten los cinco constructores de red.jl. Puede ser el propio id."
+        },
+        "nombre": {
+          "type": "string",
+          "description": "Nombre del operador. Solo existe cuando el caso trae fichero de nombres; la interfaz usa nombre ?? etiqueta ?? id."
+        },
         "kv": { "type": "number" },
         "pd": { "type": "number" },
         "qd": { "type": "number" },
@@ -41,8 +53,8 @@
       "additionalProperties": true,
       "properties": {
         "id": { "type": "string", "minLength": 1 },
-        "de": { "type": "string", "minLength": 1 },
-        "a": { "type": "string", "minLength": 1 },
+        "de": { "$ref": "#/definitions/idBarra" },
+        "a": { "$ref": "#/definitions/idBarra" },
         "r": { "type": "number" },
         "x": { "type": "number" },
         "s": { "type": "number" }
@@ -54,8 +66,8 @@
       "additionalProperties": true,
       "properties": {
         "id": { "type": "string", "minLength": 1 },
-        "de": { "type": "string", "minLength": 1 },
-        "a": { "type": "string", "minLength": 1 },
+        "de": { "$ref": "#/definitions/idBarra" },
+        "a": { "$ref": "#/definitions/idBarra" },
         "r": { "type": "number" },
         "x": { "type": "number" },
         "s": { "type": "number" },

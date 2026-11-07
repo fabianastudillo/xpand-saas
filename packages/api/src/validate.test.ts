@@ -8,7 +8,7 @@ import { createSchemaValidator } from "./validate";
 const validator = createSchemaValidator();
 
 const redValida = {
-  barras: [{ id: "1", nombre: "1", kv: 0, pd: 80, qd: 24, vmin: 0.95, vmax: 1.05 }],
+  barras: [{ id: "1", etiqueta: "1", nombre: "1", kv: 0, pd: 80, qd: 24, vmin: 0.95, vmax: 1.05 }],
   ac_existentes: [{ id: "1-2", de: "1", a: "2", r: 0.1, x: 0.4, s: 40 }],
   ac_candidatos: [{ id: "1-3", de: "1", a: "3", r: 0.1, x: 0.4, s: 40, costo: 10, nmax: 4 }],
 };
@@ -39,10 +39,28 @@ describe("createSchemaValidator: rechazos", () => {
     expect(mensaje).toContain("ac_candidatos");
   });
 
-  it("rechaza un identificador de barra numérico (de y a son cadenas)", () => {
-    const red = { ...redValida, ac_existentes: [{ id: "1-2", de: 1, a: "2", r: 0, x: 0, s: 0 }] };
+  it("acepta identificadores de barra enteros (el motor «real» los emite así; idBarra admite cadena o entero)", () => {
+    const red = {
+      barras: [{ id: 1, etiqueta: "SE-1", kv: 230, pd: 80, qd: 24, vmin: 0.95, vmax: 1.05 }],
+      ac_existentes: [{ id: "1-2", de: 1, a: 2, r: 0, x: 0, s: 0 }],
+      ac_candidatos: [{ id: "1-3", de: 1, a: "3", r: 0, x: 0, s: 0, costo: 10, nmax: 4 }],
+    };
 
-    expect(validator.check("red", red)).toContain("de");
+    expect(validator.check("red", red)).toBeUndefined();
+  });
+
+  it("rechaza un identificador de barra que no sea cadena ni entero, y una barra sin etiqueta", () => {
+    const deDecimal = { ...redValida, ac_existentes: [{ id: "1-2", de: 1.5, a: "2", r: 0, x: 0, s: 0 }] };
+    const sinEtiqueta = { ...redValida, barras: [{ id: "1", nombre: "1", kv: 0, pd: 80, qd: 24, vmin: 0.95, vmax: 1.05 }] };
+
+    expect(validator.check("red", deDecimal)).toContain("de");
+    expect(validator.check("red", sinEtiqueta)).toContain("etiqueta");
+  });
+
+  it("acepta una barra sin nombre (solo los casos con fichero de nombres lo traen)", () => {
+    const sinNombre = { ...redValida, barras: [{ id: "1", etiqueta: "1", kv: 0, pd: 80, qd: 24, vmin: 0.95, vmax: 1.05 }] };
+
+    expect(validator.check("red", sinNombre)).toBeUndefined();
   });
 
   it("rechaza un costo negativo en líneas candidatas", () => {

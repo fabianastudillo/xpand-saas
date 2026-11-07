@@ -120,6 +120,27 @@ describe("createClient: codificación de getRed", () => {
 
     expect(result.ok).toBe(true);
   });
+
+  it("acepta la red del motor «real» (ids enteros, barras sin nombre) y entrega los ids como cadenas", async () => {
+    // Arrange: the shape that red_real emits (contracts/api/red.schema.json admits it; the UI reads strings).
+    const redReal = {
+      barras: [{ id: 1, etiqueta: "Subestación A", kv: 230, pd: 10, qd: 2, vmin: 0.95, vmax: 1.05 }],
+      ac_existentes: [{ id: "L1_230", de: 1, a: 2, r: 0.01, x: 0.1, s: 300 }],
+      ac_candidatos: [{ id: "C1_230", de: 2, a: 1, r: 0.01, x: 0.1, s: 300, costo: 12.5, nmax: 2 }],
+    };
+    const client = createClient({ fetch: fetchReturning(jsonResponse(redReal)), validate: true });
+
+    // Act
+    const result = await client.getRed({ motor: "real", sistema: "sni", tec: ["ac"] });
+
+    // Assert
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.barras[0]).toMatchObject({ id: "1", etiqueta: "Subestación A" });
+    expect(result.data.barras[0]?.nombre).toBeUndefined();
+    expect(result.data.ac_existentes[0]).toMatchObject({ de: "1", a: "2" });
+    expect(result.data.ac_candidatos[0]).toMatchObject({ de: "2", a: "1" });
+  });
 });
 
 describe("createClient: errores explícitos", () => {

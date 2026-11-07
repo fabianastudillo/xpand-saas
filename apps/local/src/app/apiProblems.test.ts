@@ -24,6 +24,12 @@ describe("apiProblems", () => {
     expect(problems[0]?.action).toEqual({ label: "Abrir la interfaz clásica", href: "/" });
   });
 
+  it("also offers to retry a missing session: after signing in elsewhere, no reload is needed", () => {
+    const problems = apiProblems([{ kind: "auth", status: 401, route: "/api/catalogo", message: "x" }], RETRY, ES);
+
+    expect(problems[0]?.secondaryAction).toMatchObject({ label: "Reintentar", run: RETRY });
+  });
+
   it("reports an unreachable server once, with a retry action", () => {
     const errors: ApiError[] = [
       { kind: "network", route: "/api/catalogo", message: "x" },

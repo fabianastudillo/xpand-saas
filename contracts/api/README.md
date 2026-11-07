@@ -33,11 +33,18 @@ Esquemas JSON Schema de las cuatro rutas de solo lectura que usa la interfaz nue
 ### `red` (`GET /api/red?motor=jump_misocp&sistema=tnep_garver6&tec=ac`)
 
 - Raiz: `barras`, `ac_existentes`, `ac_candidatos` (arrays).
-- Barra (campos de la ficha): `id`, `nombre`, `kv`, `pd`, `qd`, `vmin`, `vmax`.
+- Barra (campos de la ficha): `id`, `etiqueta`, `kv`, `pd`, `qd`, `vmin`, `vmax`. `nombre` es **opcional**: solo
+  existe cuando el caso trae fichero de nombres del operador (Garver 6 lo trae; `sdp_tnep`, `lshade`, `gep_*` y
+  `real` no). `etiqueta` la emiten los cinco constructores de `packages/XpandCore/src/red.jl` y puede ser el propio
+  id. La interfaz rotula la barra con `nombre ?? etiqueta ?? id`.
 - Linea existente: `id`, `de`, `a`, `r`, `x`, `s`.
 - Linea candidata: `id`, `de`, `a`, `r`, `x`, `s`, `costo`, `nmax`.
 
-`de` y `a` son identificadores de barra y son cadenas (`"1"`, `"2"`), no numeros.
+El `id` de la barra y los extremos `de` y `a` de las lineas son identificadores de barra: cadenas (`"1"`, `"2"`)
+en los casos `.dat` y `.m`, y **enteros** en el motor `real` (`Red.red_real`, red del SNI). El esquema admite ambos
+(`idBarra`, `["string", "integer"]`) porque el contrato refleja la API real y M0 no cambia la salida del servidor;
+la interfaz los normaliza a cadena en un unico sitio (`packages/api` de xpand-saas). Comprobado el 07/11/2026 con
+la pasada por motor (abajo, prueba 5).
 
 ### `config` (`GET /api/config`)
 
@@ -83,6 +90,10 @@ En `test/runtests.jl`, testset «contrato de la API (contracts/api)»:
 3. Cada esquema es draft-07, con `$id`, `title` y todos los objetos con `additionalProperties: true`.
 4. Un esquema mutado (con un `required` que no existe en la respuesta) debe fallar: demuestra que la validacion
    muerde.
+5. Pasada por motor: el primer sistema de **cada** motor del catalogo se pide a `api_red` con `tec=ac` y toda
+   respuesta 200 debe cumplir `red.schema.json`. Las respuestas no-200 no fallan la prueba (en CI pueden faltar
+   datos LFS). Asi el `required` queda demostrado sobre todas las familias, no declarado a partir de Garver 6. Los
+   datos solo se leen; ninguno se copia a fichero.
 
 JSONSchema.jl es **solo de pruebas**: esta en `[extras]` y `[targets] test` de `Project.toml`, no en `[deps]`.
 
@@ -92,4 +103,5 @@ JSONSchema.jl es **solo de pruebas**: esta en `[extras]` y `[targets] test` de `
 2. Cambiar el esquema y, si la respuesta real cambio, el ejemplo.
 3. `GTNEP_TEST_OPF=0 XPAND_TEST_PROFILE=ci julia --project=. -e 'using Pkg; Pkg.test()'`.
 
-Un campo nuevo que la interfaz lea se añade a `required` solo si el servidor lo garantiza siempre.
+Un campo nuevo que la interfaz lea se añade a `required` solo si el servidor lo garantiza siempre, y «siempre» lo
+demuestra la pasada por motor (prueba 5), no un solo caso.

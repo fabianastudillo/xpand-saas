@@ -1,13 +1,14 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ApiProvider, createClient } from "@xpand/api";
+import { ApiProvider } from "@xpand/api";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router";
 import "./styles.css";
+import { createAppClient } from "./app/apiClient";
 import { restoreLocale } from "./i18n/locale";
 import { createAppRouter } from "./routes";
 
-// The schemas are checked against every response in development only (ajv is then loaded on demand).
-const apiClient = createClient({ validate: import.meta.env.DEV });
+// Every response is checked against contracts/api, also in production (see apiClient.ts).
+const apiClient = createAppClient();
 const queryClient = new QueryClient();
 const router = createAppRouter();
 

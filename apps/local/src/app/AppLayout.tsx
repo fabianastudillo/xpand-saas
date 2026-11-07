@@ -9,12 +9,11 @@ import { findSystem } from "../features/explorar/caseData";
 import { textOf } from "../lib/values";
 import { caseKey, upsertOpenCase, withoutOpenCase, type OpenCase } from "../features/explorar/openCases";
 import { formatSelection, parseSelection, type Selection } from "../features/explorar/caseTree";
+import { CASE_TECHNOLOGIES } from "../features/explorar/technologies";
 import { casePath, isFromCatalog } from "../lib/casePath";
 import { useAppText } from "../i18n/messages";
 import { IdeFrame } from "./IdeFrame";
 
-/** Technologies the case tree asks the server for: the AC candidate corridors (the catalog names no default). */
-const DEFAULT_TECHS = ["ac"];
 const CASE_PATTERN = "/casos/:motor/:sistema";
 const SELECTION_PARAM = "sel";
 const CATALOG_TAB_ID = "catalog";
@@ -42,7 +41,10 @@ export function AppLayout(): ReactElement {
 
   const catalog = useCatalogo();
   const redQuery = useMemo(
-    () => (engineId === undefined || systemId === undefined ? null : { motor: engineId, sistema: systemId, tec: DEFAULT_TECHS }),
+    () =>
+      engineId === undefined || systemId === undefined
+        ? null
+        : { motor: engineId, sistema: systemId, tec: [...CASE_TECHNOLOGIES] },
     [engineId, systemId],
   );
   const red = useRed(redQuery);
