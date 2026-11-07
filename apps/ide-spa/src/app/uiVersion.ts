@@ -1,7 +1,7 @@
 import type { Translate } from "../i18n/messages";
 
 /**
- * Version of this interface (apps/web/package.json). Vite replaces `__UI_VERSION__` at build and test time
+ * Version of this interface (apps/ide-spa/package.json). Vite replaces `__UI_VERSION__` at build and test time
  * (see build-define.ts), so the status bar can tell it apart from the platform version.
  */
 export const UI_VERSION: string = __UI_VERSION__;

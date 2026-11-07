@@ -5,21 +5,46 @@ import jsxA11y from "eslint-plugin-jsx-a11y";
 import reactHooks from "eslint-plugin-react-hooks";
 import tseslint from "typescript-eslint";
 
-const BROWSER_PATHS = ["packages/ui/**/*.{ts,tsx}", "apps/web/**/*.{ts,tsx}"];
+// The M0 code (design system, API client, IDE SPA) is linted with the strict type-checked rules.
+const STRICT_BROWSER_PATHS = ["packages/ui/**/*.{ts,tsx}", "apps/ide-spa/**/*.{ts,tsx}"];
+// The Next app is the open-micro-saas template: it keeps the recommended (non type-checked) rules so the
+// template's code is not rewritten to satisfy rules it was not written for. New XPAND code under it should
+// still be written to the strict standard.
+const TEMPLATE_PATHS = ["apps/web/**/*.{ts,tsx,mjs}"];
+const BROWSER_PATHS = [...STRICT_BROWSER_PATHS, ...TEMPLATE_PATHS];
 
 export default tseslint.config(
   {
-    ignores: ["**/dist/**", "**/coverage/**", "**/node_modules/**", "contracts/**", "**/test-results/**"],
+    ignores: [
+      "**/dist/**",
+      "**/coverage/**",
+      "**/node_modules/**",
+      "contracts/**",
+      "**/test-results/**",
+      "**/playwright-report/**",
+      "apps/web/.next/**",
+      "apps/web/next-env.d.ts",
+    ],
   },
   js.configs.recommended,
-  ...tseslint.configs.strictTypeChecked,
   {
+    files: ["**/*.{ts,tsx,mts,cts}"],
+    ignores: TEMPLATE_PATHS,
+    extends: [...tseslint.configs.strictTypeChecked],
     languageOptions: {
-      globals: globals.node,
       parserOptions: {
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
+    },
+  },
+  {
+    files: TEMPLATE_PATHS,
+    extends: [...tseslint.configs.recommended],
+  },
+  {
+    languageOptions: {
+      globals: globals.node,
     },
   },
   {
@@ -30,7 +55,7 @@ export default tseslint.config(
     },
   },
   {
-    // Rules of hooks and exhaustive deps for every component and hook in the React packages and the app.
+    // Rules of hooks and exhaustive deps for every component and hook in the React packages and the apps.
     files: BROWSER_PATHS,
     plugins: { "react-hooks": reactHooks },
     rules: {

@@ -14,7 +14,7 @@
     "lint": "eslint .",
     "typecheck": "pnpm -r --if-present run typecheck",
     "test": "vitest run && pnpm test:scripts && pnpm --filter @xpand/api gen:check",
-    "e2e": "pnpm --filter @xpand/web e2e",
+    "e2e": "pnpm --filter @xpand/ide-spa e2e",
     "build": "pnpm -r --if-present run build",
     "test:scripts": "bash scripts/package-dist.test.sh"
   },

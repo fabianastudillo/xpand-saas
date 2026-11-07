@@ -14,3 +14,6 @@ test-results/
 .env
 .env.*
 !.env.example
+
+# Entorno de pruebas de apps/web: valores locales regenerados, sin secretos reales
+!.env.test

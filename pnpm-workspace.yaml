@@ -1,3 +1,12 @@
 packages:
   - "packages/*"
   - "apps/*"
+
+# Dependencias cuyos scripts de instalación se permiten (pnpm los bloquea por defecto):
+# prisma genera su cliente y motor, sharp y esbuild traen binarios nativos.
+allowBuilds:
+  "@prisma/client": true
+  "@prisma/engines": true
+  prisma: true
+  sharp: true
+  esbuild: true
