@@ -197,12 +197,19 @@ describe("theme.css", () => {
 });
 
 describe("fonts.css", () => {
-  it("bundles only the latin subsets and no italic faces", () => {
-    const imports = [...fontsCss.matchAll(/@import\s+"([^"]+)"/g)].map((m) => m[1] ?? "");
-    expect(imports.length).toBeGreaterThan(0);
-    for (const path of imports) {
-      expect(path, path).toMatch(/^@fontsource\/ibm-plex-(sans|mono)\/latin-\d{3}\.css$/);
+  it("bundles only the latin subsets, no italic faces, and only woff2 files (no .woff doubles in the build)", () => {
+    const faces = fontsCss.split("@font-face").slice(1);
+    expect(faces.length).toBeGreaterThan(0);
+    for (const face of faces) {
+      const urls = [...face.matchAll(/url\("([^"]+)"\)/g)].map((m) => m[1] ?? "");
+      expect(urls, face).toHaveLength(1);
+      expect(urls[0], face).toMatch(/\/@fontsource\/ibm-plex-(sans|mono)\/files\/ibm-plex-(sans|mono)-latin-\d{3}-normal\.woff2$/);
+      expect(face).toMatch(/font-style:\s*normal/);
+      expect(face).toMatch(/font-display:\s*swap/);
+      expect(face).toMatch(/unicode-range:/);
     }
+    expect(fontsCss).not.toMatch(/\.woff"/);
+    expect(fontsCss).not.toMatch(/@import/);
   });
 });
 
