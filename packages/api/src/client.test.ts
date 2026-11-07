@@ -213,6 +213,22 @@ describe("createClient: errores explícitos", () => {
     expect(result.error.kind).toBe("http");
   });
 
+  it("una petición abortada mientras se lee el cuerpo de un error se rechaza, no pierde el código en silencio", async () => {
+    const controller = new AbortController();
+    const response = new Response(
+      new ReadableStream({
+        start(stream) {
+          controller.abort();
+          stream.error(new DOMException("aborted", "AbortError"));
+        },
+      }),
+      { status: 500 },
+    );
+    const client = createClient({ fetch: fetchReturning(response) });
+
+    await expect(client.getConfig({ signal: controller.signal })).rejects.toBeDefined();
+  });
+
   it("un error cuyo cuerpo no es JSON sigue siendo http sin código", async () => {
     const client = createClient({ fetch: fetchReturning(new Response("<html>502</html>", { status: 502 })) });
 

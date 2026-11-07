@@ -313,8 +313,10 @@ function CatalogRow({ entry, index, total, tabbable, onFocusRow, onMove, onOpen,
       <Link
         href={casePath(engine.id, system.id)}
         prefetch={false}
-        onClick={() => {
-          onOpen(engine.id, system.id);
+        onClick={(event) => {
+          // Ctrl/⌘/Shift/Alt-click opens the case in another tab or window: this tab's tree must not take the focus.
+          const plain = event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey;
+          if (plain) onOpen(engine.id, system.id);
         }}
         tabIndex={tabbable ? 0 : -1}
         onFocus={onFocusRow}

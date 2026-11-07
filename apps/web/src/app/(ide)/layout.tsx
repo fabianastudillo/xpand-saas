@@ -6,8 +6,8 @@ import { IdeZone } from "@/ide/IdeZone";
 
 // The zone is its own root layout: its own <html>, its own stylesheet (the design system of @xpand/ui), and no
 // session, database or third-party code of the template. A visit to /casos needs none of them.
-// No `title` here: the title is the page's (the catalog, or the case's name) and the zone sets it in the browser;
-// a title of the metadata would be put back by Next after the zone's, in production.
+// No `title` in the metadata: Next puts it back after the zone's own in production. The zone renders a <title> itself
+// (the shell's in its loading state, then the page's).
 export const metadata: Metadata = {
   description: "Explorar casos de estudio de sistemas eléctricos.",
 };

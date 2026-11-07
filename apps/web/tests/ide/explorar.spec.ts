@@ -50,7 +50,10 @@ const test = base.extend<{ watched: string[] }>({
         problems.push(`page error: ${error.message}`);
       });
       page.on("requestfailed", (request) => {
-        if (!request.url().includes("/api/")) problems.push(`failed request: ${request.url()}`);
+        // A reload or a navigation cancels the static assets still in flight (fonts, chunks): not a defect. Any other
+        // failed request still fails the test. /api/ is judged by mockApi (the tests that break it do so on purpose).
+        const cancelled = request.failure()?.errorText === "net::ERR_ABORTED";
+        if (!request.url().includes("/api/") && !cancelled) problems.push(`failed request: ${request.url()}`);
       });
       page.on("response", (response) => {
         if (response.status() >= 400 && !response.url().includes("/api/")) {
@@ -195,6 +198,7 @@ test.describe("Explore cases", () => {
 
     await expect(problemList(page)).toContainText("Sesión requerida");
     await expect(problemList(page).getByRole("button", { name: "Reintentar" })).toBeVisible();
+    await expectNoViolations(page);
     // The live region never says «Cargando…» after a failure.
     await expect(statusMessage(page)).toHaveText("Catálogo no disponible. Revisa «Problemas».");
 
@@ -285,6 +289,7 @@ test.describe("Explore cases", () => {
 
     await expect(problemList(page)).toContainText("El servidor respondió con error");
     await expect(problemList(page)).toContainText("HTTP 500");
+    await expectNoViolations(page);
     await expect(statusMessage(page)).toHaveText("Catálogo no disponible. Revisa «Problemas».");
     const retry = page.getByRole("button", { name: "Reintentar" });
     await expect(retry).toBeVisible();
@@ -396,6 +401,7 @@ test.describe("Explore cases", () => {
     await expect(explorer).toBeVisible();
     await expect(explorerToggle).toHaveAttribute("aria-expanded", "true");
     await expect(firstBusItem(page)).toBeVisible();
+    await expectNoViolations(page); // with the drawer open
     await page.locator('[data-slot="shell-overlay"]').click({ position: { x: 340, y: 200 } });
     await expect(explorer).toBeHidden();
 
@@ -412,6 +418,7 @@ test.describe("Explore cases", () => {
     const inspectorToggle = page.getByRole("button", { name: "Inspector", exact: true });
     await inspectorToggle.click();
     await expect(inspector).toBeVisible();
+    await expectNoViolations(page); // with the inspector drawer open
     await page.getByRole("button", { name: "Cerrar inspector" }).click();
     await expect(inspector).toBeHidden();
 
@@ -615,6 +622,7 @@ test.describe("Explore cases: the store, the situations around it and the langua
     await expect(problemList(page)).toContainText("Almacén de casos no disponible");
     await expect(problemList(page)).toContainText("XPAND_ALMACEN");
     await expect(statusMessage(page)).toHaveText("Catálogo no disponible. Revisa «Problemas».");
+    await expectNoViolations(page);
 
     mock.setMode("ok");
     await page.getByRole("button", { name: "Reintentar" }).click();
@@ -628,6 +636,7 @@ test.describe("Explore cases: the store, the situations around it and the langua
     await expect(problemList(page)).toContainText("La respuesta no cumple el contrato");
     await expect(problemList(page)).toContainText("/api/catalogo");
     await expect(statusMessage(page)).toHaveText("Catálogo no disponible. Revisa «Problemas».");
+    await expectNoViolations(page);
   });
 
   test("the language switch changes the zone and the choice survives a reload", async ({ page }) => {
@@ -668,10 +677,34 @@ test.describe("Explore cases: the store, the situations around it and the langua
   });
 });
 
+test.describe("Explore cases: addresses and clicks", () => {
+  // The plain test: the 404 of an unknown address is the expected answer, which the watching fixture would flag.
+  base("an unknown address gets the site's own page, with ways back", async ({ page }) => {
+    const response = await page.goto("/esto-no-existe");
+
+    expect(response?.status()).toBe(404);
+    await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
+    await page.getByRole("link", { name: "Explorar casos" }).click();
+    await expect(page).toHaveURL(/\/casos$/);
+  });
+
+  test("a Ctrl-click on a catalog row does not hand the focus to the tree of this tab", async ({ page }) => {
+    await mockApi(page);
+    await page.goto(CATALOG_PATH);
+    const row = page.getByRole("link", { name: /Garver 6 — benchmark/ }).last();
+    await expect(row).toBeVisible();
+
+    await row.click({ modifiers: ["Control"] });
+    await page.getByRole("link", { name: /Garver 6 — benchmark/ }).last().click();
+
+    // The plain click that follows is the one that gives the focus (arrival is per click, not left over).
+    await expect(firstBusItem(page)).toBeFocused();
+  });
+});
+
 /** The text of the «case not found» document, once it is on screen. */
 async function notFoundText(page: Page): Promise<string> {
   const alert = page.getByRole("alert").filter({ hasText: "Caso no encontrado" });
   await expect(alert).toBeVisible();
   return (await alert.locator("xpath=..").innerText()).trim();
 }
-

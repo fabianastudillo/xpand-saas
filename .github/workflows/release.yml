@@ -20,16 +20,12 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version-file: .nvmrc
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build
-      - name: Empaquetar la build (sin mapas, index.html en la raíz)
+      # Desactivado a propósito (ruling R16): la SPA que se empaquetaba aquí ya no existe, la interfaz es parte de la
+      # app Next (apps/web). Hasta que la Tarea 9 defina el empaquetado del standalone, un tag no publica nada.
+      - name: Release desactivado hasta la Tarea 9
         run: |
-          mkdir -p "$RUNNER_TEMP/release"
-          scripts/package-dist.sh apps/ide-spa/dist "$RUNNER_TEMP/release"
+          echo "::error::Release desactivado: pendiente de la Tarea 9: empaquetar el standalone de apps/web"
+          exit 1
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: dist
@@ -55,13 +51,13 @@ jobs:
         with:
           name: dist
           path: release
-      # El pie de la interfaz muestra la versión de apps/ide-spa/package.json: un tag que no coincida publicaría
+      # El pie de la interfaz muestra la versión de apps/web/package.json: un tag que no coincida publicaría
       # una build que dice otra versión. Se comprueba antes de publicar nada.
-      - name: Comprobar que el tag es v<versión de apps/ide-spa/package.json>
+      - name: Comprobar que el tag es v<versión de apps/web/package.json>
         run: |
-          version="$(jq -r .version apps/ide-spa/package.json)"
+          version="$(jq -r .version apps/web/package.json)"
           if [ "$TAG" != "v$version" ]; then
-            echo "::error::El tag $TAG no coincide con la versión de apps/ide-spa/package.json (v$version)"
+            echo "::error::El tag $TAG no coincide con la versión de apps/web/package.json (v$version)"
             exit 1
           fi
       - name: Extraer las notas de la versión de CHANGELOG.md

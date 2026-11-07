@@ -2,6 +2,6 @@
 
 import { RouteError } from "@/ide/app/RouteError";
 
-export default function Error({ error }: { error: Error & { digest?: string } }) {
+export default function IdeError({ error }: { error: Error & { digest?: string } }) {
   return <RouteError error={error} />;
 }

@@ -36,7 +36,7 @@ describe("catalogProblems", () => {
     expect(problems.map((problem) => problem.id)).toEqual(["catalog.empty"]);
   });
 
-  it("shows the server's notice as a warning, in the server's words", () => {
+  it("shows the server's notice as a warning, in the interface's language", () => {
     const catalog = { ...WITH_SYSTEMS, aviso: "Algunos casos no se pudieron cargar." };
 
     const problems = catalogProblems(catalog, EN);
@@ -44,7 +44,8 @@ describe("catalogProblems", () => {
     expect(problems.map((problem) => problem.id)).toEqual(["catalog.notice"]);
     expect(problems[0]?.severity).toBe("warn");
     expect(problems[0]?.title).toBe("Notice from the case store");
-    expect(problems[0]?.cause).toBe("Algunos casos no se pudieron cargar.");
+    expect(problems[0]?.cause).toBe("Some cases could not be loaded.");
+    expect(catalogProblems(catalog, ES)[0]?.cause).toBe("Algunos casos no se pudieron cargar.");
   });
 
   it("ignores a notice that is not text", () => {

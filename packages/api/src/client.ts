@@ -68,14 +68,16 @@ function failure(error: ApiError): Result<never> {
 }
 
 /** The `codigo` of a `{ "error": { "codigo": string } }` body, if the response has that shape. Never throws. */
-async function errorCodeOf(response: Response): Promise<string | undefined> {
+async function errorCodeOf(response: Response, signal?: AbortSignal): Promise<string | undefined> {
   try {
     const body: unknown = await response.json();
     if (typeof body !== "object" || body === null || !("error" in body)) return undefined;
     const { error } = body;
     if (typeof error !== "object" || error === null || !("codigo" in error)) return undefined;
     return typeof error.codigo === "string" && error.codigo !== "" ? error.codigo : undefined;
-  } catch {
+  } catch (cause) {
+    // An abort is the caller's decision, not a missing code: it keeps rejecting, as for the success body.
+    if (signal?.aborted === true) throw cause;
     // An error body that is not JSON (a proxy's HTML page, an interrupted read) has no code to offer.
     return undefined;
   }
@@ -154,7 +156,7 @@ export function createClient(options: ClientOptions = {}): ApiClient {
       if (signal?.aborted === true) throw cause;
       return failure({ kind: "network", route: route.path, message: `Could not reach the server: ${String(cause)}` });
     }
-    if (!response.ok) return failure(statusError(route, response.status, await errorCodeOf(response)));
+    if (!response.ok) return failure(statusError(route, response.status, await errorCodeOf(response, signal)));
 
     let body: unknown;
     try {

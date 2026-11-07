@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Empaqueta la build de la interfaz web para publicarla como release (ver .github/workflows/release.yml).
 #
-#   scripts/package-dist.sh [dist] [salida]
+#   scripts/package-dist.sh dist [salida]
 #
-# dist    directorio de la build (por defecto apps/ide-spa/dist).
+# dist    directorio de la build (obligatorio). Sin empaquetado de la app Next hasta la Tarea 9 (ver release.yml).
 # salida  directorio donde se escriben dist.tar.gz y dist.tar.gz.sha256 (por defecto el directorio actual).
 #
 # El tarball trae el CONTENIDO de dist en su raíz (index.html, assets/...), sin carpeta envolvente ni
@@ -17,16 +17,19 @@ readonly EXIT_BUILD=1
 readonly EXIT_USO=64
 readonly NOMBRE_TARBALL="dist.tar.gz"
 
-HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DIST="${1:-$HERE/apps/ide-spa/dist}"
+DIST="${1:-}"
 SALIDA="${2:-$PWD}"
 
 error() {
   echo "package-dist: $*" >&2
 }
 
+[ -n "$DIST" ] || {
+  error "falta el directorio de la build (pendiente de la Tarea 9: empaquetar el standalone de apps/web)"
+  exit "$EXIT_USO"
+}
 [ "$#" -le 2 ] || {
-  error "uso: $0 [dist] [salida]"
+  error "uso: $0 dist [salida]"
   exit "$EXIT_USO"
 }
 [ -d "$DIST" ] || {

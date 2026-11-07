@@ -77,9 +77,6 @@ export function IdeLayout({ children }: IdeLayoutProps): ReactElement {
 
   const catalogTitle = translate("catalog.title");
   const title = key === null ? catalogTitle : notFound ? translate("case.notFound") : systemName;
-  useEffect(() => {
-    document.title = `${title} · ${APP_NAME}`;
-  }, [title]);
 
   // The selection lives in the address, replaced in place (no history entry, no request to the server).
   const select = (next: Selection): void => {
@@ -120,6 +117,8 @@ export function IdeLayout({ children }: IdeLayoutProps): ReactElement {
   return (
     <IdeNavigationContext.Provider value={navigation}>
       <CaseContext.Provider value={caseContext}>
+        {/* React hoists it into <head>: the page's title (WCAG 2.4.2) replaces the shell's «XPAND». */}
+        <title>{`${title} · ${APP_NAME}`}</title>
         <IdeFrame
           title={title}
           path={key === null ? [] : [engineName, systemName]}

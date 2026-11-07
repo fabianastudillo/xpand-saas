@@ -8,7 +8,7 @@ const CATALOG_SOURCE = "catalogo";
 
 /**
  * The «Problemas» entries that a loaded catalog carries by itself: an empty one (how to fill the store) and the
- * server's public notice («Algunos casos no se pudieron cargar.»), shown in the server's own words.
+ * server's public notice (shown as the interface's own localized message, not the server's Spanish text).
  */
 export function catalogProblems(catalog: Catalogo | undefined, translate: Translate): Problem[] {
   if (catalog === undefined) return [];
@@ -22,13 +22,14 @@ export function catalogProblems(catalog: Catalogo | undefined, translate: Transl
       source: CATALOG_SOURCE,
     });
   }
+  // The server's notice is Spanish prose: whenever there is one, the interface says its own (localized) version.
   const notice = textOf(catalog["aviso"]);
   if (notice !== undefined && notice !== "") {
     problems.push({
       id: "catalog.notice",
       severity: "warn",
       title: translate("problems.catalogNotice.title"),
-      cause: notice,
+      cause: translate("problems.catalogNotice.cause"),
       source: CATALOG_SOURCE,
     });
   }
