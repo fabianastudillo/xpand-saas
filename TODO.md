@@ -20,3 +20,6 @@ Pendientes conocidos que todavía no tienen rama ni PR.
 - **[LOW] El catálogo no muestra `nota` en la fila.** `apps/local/src/features/explorar/CatalogDocument.tsx`
   (`CatalogRow`): el aviso del sistema solo aparece al abrir el caso, como problema «info» (spec §5.1 no exige más).
   Un indicador textual en la fila avisaría antes de abrir (p. ej. que Garver 6 «no es el Garver clásico»).
+- **[LOW]** `packages/ui/src/styles/fonts.css` apunta a `../../node_modules/@fontsource/...`: depende de cómo pnpm
+  coloca los paquetes; un cambio de hoisting rompería el build. Resolver por especificador de paquete o copiar los
+  `.woff2` en el build (revisión de la ronda final de M0).
