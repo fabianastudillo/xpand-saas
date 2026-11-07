@@ -3,7 +3,7 @@
 // confinada a la carpeta del caso (realpath del fichero contra el de la carpeta, asi que ni «..» ni enlaces
 // simbolicos sacan de ella).
 import Ajv from "ajv";
-import { closeSync, constants, fstatSync, openSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
+import { closeSync, constants, fstatSync, lstatSync, openSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import path from "node:path";
 import type { Leer } from "@xpand/core";
 import manifiestoSchema from "../../../contracts/almacen/manifiesto.schema.json";
@@ -58,6 +58,9 @@ export interface Almacen {
   recargar(): Promise<void>;
 }
 
+// Los tipos de @types/node los dan por definidos, pero en Windows O_NOFOLLOW y O_NONBLOCK son undefined.
+const O_NOFOLLOW = constants.O_NOFOLLOW as number | undefined;
+const O_NONBLOCK = constants.O_NONBLOCK as number | undefined;
 const NOMBRE_MANIFIESTO = "manifiesto.json";
 const PATRON_ID = /^[A-Za-z0-9_.-]+$/;
 /** Tope de tamano de un fichero de caso: la lectura es sincrona y bloquea el bucle de eventos. */
@@ -102,7 +105,10 @@ function lectorConfinado(dirReal: string, registrar: (msg: string) => void): Lee
     try {
       const real = realpathSync(path.resolve(dirReal, ruta));
       if (!dentroDe(dirReal, real)) return undefined;
-      fd = openSync(real, constants.O_RDONLY | constants.O_NOFOLLOW);
+      // O_NOFOLLOW no existe en Windows (undefined): alli se comprueba con lstat el ultimo componente antes de abrir
+      // (queda una ventana minima, aceptada en esa plataforma). O_NONBLOCK evita que un FIFO bloquee el open.
+      if (O_NOFOLLOW === undefined && lstatSync(real).isSymbolicLink()) return undefined;
+      fd = openSync(real, constants.O_RDONLY | (O_NOFOLLOW ?? 0) | (O_NONBLOCK ?? 0));
       const st = fstatSync(fd);
       if (!st.isFile()) return undefined;
       if (st.size > MAX_BYTES_FICHERO) {
@@ -211,6 +217,8 @@ function leerAlmacen(dir: string, registrar: (msg: string) => void): Foto {
   return { casos, detalles, descartados: detalles.length };
 }
 
+const PREFIJO_FALLO = "No se pudo leer el almacen ";
+
 function mensajeError(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
@@ -230,9 +238,11 @@ function crearAlmacen(dir: string): Almacen {
       detallesInicio =
         foto.casos.size === 0 ? [`El almacen ${dir} no tiene casos; importe los casos publicos para poblarlo.`, ...foto.detalles] : foto.detalles;
       recargaFallida = false;
+      lecturas.length = 0; // los fallos de lectura de la foto anterior ya no aplican
     } catch (e) {
       recargaFallida = true;
-      detallesInicio = [...detallesInicio, `No se pudo leer el almacen ${dir}: ${mensajeError(e)}`];
+      // Se sustituye la entrada de fallo anterior (si la hay) para que N relecturas fallidas dejen detalles acotados.
+      detallesInicio = [...detallesInicio.filter((d) => !d.startsWith(PREFIJO_FALLO)), `${PREFIJO_FALLO}${dir}: ${mensajeError(e)}`];
     }
   };
   cargar();

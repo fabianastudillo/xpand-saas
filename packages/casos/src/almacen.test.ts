@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { cp, mkdtemp, readFile, rm, symlink, truncate, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -240,6 +241,37 @@ describe("recargar", () => {
   });
 });
 
+describe("recargar: detalles acotados", () => {
+  it("100 relecturas fallidas dejan detalles acotados", async () => {
+    const raiz = await mkdtemp(path.join(tmpdir(), "xpand-alm-acota-"));
+    await cp(path.join(FIXTURE, "fp_dc"), path.join(raiz, "fp_dc"), { recursive: true });
+    const a = await abrirAlmacen(raiz);
+    await rm(raiz, { recursive: true, force: true });
+    for (let i = 0; i < 100; i++) await a.recargar();
+    expect(a.detalles.length).toBeLessThanOrEqual(3);
+  });
+
+  it("una relectura correcta olvida los fallos de lectura anteriores", async () => {
+    const raiz = await mkdtemp(path.join(tmpdir(), "xpand-alm-reset-"));
+    try {
+      const dst = path.join(raiz, "fp_dc/tnep_garver6");
+      await cp(path.join(FIXTURE, "fp_dc/tnep_garver6"), dst, { recursive: true });
+      await truncate(path.join(dst, "enorme.dat"), MAX_BYTES_FICHERO + 1).catch(async () => {
+        await writeFile(path.join(dst, "enorme.dat"), "");
+        await truncate(path.join(dst, "enorme.dat"), MAX_BYTES_FICHERO + 1);
+      });
+      const a = await abrirAlmacen(raiz);
+      a.caso("fp_dc", "tnep_garver6", SIN_INTERNOS)?.leer("enorme.dat");
+      expect(a.detalles.join("\n")).toContain("enorme.dat");
+      await rm(path.join(dst, "enorme.dat"));
+      await a.recargar();
+      expect(a.detalles.join("\n")).not.toContain("enorme.dat");
+    } finally {
+      await rm(raiz, { recursive: true, force: true });
+    }
+  });
+});
+
 describe("archivos hostiles en el manifiesto", () => {
   it.each(["../../x", "/etc/passwd", "a\\b", "a\u0000b"])("descarta un manifiesto con archivos.base = %j", async (nombre) => {
     const raiz = await mkdtemp(path.join(tmpdir(), "xpand-alm-arch-"));
@@ -335,7 +367,26 @@ describe("lectura robusta", () => {
     expect(caso?.leer(".")).toBeUndefined();
   });
 
-  it("abrirAlmacen rechaza (no lanza) ante una entrada imposible", async () => {
-    await expect(abrirAlmacen("a\0b")).resolves.toBeDefined();
+  it("una ruta de almacen con NUL da un almacen vacio con aviso (no lanza)", async () => {
+    const a = await abrirAlmacen("a\0b");
+    expect(a.casos(CON_INTERNOS)).toEqual([]);
+    expect(a.aviso).toBeDefined();
+  });
+
+  it("un FIFO en la carpeta del caso se rechaza sin bloquear", async (ctx) => {
+    const raiz = await mkdtemp(path.join(tmpdir(), "xpand-alm-fifo-"));
+    try {
+      const dst = path.join(raiz, "fp_dc/tnep_garver6");
+      await cp(path.join(FIXTURE, "fp_dc/tnep_garver6"), dst, { recursive: true });
+      try {
+        execFileSync("mkfifo", [path.join(dst, "tuberia.dat")]);
+      } catch {
+        ctx.skip();
+      }
+      const a = await abrirAlmacen(raiz);
+      expect(a.caso("fp_dc", "tnep_garver6", SIN_INTERNOS)?.leer("tuberia.dat")).toBeUndefined();
+    } finally {
+      await rm(raiz, { recursive: true, force: true });
+    }
   });
 });
