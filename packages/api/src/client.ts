@@ -19,11 +19,19 @@ export interface ClientOptions {
   fetch?: typeof fetch;
 }
 
+export interface RequestOptions {
+  /**
+   * Cancels the request. When the signal is aborted, the call rejects with the abort error
+   * instead of resolving to a Result: an abort is a decision of the caller, not a failure to report.
+   */
+  signal?: AbortSignal;
+}
+
 export interface ApiClient {
-  getCatalogo(): Promise<Result<Catalogo>>;
-  getRed(query: RedQuery): Promise<Result<Red>>;
-  getConfig(): Promise<Result<Config>>;
-  getSesion(): Promise<Result<Sesion>>;
+  getCatalogo(options?: RequestOptions): Promise<Result<Catalogo>>;
+  getRed(query: RedQuery, options?: RequestOptions): Promise<Result<Red>>;
+  getConfig(options?: RequestOptions): Promise<Result<Config>>;
+  getSesion(options?: RequestOptions): Promise<Result<Sesion>>;
 }
 
 interface RouteSpec {
@@ -61,6 +69,18 @@ function statusError(route: RouteSpec, status: number): ApiError {
   return { kind: "http", status, route: route.path, message: `Server responded with HTTP ${String(status)}` };
 }
 
+/** A body that dies while being read (server crash, dropped connection) is retryable; bad JSON is not. */
+function bodyReadError(route: RouteSpec, status: number, cause: unknown): ApiError {
+  if (cause instanceof SyntaxError) {
+    return { kind: "http", status, route: route.path, message: `Response body is not valid JSON: ${String(cause)}` };
+  }
+  return { kind: "network", route: route.path, message: `Response body was interrupted: ${String(cause)}` };
+}
+
+function schemaError(route: RouteSpec, message: string): ApiError {
+  return { kind: "schema", route: route.path, message };
+}
+
 export function createClient(options: ClientOptions = {}): ApiClient {
   const baseUrl = options.baseUrl ?? "";
   const shouldValidate = options.validate ?? false;
@@ -72,36 +92,55 @@ export function createClient(options: ClientOptions = {}): ApiClient {
     return validatorPromise;
   };
 
-  async function requestJson<T>(route: RouteSpec, pathWithQuery: string): Promise<Result<T>> {
+  /** Returns the schema error for a non-conforming body, or undefined when it conforms or validation is off. */
+  async function schemaProblem(route: RouteSpec, body: unknown): Promise<ApiError | undefined> {
+    if (!shouldValidate) return undefined;
+    let validator: SchemaValidator;
+    try {
+      validator = await loadValidator();
+    } catch (cause) {
+      // Forget the rejected load so that the next call retries it (e.g. after a chunk redeploy).
+      validatorPromise = undefined;
+      return schemaError(route, `Schema validator could not be loaded: ${String(cause)}`);
+    }
+    try {
+      const problem = validator.check(route.contract, body);
+      return problem === undefined ? undefined : schemaError(route, problem);
+    } catch (cause) {
+      return schemaError(route, `Schema validation could not run: ${String(cause)}`);
+    }
+  }
+
+  async function requestJson<T>(route: RouteSpec, pathWithQuery: string, signal?: AbortSignal): Promise<Result<T>> {
     const fetchImpl = options.fetch ?? globalThis.fetch;
+    const init: RequestInit | undefined = signal === undefined ? undefined : { signal };
     let response: Response;
     try {
-      response = await fetchImpl(`${baseUrl}${pathWithQuery}`);
-    } catch {
-      return failure({ kind: "network", route: route.path, message: "Could not reach the server" });
+      response = await fetchImpl(`${baseUrl}${pathWithQuery}`, init);
+    } catch (cause) {
+      if (signal?.aborted === true) throw cause;
+      return failure({ kind: "network", route: route.path, message: `Could not reach the server: ${String(cause)}` });
     }
     if (!response.ok) return failure(statusError(route, response.status));
 
     let body: unknown;
     try {
       body = await response.json();
-    } catch {
-      return failure({ kind: "http", status: response.status, route: route.path, message: "Response body is not valid JSON" });
+    } catch (cause) {
+      if (signal?.aborted === true) throw cause;
+      return failure(bodyReadError(route, response.status, cause));
     }
 
-    if (shouldValidate) {
-      const problem = (await loadValidator()).check(route.contract, body);
-      if (problem !== undefined) {
-        return failure({ kind: "schema", route: route.path, message: problem });
-      }
-    }
+    const problem = await schemaProblem(route, body);
+    if (problem !== undefined) return failure(problem);
     return { ok: true, data: body as T };
   }
 
   return {
-    getCatalogo: () => requestJson<Catalogo>(CATALOGO_ROUTE, CATALOGO_ROUTE.path),
-    getRed: (query) => requestJson<Red>(RED_ROUTE, `${RED_ROUTE.path}?${redQueryString(query)}`),
-    getConfig: () => requestJson<Config>(CONFIG_ROUTE, CONFIG_ROUTE.path),
-    getSesion: () => requestJson<Sesion>(SESION_ROUTE, SESION_ROUTE.path),
+    getCatalogo: (request) => requestJson<Catalogo>(CATALOGO_ROUTE, CATALOGO_ROUTE.path, request?.signal),
+    getRed: (query, request) =>
+      requestJson<Red>(RED_ROUTE, `${RED_ROUTE.path}?${redQueryString(query)}`, request?.signal),
+    getConfig: (request) => requestJson<Config>(CONFIG_ROUTE, CONFIG_ROUTE.path, request?.signal),
+    getSesion: (request) => requestJson<Sesion>(SESION_ROUTE, SESION_ROUTE.path, request?.signal),
   };
 }

@@ -8,21 +8,11 @@ import configExample from "../../../contracts/api/examples/config.json";
 import redExample from "../../../contracts/api/examples/red.json";
 import sesionExample from "../../../contracts/api/examples/sesion.json";
 import { createClient } from "./client";
+import { jsonResponse, urlOf } from "./test-utils";
 import { ApiProvider, useCatalogo, useConfig, useRed, useSesion } from "./hooks";
 import { ApiFailure } from "./result";
 
 const RETRY_WAIT_MS = 4000;
-
-function jsonResponse(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
-
-function urlOf(input: RequestInfo | URL): string {
-  return input instanceof Request ? input.url : input.toString();
-}
 
 function setup(fetchMock: ReturnType<typeof vi.fn<typeof fetch>>, validate = false) {
   const queryClient = new QueryClient();
@@ -176,8 +166,58 @@ describe("política de reintentos", () => {
 
     await waitFor(() => {
       expect(result.current.isError).toBe(true);
-    }, { timeout: RETRY_WAIT_MS });;
+    }, { timeout: RETRY_WAIT_MS });
     expect(result.current.error?.error.kind).toBe("network");
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("opciones de caché de los hooks de M0", () => {
+  it("cada hook define staleTime explícito y no refresca al volver a la ventana", async () => {
+    const fetchMock = vi.fn<typeof fetch>((input) => {
+      const url = urlOf(input);
+      const cuerpo = url.startsWith("/api/red") ? redExample : url.endsWith("/api/config") ? configExample : url.endsWith("/api/sesion") ? sesionExample : catalogoExample;
+      return Promise.resolve(jsonResponse(cuerpo));
+    });
+    const { queryClient, wrapper } = setup(fetchMock);
+    const consulta = { motor: "jump_misocp", sistema: "tnep_garver6", tec: ["ac"] };
+
+    const catalogo = renderHook(() => useCatalogo(), { wrapper });
+    const red = renderHook(() => useRed(consulta), { wrapper });
+    const config = renderHook(() => useConfig(), { wrapper });
+    const sesion = renderHook(() => useSesion(), { wrapper });
+    await waitFor(() => {
+      expect(catalogo.result.current.isSuccess && red.result.current.isSuccess).toBe(true);
+      expect(config.result.current.isSuccess && sesion.result.current.isSuccess).toBe(true);
+    });
+
+    // QueryOptions does not type these keys, but the cache stores the hook options as given.
+    type CacheOptions = { staleTime?: number; refetchOnWindowFocus?: boolean };
+    const opciones = Object.fromEntries(
+      queryClient
+        .getQueryCache()
+        .getAll()
+        .map((query) => [String(query.queryKey[0]), query.options as CacheOptions]),
+    );
+    expect(opciones["catalogo"]?.staleTime).toBe(10 * 60 * 1000);
+    expect(opciones["red"]?.staleTime).toBe(5 * 60 * 1000);
+    expect(opciones["config"]?.staleTime).toBe(5 * 60 * 1000);
+    expect(opciones["sesion"]?.staleTime).toBe(5 * 60 * 1000);
+    for (const opcion of Object.values(opciones)) {
+      expect(opcion.refetchOnWindowFocus).toBe(false);
+    }
+  });
+
+  it("pasa la señal de TanStack Query a la petición", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse(configExample));
+    const { wrapper } = setup(fetchMock);
+
+    const { result } = renderHook(() => useConfig(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
+    const init = fetchMock.mock.calls[0]?.[1];
+    expect(init?.signal).toBeInstanceOf(AbortSignal);
   });
 });

@@ -4,20 +4,10 @@ import configExample from "../../../contracts/api/examples/config.json";
 import redExample from "../../../contracts/api/examples/red.json";
 import sesionExample from "../../../contracts/api/examples/sesion.json";
 import { createClient } from "./client";
-
-function jsonResponse(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
+import { jsonResponse, urlOf } from "./test-utils";
 
 function fetchReturning(response: Response) {
   return vi.fn<typeof fetch>().mockResolvedValue(response);
-}
-
-function urlOf(input: RequestInfo | URL): string {
-  return input instanceof Request ? input.url : input.toString();
 }
 
 function requestedUrl(fetchMock: ReturnType<typeof fetchReturning>): string {
@@ -222,5 +212,100 @@ describe("createClient: errores explícitos", () => {
     const result = await client.getConfig();
 
     expect(result).toMatchObject({ ok: false, error: { kind: "http", status: 500 } });
+  });
+});
+
+describe("createClient: cuerpo interrumpido", () => {
+  it("un cuerpo que se corta a mitad de lectura es network (reintentable)", async () => {
+    const respuestaCortada = {
+      ok: true,
+      status: 200,
+      json: () => Promise.reject(new TypeError("terminated")),
+    } as unknown as Response;
+    const client = createClient({ fetch: fetchReturning(respuestaCortada) });
+
+    const result = await client.getCatalogo();
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toMatchObject({ kind: "network", route: "/api/catalogo" });
+    expect(result.error.message).toContain("terminated");
+  });
+
+  it("un cuerpo con JSON mal formado sigue siendo http (no reintentable)", async () => {
+    const client = createClient({ fetch: fetchReturning(new Response("{", { status: 200 })) });
+
+    const result = await client.getSesion();
+
+    expect(result).toMatchObject({ ok: false, error: { kind: "http", route: "/api/sesion" } });
+  });
+
+  it("el mensaje de network conserva la causa original", async () => {
+    const client = createClient({
+      fetch: vi.fn<typeof fetch>().mockRejectedValue(new TypeError("fetch failed")),
+    });
+
+    const result = await client.getConfig();
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.message).toContain("fetch failed");
+  });
+});
+
+describe("createClient: AbortSignal", () => {
+  it("reenvía la señal de cada llamada al fetch", async () => {
+    const fetchMock = fetchReturning(jsonResponse(configExample));
+    const client = createClient({ fetch: fetchMock });
+    const controller = new AbortController();
+
+    await client.getConfig({ signal: controller.signal });
+
+    const init = fetchMock.mock.calls[0]?.[1];
+    expect(init?.signal).toBe(controller.signal);
+  });
+
+  it("una petición abortada por el llamador se rechaza con AbortError, no es un Result", async () => {
+    const fetchMock = vi.fn<typeof fetch>((_input, init) => {
+      return new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => {
+          reject(new DOMException("The operation was aborted.", "AbortError"));
+        });
+      });
+    });
+    const client = createClient({ fetch: fetchMock });
+    const controller = new AbortController();
+
+    const pendiente = client.getCatalogo({ signal: controller.signal });
+    controller.abort();
+
+    await expect(pendiente).rejects.toMatchObject({ name: "AbortError" });
+  });
+
+  it("una petición abortada mientras se lee el cuerpo también se rechaza con AbortError", async () => {
+    const controller = new AbortController();
+    let bodyReadStarted: () => void = () => undefined;
+    const started = new Promise<void>((resolve) => {
+      bodyReadStarted = resolve;
+    });
+    const respuesta = {
+      ok: true,
+      status: 200,
+      json: () => {
+        bodyReadStarted();
+        return new Promise<never>((_resolve, reject) => {
+          controller.signal.addEventListener("abort", () => {
+            reject(new DOMException("aborted", "AbortError"));
+          });
+        });
+      },
+    } as unknown as Response;
+    const client = createClient({ fetch: fetchReturning(respuesta) });
+
+    const pendiente = client.getRed({ motor: "m", sistema: "s", tec: [] }, { signal: controller.signal });
+    await started;
+    controller.abort();
+
+    await expect(pendiente).rejects.toMatchObject({ name: "AbortError" });
   });
 });
