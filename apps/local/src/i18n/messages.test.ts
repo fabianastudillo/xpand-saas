@@ -20,6 +20,12 @@ describe("app messages", () => {
     expect(createTranslator("es")("catalog.difficulty")).toBe("Esfuerzo: {value}");
   });
 
+  it("names the server and the interface versions apart in the status bar", () => {
+    const vars = { server: "1.0.0", ui: "0.1.0" };
+    expect(createTranslator("es")("state.versions", vars)).toBe("Servidor 1.0.0 · Interfaz 0.1.0");
+    expect(createTranslator("en")("state.versions", vars)).toBe("Server 1.0.0 · UI 0.1.0");
+  });
+
   it("gives a different translator for each locale", () => {
     expect(createTranslator("es")("catalog.title")).not.toBe(createTranslator("en")("catalog.title"));
   });

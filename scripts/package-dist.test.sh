@@ -68,6 +68,38 @@ mkdir -p "$SALIDA_SIN"
 bash "$SCRIPT" "$DIST_SIN" "$SALIDA_SIN" > "$WORK/sinindex/out.txt" 2>&1
 check "sin index.html falla con exit 1" "$([[ $? -eq 1 ]] && echo true || echo false)"
 
+# Enlaces simbólicos, enlaces duros y ficheros especiales: la build se rechaza y no deja tarball.
+DIST_SIMBOLICO="$(crear_dist consimbolico)"
+ln -s ../index.html "$DIST_SIMBOLICO/assets/enlace.html"
+SALIDA_SIMBOLICO="$WORK/consimbolico/salida"
+mkdir -p "$SALIDA_SIMBOLICO"
+bash "$SCRIPT" "$DIST_SIMBOLICO" "$SALIDA_SIMBOLICO" > "$WORK/consimbolico/out.txt" 2>&1
+check "con un enlace simbólico falla con exit 1" "$([[ $? -eq 1 ]] && echo true || echo false)"
+check "con un enlace simbólico no deja tarball" "$([[ ! -e "$SALIDA_SIMBOLICO/dist.tar.gz" ]] && echo true || echo false)"
+
+DIST_DURO="$(crear_dist conenlaceduro)"
+ln "$DIST_DURO/assets/app-abc.js" "$DIST_DURO/assets/copia-app.js"
+SALIDA_DURO="$WORK/conenlaceduro/salida"
+mkdir -p "$SALIDA_DURO"
+bash "$SCRIPT" "$DIST_DURO" "$SALIDA_DURO" > "$WORK/conenlaceduro/out.txt" 2>&1
+check "con un enlace duro falla con exit 1" "$([[ $? -eq 1 ]] && echo true || echo false)"
+check "con un enlace duro no deja tarball" "$([[ ! -e "$SALIDA_DURO/dist.tar.gz" ]] && echo true || echo false)"
+
+DIST_ESPECIAL="$(crear_dist conespecial)"
+mkfifo "$DIST_ESPECIAL/assets/tuberia"
+SALIDA_ESPECIAL="$WORK/conespecial/salida"
+mkdir -p "$SALIDA_ESPECIAL"
+bash "$SCRIPT" "$DIST_ESPECIAL" "$SALIDA_ESPECIAL" > "$WORK/conespecial/out.txt" 2>&1
+check "con un fichero especial (fifo) falla con exit 1" "$([[ $? -eq 1 ]] && echo true || echo false)"
+
+# Un nombre que empieza por guion no se confunde con una opción de tar.
+DIST_GUION="$(crear_dist guion)"
+echo "x" > "$DIST_GUION/-guion.txt"
+SALIDA_GUION="$WORK/guion/salida"
+mkdir -p "$SALIDA_GUION"
+bash "$SCRIPT" "$DIST_GUION" "$SALIDA_GUION" > "$WORK/guion/out.txt" 2>&1
+check "un nombre que empieza por guion se empaqueta" "$(tar -tzf "$SALIDA_GUION/dist.tar.gz" 2>/dev/null | grep -qx -- '-guion.txt' && echo true || echo false)"
+
 # Argumentos inexistentes o de más: uso con exit 64.
 bash "$SCRIPT" "$WORK/no-existe" "$SALIDA" > /dev/null 2>&1
 check "directorio de build inexistente da exit 64" "$([[ $? -eq 64 ]] && echo true || echo false)"

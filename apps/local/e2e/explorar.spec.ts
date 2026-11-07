@@ -233,6 +233,12 @@ test.describe("Explore cases", () => {
     await expect(page).toHaveTitle(/^Garver 6 — benchmark .* · XPAND$/);
   });
 
+  test("the status bar names the server and the interface versions apart", async ({ page }) => {
+    await mockApi(page);
+    await page.goto(CATALOG_PATH);
+    await expect(page.getByText("Servidor 1.0.0 · Interfaz 0.1.0")).toBeVisible();
+  });
+
   test("moving between catalog and case keeps the collapsed panel and does not repeat problems", async ({ page }) => {
     await mockApi(page);
     await page.goto(CASE_PATH);

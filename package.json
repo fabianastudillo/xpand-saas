@@ -10,6 +10,7 @@
     "node": ">=22"
   },
   "scripts": {
+    "dev": "pnpm --filter @xpand/local dev",
     "lint": "eslint .",
     "typecheck": "pnpm -r --if-present run typecheck",
     "test": "vitest run && pnpm test:scripts && pnpm --filter @xpand/api gen:check",

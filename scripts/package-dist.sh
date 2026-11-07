@@ -7,10 +7,10 @@
 # salida  directorio donde se escriben dist.tar.gz y dist.tar.gz.sha256 (por defecto el directorio actual).
 #
 # El tarball trae el CONTENIDO de dist en su raíz (index.html, assets/...), sin carpeta envolvente ni
-# entradas «./»: así lo acepta scripts/actualizar-ui.sh de xpand. Falla si falta index.html o si hay
-# mapas de código fuente (*.map): no se publican.
+# entradas «./»: así lo acepta scripts/actualizar-ui.sh de xpand. Falla si falta index.html, si hay
+# mapas de código fuente (*.map), enlaces simbólicos, enlaces duros o ficheros especiales: no se publican.
 #
-# Códigos de salida: 0 ok · 1 build incompleta o con mapas · 64 uso o directorio que falta.
+# Códigos de salida: 0 ok · 1 build incompleta, con mapas, enlaces o ficheros especiales · 64 uso o directorio que falta.
 set -euo pipefail
 
 readonly EXIT_BUILD=1
@@ -50,13 +50,29 @@ if [ -n "$mapas" ]; then
   exit "$EXIT_BUILD"
 fi
 
+# Solo ficheros y directorios: un enlace simbólico o especial podría sacar del tarball algo fuera de dist.
+especiales="$(find "$DIST" ! -type f ! -type d)"
+if [ -n "$especiales" ]; then
+  error "la build contiene enlaces simbólicos o ficheros especiales; no se publican:"
+  echo "$especiales" >&2
+  exit "$EXIT_BUILD"
+fi
+
+# Un enlace duro haría que tar guarde el contenido dos veces como enlace: se rechaza igual.
+enlaces_duros="$(find "$DIST" -type f -links +1)"
+if [ -n "$enlaces_duros" ]; then
+  error "la build contiene enlaces duros (ficheros con más de un nombre); no se publican:"
+  echo "$enlaces_duros" >&2
+  exit "$EXIT_BUILD"
+fi
+
 # Nombres de primer nivel sin «./»: el tarball queda con index.html y assets/ directamente en su raíz.
 entradas=()
 while IFS= read -r nombre; do
   entradas+=("$nombre")
 done < <(cd "$DIST" && ls -A)
 
-tar --owner=0 --group=0 --numeric-owner -czf "$SALIDA/$NOMBRE_TARBALL" -C "$DIST" "${entradas[@]}"
+tar --owner=0 --group=0 --numeric-owner -czf "$SALIDA/$NOMBRE_TARBALL" -C "$DIST" -- "${entradas[@]}"
 
 # sha256sum escribe la ruta tal como se le pasa: se ejecuta dentro de la salida para que el fichero
 # diga solo «<hash>  dist.tar.gz» y el usuario pueda verificarlo con sha256sum -c.

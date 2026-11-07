@@ -45,7 +45,7 @@
   "state.session.local": "Sesión local",
   "state.session.of": "Sesión de {name}",
   "state.session.none": "Sin sesión",
-  "state.version": "Versión {version}",
+  "state.versions": "Servidor {server} · Interfaz {ui}",
   "language.label": "Idioma",
   "actions.catalog": "Ir al catálogo",
   "group.goto": "Ir a",
