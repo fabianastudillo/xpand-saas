@@ -1,0 +1,47 @@
+# Caso GFM/GFL sintetico escrito para la prueba (feature 003, esquema unificado). No describe ningun sistema real.
+param Sbase := 100;
+param Vm := 0.94;
+param VM := 1.06;
+param : BUS : TP PD0 QD0 gshb bshb PGM :=
+1 3 0 0 0 0 0
+2 1 0.5 0.2 0 0 0
+3 1 0.3 0.1 0.01 0 0
+;
+set CBUS := 3;
+param NBMAX :=
+3 4
+;
+param NBBMAX :=
+3 2
+;
+param SCRMIN :=
+3 1.5
+;
+param LCOE :=
+3 45
+;
+param CGFM :=
+3 2.1
+;
+param CCAP :=
+3 1200
+;
+param : BRANCH : r x bsh SMAX N0 NMAX BCOST :=
+1 1 2 0.01 0.1 0.02 2 1 1 1
+2 1 3 0.02 0.2 0.03 1.5 0 2 0.5
+3 2 3 0.015 0.12 0.025 1.5 0 2 0.5
+;
+set SGEN := V1 V2;
+param PGM :=
+V1 0.6
+V2 0.4
+;
+param H :=
+V1 5.5
+V2 3.1
+;
+param SNOM :=
+V1 0.8
+V2 0.5
+;
+set CTG := c1 c2;

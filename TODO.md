@@ -4,6 +4,10 @@ Pendientes conocidos que todavía no tienen rama ni PR.
 
 ## Menores aparcados de la revisión final de M0 (2026-11-07, ruling R18)
 
+- **[MEDIUM] Fixture `red/sitios/sintetico` omitido de `packages/core`.** Un nombre de central procede de un caso
+  interno (FR-009). Regenerarlo en el origen con nombres neutros (y su `expected.json` con el Julia de referencia),
+  copiarlo a `packages/core/fixtures/red/sitios/` y quitar su entrada de `OMITIDOS` en `fixtures.test.ts`; así vuelve la
+  cobertura de IBRSITE_EXT, NGX y estrellas de extremo a extremo. Ver `packages/core/FIXTURES.md`.
 - **[LOW] 404 de `/api/red` con «Reintentar».** `apps/ide-spa/src/app/apiProblems.ts:43` trata todo `http` igual; para
   `/casos/<motor>/<sistema que no existe>` «Problemas» dice «/api/red respondió HTTP 404 · Reintentar», y
   reintentar no sirve. Propuesta: para 400/404/500 de `/api/red` con un caso desconocido, texto «caso no

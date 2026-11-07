@@ -1,0 +1,144 @@
+{
+  "ac_candidatos": [
+    {
+      "a": "2",
+      "b": 0.02,
+      "costo": 1.0,
+      "de": "1",
+      "id": "L1",
+      "n0": 1,
+      "nmax": 1,
+      "r": 0.01,
+      "s": 2.0,
+      "x": 0.1
+    },
+    {
+      "a": "3",
+      "b": 0.03,
+      "costo": 0.5,
+      "de": "1",
+      "id": "L2",
+      "n0": 0,
+      "nmax": 2,
+      "r": 0.02,
+      "s": 1.5,
+      "x": 0.2
+    },
+    {
+      "a": "3",
+      "b": 0.025,
+      "costo": 0.5,
+      "de": "2",
+      "id": "L3",
+      "n0": 0,
+      "nmax": 2,
+      "r": 0.015,
+      "s": 1.5,
+      "x": 0.12
+    }
+  ],
+  "ac_existentes": [
+    {
+      "a": "2",
+      "b": 0.02,
+      "costo": 1.0,
+      "de": "1",
+      "id": "L1",
+      "n": 1,
+      "n0": 1,
+      "nmax": 1,
+      "r": 0.01,
+      "s": 2.0,
+      "x": 0.1
+    }
+  ],
+  "bancos": [],
+  "barras": [
+    {
+      "bsh": 0.0,
+      "etiqueta": "1",
+      "gen": [],
+      "gsh": 0.0,
+      "id": "1",
+      "pd": 0.0,
+      "pgmax": 0.0,
+      "qd": 0.0,
+      "sincrona": false,
+      "sitio_ibr": false,
+      "tipo": 3,
+      "vmax": 1.06,
+      "vmin": 0.94
+    },
+    {
+      "bsh": 0.0,
+      "etiqueta": "2",
+      "gen": [],
+      "gsh": 0.0,
+      "id": "2",
+      "pd": 0.5,
+      "pgmax": 0.0,
+      "qd": 0.2,
+      "sincrona": false,
+      "sitio_ibr": false,
+      "tipo": 1,
+      "vmax": 1.06,
+      "vmin": 0.94
+    },
+    {
+      "bsh": 0.0,
+      "etiqueta": "3",
+      "gen": [],
+      "gsh": 0.01,
+      "id": "3",
+      "pd": 0.3,
+      "pgmax": 0.0,
+      "qd": 0.1,
+      "sincrona": false,
+      "sitio_ibr": true,
+      "tipo": 1,
+      "vmax": 1.06,
+      "vmin": 0.94
+    }
+  ],
+  "contingencias": [
+    "c1",
+    "c2"
+  ],
+  "convertidores": [],
+  "esquema": "gfmgfl",
+  "nodos_dc": [],
+  "proyectos_gen": [],
+  "ramas_dc": [],
+  "refbus": "",
+  "sbase": 100.0,
+  "sincronas": [
+    {
+      "bus": "V1",
+      "h": 5.5,
+      "id": "V1",
+      "pmax": 0.6,
+      "snom": 0.8
+    },
+    {
+      "bus": "V2",
+      "h": 3.1,
+      "id": "V2",
+      "pmax": 0.4,
+      "snom": 0.5
+    }
+  ],
+  "sitios_ibr": [
+    {
+      "bus": "3",
+      "ccap": 1200.0,
+      "cgfm": 2.1,
+      "id": "3",
+      "lcoe": 45.0,
+      "nbbmax": 2,
+      "nbmax": 4,
+      "scrmin": 1.5
+    }
+  ],
+  "sssc": [],
+  "statcom": []
+}

@@ -82,4 +82,16 @@ export default tseslint.config(
     files: ["**/*.js"],
     ...tseslint.configs.disableTypeChecked,
   },
+  {
+    // packages/core: lectores TS portados de Julia (003) y copiados tal cual. Solo se relajan las reglas que
+    // fallan en su código: el resto del estándar estricto sigue activo. Los lectores no se reescriben por lint.
+    files: ["packages/core/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-non-null-assertion": "off",
+      "@typescript-eslint/no-base-to-string": "off",
+      "@typescript-eslint/restrict-template-expressions": "off",
+      "@typescript-eslint/no-unnecessary-type-conversion": "off",
+      "@typescript-eslint/no-misused-spread": "off",
+    },
+  },
 );

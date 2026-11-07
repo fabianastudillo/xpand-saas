@@ -1,0 +1,6 @@
+# Escalares economicos del caso (escritos para la prueba, forma de econ.dat).
+param irate := 0.1;
+param phi := 0.8;
+param voll := 1533;
+param loss_price := 45.5;
+param termico_corriente := 1;

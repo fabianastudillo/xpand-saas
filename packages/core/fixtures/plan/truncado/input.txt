@@ -1,0 +1,4 @@
+##PLAN_INI##
+##KV## estado=timeout
+##IT## tipo=ac|id=C1_2_1|copia=1|n=1|costo=823.17
+##BUS## id=1|v=1.0231|pd=180.0|qd=54.0

@@ -1,0 +1,37 @@
+{
+  "nombre": "Sistema sintetico de prueba",
+  "fuente": "sintetico, escrito para la prueba (feature 003). No describe ningun sistema real.",
+  "parametros_estimados": true,
+  "sbase": 100,
+  "barras": [
+    {"id": 1, "nombre": "Subestacion Norte", "pd": 0, "qd": 0, "kv": 230, "operador": "OP-A", "kv_todas": [230, 69], "lon": -78.5, "lat": -0.2},
+    {"id": 2, "nombre": "Sin nombre", "pd": 45.5, "qd": 12.0, "kv": 138, "operador": "OP-A", "lon": -78.6, "lat": -0.3},
+    {"id": 3, "nombre": "", "pd": 30, "qd": 8, "kv": 69, "operador": "", "lon": -78.7, "lat": -0.4}
+  ],
+  "generacion": [
+    {"bus": 1, "nombre": "Central Hidro Prueba", "mw": 120, "fuente": "hidro", "lon": -78.5, "lat": -0.2},
+    {"bus": 2, "nombre": "Central Termica Prueba", "mw": 60, "fuente": "termica"}
+  ],
+  "lineas": [
+    {"de": 1, "a": 2, "r": 0.01, "x": 0.08, "b": 0.02, "mva": 250, "kv": 230, "km": 12.5, "circuitos": 2, "conductor": "ACSR-1", "operador": "OP-A", "ruta": [[-78.5, -0.2], [-78.55, -0.25], [-78.6, -0.3]]},
+    {"de": 2, "a": 3, "r": 0.02, "x": 0.1, "b": 0.01, "mva": 120, "kv": 138, "km": 8.0}
+  ],
+  "candidatos_ac": [
+    {"id": "CAND-1", "de": 1, "a": 3, "r": 0.03, "x": 0.12, "b": 0.01, "s": 150, "nmax": 2, "costo": 3.5, "kv": 230, "km": 15, "nota": "Propuesta de prueba"},
+    {"de": 2, "a": 3, "r": 0.02, "x": 0.09, "b": 0.0, "mva": 90, "kv": 138}
+  ],
+  "candidatos_bc": [
+    {"id": "BC-1", "bus": 2, "qmod": 25, "hmax": 2, "cmod": 0.4, "nota": "banco de prueba"}
+  ],
+  "candidatos_st": [
+    {"id": "ST-1", "bus": 3, "s": 50, "costo": 1.1}
+  ],
+  "candidatos_sc": [
+    {"id": "SC-1", "bus": 1, "s": 80, "vmax": 0.25, "costo": 2.2}
+  ],
+  "candidatos_gen": [
+    {"id": "GP-1", "bus": 3, "tec": "solar", "pnom": 60, "costo": 900, "nota": "proyecto de prueba"},
+    {"bus": 2, "tec": "eolica", "mw": 40, "costo": 700}
+  ],
+  "descartes": {"lineas": 0}
+}

@@ -1,0 +1,53 @@
+# Tecnologia activa sintetica (escrita para la prueba): solapa con la base en g1, l12 y la barra 2.
+param : BUS : bus_type Pd Qd Vmin Vmax kV :=
+2 1 0.65 0.2 0.95 1.05 138
+4 1 0.3 0.05 0.95 1.05 69
+;
+set GEN := g1 g2 gfv;
+param gen_bus :=
+gfv 3
+;
+param Pgmax :=
+g1 1.2
+gfv 0.5
+;
+param Pgmin :=
+gfv 0
+;
+param Qgmax :=
+gfv 0.3
+;
+param Qgmin :=
+gfv -0.2
+;
+param cg2 :=
+gfv 0
+;
+param cg1 :=
+gfv 15
+;
+param cg0 :=
+gfv 0
+;
+set ELINE := l12 l13 l23 l34;
+param el_S :=
+l12 2.2
+;
+param el_f :=
+l34 3
+;
+param el_t :=
+l34 4
+;
+param el_r :=
+l34 0.012
+;
+param el_x :=
+l34 0.11
+;
+param el_bch :=
+l34 0.02
+;
+param el_S :=
+l34 1
+;

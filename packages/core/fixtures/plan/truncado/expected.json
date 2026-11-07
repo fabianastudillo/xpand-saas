@@ -1,0 +1,25 @@
+{
+  "buses": [
+    {
+      "id": 1.0,
+      "pd": 180.0,
+      "qd": 54.0,
+      "v": 1.0231
+    }
+  ],
+  "completo": false,
+  "gens": [],
+  "hay_plan": true,
+  "items": [
+    {
+      "copia": 1.0,
+      "costo": 823.17,
+      "id": "C1_2_1",
+      "n": 1.0,
+      "tipo": "ac"
+    }
+  ],
+  "kv": {
+    "estado": "timeout"
+  }
+}

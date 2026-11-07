@@ -1,0 +1,221 @@
+{
+  "ac_candidatos": [
+    {
+      "a": 3,
+      "b": 0.01,
+      "costo": 3.5,
+      "de": 1,
+      "id": "CAND-1",
+      "km": 15.0,
+      "kv": 230.0,
+      "nmax": 2,
+      "nota": "Propuesta de prueba",
+      "r": 0.03,
+      "s": 150.0,
+      "x": 0.12
+    },
+    {
+      "a": 3,
+      "b": 0.0,
+      "costo": 0.0,
+      "de": 2,
+      "id": "C2_138",
+      "km": 0.0,
+      "kv": 138.0,
+      "nmax": 1,
+      "nota": "",
+      "r": 0.02,
+      "s": 90.0,
+      "x": 0.09
+    }
+  ],
+  "ac_existentes": [
+    {
+      "a": 2,
+      "b": 0.02,
+      "circuitos": 2,
+      "conductor": "ACSR-1",
+      "de": 1,
+      "id": "L1_230",
+      "km": 12.5,
+      "kv": 230.0,
+      "operador": "OP-A",
+      "r": 0.01,
+      "ruta": [
+        [
+          -78.5,
+          -0.2
+        ],
+        [
+          -78.55,
+          -0.25
+        ],
+        [
+          -78.6,
+          -0.3
+        ]
+      ],
+      "s": 250.0,
+      "tap": 1.0,
+      "x": 0.08
+    },
+    {
+      "a": 3,
+      "b": 0.01,
+      "circuitos": 1,
+      "conductor": "",
+      "de": 2,
+      "id": "L2_138",
+      "km": 8.0,
+      "kv": 138.0,
+      "operador": "",
+      "r": 0.02,
+      "ruta": null,
+      "s": 120.0,
+      "tap": 1.0,
+      "x": 0.1
+    }
+  ],
+  "bancos": [
+    {
+      "bus": 2,
+      "cmod": 0.4,
+      "hmax": 2,
+      "id": "BC-1",
+      "nota": "banco de prueba",
+      "qmod": 25
+    }
+  ],
+  "barras": [
+    {
+      "bsh": 0.0,
+      "etiqueta": "Subestacion Norte",
+      "gen": [
+        {
+          "bus": 1,
+          "id": "Central Hidro Prueba",
+          "lat": -0.2,
+          "lon": -78.5,
+          "pmax": 120.0,
+          "pmin": 0.0,
+          "qmax": 42.0,
+          "qmin": -42.0,
+          "tec": "hidro"
+        }
+      ],
+      "gsh": 0.0,
+      "id": 1,
+      "kv": 230.0,
+      "kv_todas": [
+        230,
+        69
+      ],
+      "lat": -0.2,
+      "lon": -78.5,
+      "operador": "OP-A",
+      "pd": 0.0,
+      "pgmax": 120.0,
+      "qd": 0.0,
+      "tipo": 2,
+      "vmax": 1.05,
+      "vmin": 0.95
+    },
+    {
+      "bsh": 0.0,
+      "etiqueta": "SE-2",
+      "gen": [
+        {
+          "bus": 2,
+          "id": "Central Termica Prueba",
+          "lat": null,
+          "lon": null,
+          "pmax": 60.0,
+          "pmin": 0.0,
+          "qmax": 21.0,
+          "qmin": -21.0,
+          "tec": "termica"
+        }
+      ],
+      "gsh": 0.0,
+      "id": 2,
+      "kv": 138.0,
+      "kv_todas": [],
+      "lat": -0.3,
+      "lon": -78.6,
+      "operador": "OP-A",
+      "pd": 45.5,
+      "pgmax": 60.0,
+      "qd": 12.0,
+      "tipo": 2,
+      "vmax": 1.05,
+      "vmin": 0.95
+    },
+    {
+      "bsh": 0.0,
+      "etiqueta": "SE-3",
+      "gen": [],
+      "gsh": 0.0,
+      "id": 3,
+      "kv": 69.0,
+      "kv_todas": [],
+      "lat": -0.4,
+      "lon": -78.7,
+      "operador": "",
+      "pd": 30.0,
+      "pgmax": 0.0,
+      "qd": 8.0,
+      "tipo": 1,
+      "vmax": 1.05,
+      "vmin": 0.95
+    }
+  ],
+  "convertidores": [],
+  "descartes": {
+    "lineas": 0
+  },
+  "esquema": "real",
+  "fuente": "sintetico, escrito para la prueba (feature 003). No describe ningun sistema real.",
+  "nodos_dc": [],
+  "nombre": "Sistema sintetico de prueba",
+  "parametros_estimados": true,
+  "proyectos_gen": [
+    {
+      "bus": 3,
+      "costo": 900.0,
+      "id": "GP-1",
+      "nota": "proyecto de prueba",
+      "pnom": 60.0,
+      "tec": "solar"
+    },
+    {
+      "bus": 2,
+      "costo": 700.0,
+      "id": "GP2",
+      "nota": "",
+      "pnom": 40.0,
+      "tec": "eolica"
+    }
+  ],
+  "ramas_dc": [],
+  "refbus": 1,
+  "sbase": 100.0,
+  "sssc": [
+    {
+      "bus": 1,
+      "costo": 2.2,
+      "id": "SC-1",
+      "nota": "",
+      "s": 80,
+      "vmax": 0.25
+    }
+  ],
+  "statcom": [
+    {
+      "bus": 3,
+      "costo": 1.1,
+      "id": "ST-1",
+      "nota": "",
+      "s": 50
+    }
+  ]
+}

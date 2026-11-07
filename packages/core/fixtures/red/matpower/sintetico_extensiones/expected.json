@@ -1,0 +1,210 @@
+{
+  "ac_candidatos": [
+    {
+      "a": "3",
+      "b": 0.02,
+      "costo": 1.5,
+      "de": "1",
+      "grupo": 0,
+      "id": "C13",
+      "nmax": 2,
+      "r": 0.02,
+      "s": 100.0,
+      "sale": "",
+      "x": 0.2
+    },
+    {
+      "a": "3",
+      "b": 0.01,
+      "costo": 0.8,
+      "de": "2",
+      "grupo": 0,
+      "id": "C23",
+      "nmax": 2,
+      "r": 0.03,
+      "s": 80.0,
+      "sale": "",
+      "x": 0.25
+    }
+  ],
+  "ac_existentes": [
+    {
+      "a": "2",
+      "b": 0.02,
+      "de": "1",
+      "desf": 0.0,
+      "id": "E1",
+      "r": 0.01,
+      "s": 200.0,
+      "tap": 1.0,
+      "x": 0.1
+    },
+    {
+      "a": "3",
+      "b": 0.03,
+      "de": "1",
+      "desf": 0.0,
+      "id": "E2",
+      "r": 0.02,
+      "s": 150.0,
+      "tap": 1.02,
+      "x": 0.2
+    }
+  ],
+  "bancos": [],
+  "barras": [
+    {
+      "bsh": 0.0,
+      "etiqueta": "1",
+      "gen": [
+        {
+          "id": "G1_1",
+          "mbase": 100.0,
+          "pg": 80.0,
+          "pmax": 150.0,
+          "pmin": 0.0,
+          "qg": 0.0,
+          "qmax": 50.0,
+          "qmin": -50.0,
+          "vg": 1.0
+        }
+      ],
+      "gsh": 0.0,
+      "id": "1",
+      "kv": 138.0,
+      "pd": 0.0,
+      "pgmax": 150.0,
+      "qd": 0.0,
+      "tipo": 3,
+      "va0": 0.0,
+      "vm0": 1.0,
+      "vmax": 1.06,
+      "vmin": 0.94
+    },
+    {
+      "bsh": 0.0,
+      "etiqueta": "2",
+      "gen": [
+        {
+          "id": "G2_1",
+          "mbase": 100.0,
+          "pg": 40.0,
+          "pmax": 90.0,
+          "pmin": 0.0,
+          "qg": 0.0,
+          "qmax": 30.0,
+          "qmin": -30.0,
+          "vg": 1.0
+        }
+      ],
+      "gsh": 0.0,
+      "id": "2",
+      "kv": 138.0,
+      "pd": 60.0,
+      "pgmax": 90.0,
+      "qd": 20.0,
+      "tipo": 1,
+      "va0": 0.0,
+      "vm0": 1.0,
+      "vmax": 1.06,
+      "vmin": 0.94
+    },
+    {
+      "bsh": 0.0,
+      "etiqueta": "3",
+      "gen": [],
+      "gsh": 0.0,
+      "id": "3",
+      "kv": 69.0,
+      "pd": 40.0,
+      "pgmax": 0.0,
+      "qd": 10.0,
+      "tipo": 1,
+      "va0": 0.0,
+      "vm0": 1.0,
+      "vmax": 1.06,
+      "vmin": 0.94
+    }
+  ],
+  "bess": [],
+  "convertidores": [
+    {
+      "bus": "3",
+      "costo": 12.0,
+      "en_servicio": false,
+      "existente": false,
+      "id": "VN1",
+      "kv": 345.0,
+      "nodo_dc": "1",
+      "pacmax": 50.0,
+      "pacmin": -50.0,
+      "pg": 0.0,
+      "qacmax": 30.0,
+      "qacmin": -30.0,
+      "qg": 0.0,
+      "qmax": 30.0,
+      "qmin": -30.0,
+      "srated": 50.0,
+      "type_ac": 1,
+      "type_dc": 1,
+      "vtar": 1.0
+    }
+  ],
+  "esquema": "matpower",
+  "ibr": [],
+  "nodos_dc": [
+    {
+      "existente": true,
+      "id": "DC_A",
+      "kv": 345.0,
+      "pload": 0.0,
+      "umax": 1.1,
+      "umin": 0.9
+    },
+    {
+      "existente": true,
+      "id": "2",
+      "kv": 345.0,
+      "pload": 0.5,
+      "umax": 1.1,
+      "umin": 0.9
+    },
+    {
+      "existente": false,
+      "id": "1",
+      "kv": 345.0,
+      "pload": 0.0,
+      "umax": 1.1,
+      "umin": 0.9
+    }
+  ],
+  "proyectos_gen": [
+    {
+      "bus": "3",
+      "costo": 0.0,
+      "gamma": 1.0,
+      "id": "GC3",
+      "pnom": 60.0,
+      "tec": ""
+    }
+  ],
+  "ramas_dc": [
+    {
+      "a": "2",
+      "costo": 2.5,
+      "de": "1",
+      "en_servicio": false,
+      "existente": false,
+      "id": "DCL1",
+      "polos": 1,
+      "r": 0.05,
+      "rate": 100.0
+    }
+  ],
+  "refbus": "1",
+  "sbase": 100.0,
+  "sssc": [],
+  "statcom": [],
+  "svc": [],
+  "tcsc": []
+}

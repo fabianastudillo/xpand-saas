@@ -1,0 +1,49 @@
+# Synthetic fixture written for the TypeScript port test (not from a case study).
+# It exercises every branch of packages/XpandCore/src/ampldat.jl.
+
+# form 1: simple set and tuple set
+set BUS := 1 2 3;
+set BRANCH := (1,2,1) (2,3,1);   # trailing comment; the ';' above ends the statement
+
+# a comment containing a semicolon ; must not start a new statement
+
+# form 2: indexed set name
+set HSEC[PUN] := ;
+
+# form 1 with elements split over two lines
+set GEN := g1 g2
+  g3;
+
+# form 3: scalar parameter
+param Sbase := 100;
+
+# form 4: indexed parameter, one key per line
+param Pd :=
+  2 50
+  3 75.5
+  1 .
+;
+
+# form 4 (bracket variant): several pairs on one line
+param DSCC := [8,2,5,2] 0.5 [8,2,6,2] 0.25;
+
+# form 5: matrix, rows are the first index
+param X : c1 c2 :=
+  f1 1.5 2.5
+  f2 . 4.0
+;
+
+# form 6: table that declares its index set
+param : NODO : tipo Pd :=
+  1 2 51
+  2 1 0
+;
+
+# form 7: table over an index set already declared
+param : c1 c2 :=
+  1 0.5 0.6
+  2 . 0.8
+;
+
+# unrecognized statement: kept verbatim in raw
+option solver gurobi;

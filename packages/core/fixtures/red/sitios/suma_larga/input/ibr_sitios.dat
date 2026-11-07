@@ -1,0 +1,46 @@
+# Sitio con 40 puntos de operacion: fija el orden de suma de izquierda a derecha (D1). Escrito para la prueba.
+param : IBRSITE : bus nbmax smod_mva csite ccap cgfm cgfmf om_res imaxl imaxm hvr_s nq v0 q0 xv emin emax scrmin ifab cf nbbmax smodb_mva cbp cbe cgfmb ebmax_mwh eb_fijo_mwh etac etad socmin hvb_s nqb v0b q0b xvb ebminv ebmaxv fom :=
+1 3 4 50 1.2 0.8 2.1 2.0 0.5 1.1 1.3 0 0.03 1.02 0 0.1 0.9 1.15 0.2 1.1 0.3 2 25 0.6 0.2 0.4 120 200 0.95 0.95 0.2 8 0.03 1.02 0 0.08 0.9 1.15 0.02 # Sitio largo
+;
+param : IBRPAV : site punto pav :=
+1 1 0.366337
+1 2 0.732673
+1 3 0.09901
+1 4 0.465347
+1 5 0.831683
+1 6 0.19802
+1 7 0.564356
+1 8 0.930693
+1 9 0.29703
+1 10 0.663366
+1 11 0.029703
+1 12 0.39604
+1 13 0.762376
+1 14 0.128713
+1 15 0.49505
+1 16 0.861386
+1 17 0.227723
+1 18 0.594059
+1 19 0.960396
+1 20 0.326733
+1 21 0.693069
+1 22 0.059406
+1 23 0.425743
+1 24 0.792079
+1 25 0.158416
+1 26 0.524752
+1 27 0.891089
+1 28 0.257426
+1 29 0.623762
+1 30 0.990099
+1 31 0.356436
+1 32 0.722772
+1 33 0.089109
+1 34 0.455446
+1 35 0.821782
+1 36 0.188119
+1 37 0.554455
+1 38 0.920792
+1 39 0.287129
+1 40 0.653465
+;

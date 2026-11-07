@@ -1,0 +1,80 @@
+{
+  "ac_candidatos": [],
+  "ac_existentes": [],
+  "bancos": [],
+  "barras": [
+    {
+      "bsh": 0.0,
+      "etiqueta": "Ecuador (sistema aislado)",
+      "gen": [
+        {
+          "c0": 0.0,
+          "c1": 0.0,
+          "c2": 0.0,
+          "id": "H_HID_A",
+          "pmax": 120.0,
+          "pmin": 0.0,
+          "qmax": 0.0,
+          "qmin": 0.0,
+          "tec": "hidro"
+        },
+        {
+          "c0": 0.0,
+          "c1": 0.0,
+          "c2": 0.0,
+          "id": "H_HID_B",
+          "pmax": 80.5,
+          "pmin": 0.0,
+          "qmax": 0.0,
+          "qmin": 0.0,
+          "tec": "hidro"
+        },
+        {
+          "c0": 0.0,
+          "c1": 31.2,
+          "c2": 0.0,
+          "id": "T_TER_A",
+          "pmax": 50.0,
+          "pmin": 0.0,
+          "qmax": 0.0,
+          "qmin": 0.0,
+          "tec": "termica"
+        },
+        {
+          "c0": 0.0,
+          "c1": 44.0,
+          "c2": 0.0,
+          "id": "T_TER_B",
+          "pmax": 25.0,
+          "pmin": 0.0,
+          "qmax": 0.0,
+          "qmin": 0.0,
+          "tec": "termica"
+        }
+      ],
+      "gsh": 0.0,
+      "id": "1",
+      "kv": 0.0,
+      "pd": 1000.0,
+      "pgmax": 275.5,
+      "qd": 0.0,
+      "tipo": 3,
+      "va0": 0.0,
+      "vm0": 0.0,
+      "vmax": 1.05,
+      "vmin": 0.95
+    }
+  ],
+  "convertidores": [],
+  "esquema": "hidro",
+  "nodos_dc": [],
+  "nota": "Estudio aislado de PSR: sin red electrica. Un nodo con toda la demanda y la generacion.",
+  "proyectos_gen": [],
+  "ramas_dc": [],
+  "refbus": "1",
+  "sbase": 100.0,
+  "sssc": [],
+  "statcom": [],
+  "svc": [],
+  "tcsc": []
+}
