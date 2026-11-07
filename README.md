@@ -27,7 +27,7 @@ pnpm test                        # Vitest
 pnpm --filter @xpand/api gen    # regenerar los tipos de contracts/api (pnpm test comprueba que no difieren)
 pnpm e2e                         # Playwright contra el build de apps/local (API simulada; instalar Chromium antes: pnpm --filter @xpand/local exec playwright install chromium)
 pnpm build                       # build de los paquetes que lo definan
-pnpm test:scripts                # pruebas de scripts/sync-from-xpand.sh (también en pnpm test)
+pnpm test:scripts                # pruebas de scripts/sync-from-xpand.sh y scripts/package-dist.sh (también en pnpm test)
 ```
 
 ## E2E y capturas (`apps/local`)
