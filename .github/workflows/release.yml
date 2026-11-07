@@ -1,7 +1,7 @@
 name: release
 
-# Un tag v* (p. ej. v0.1.0) construye la aplicación y publica dist.tar.gz y su .sha256 como release de GitHub.
-# xpand descarga ese release con scripts/actualizar-ui.sh.
+# Un tag v* (p. ej. v0.1.0) construye la app Next (salida standalone) y publica xpand-plataforma-vX.Y.Z.tar.gz y su
+# .sha256 como release de GitHub. Se instala con README-instalar.md, que va dentro del tarball.
 on:
   push:
     tags:
@@ -20,18 +20,29 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
-      # Desactivado a propósito (ruling R16): la SPA que se empaquetaba aquí ya no existe, la interfaz es parte de la
-      # app Next (apps/web). Hasta que la Tarea 9 defina el empaquetado del standalone, un tag no publica nada.
-      - name: Release desactivado hasta la Tarea 9
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      # Sin caché de pnpm a propósito: un release no debe leer una caché que otro workflow (p. ej. un PR) haya podido escribir.
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+      - run: pnpm install --frozen-lockfile
+      - name: Pruebas del empaquetado
+        run: bash scripts/package-dist.test.sh
+      - name: Construir apps/web (salida standalone)
+        run: pnpm --filter @xpand/web build
+      # TAG llega por entorno (nunca interpolado en el script); package-dist.sh exige que sea v<versión de apps/web/package.json>.
+      - name: Empaquetar
+        env:
+          TAG: ${{ github.ref_name }}
         run: |
-          echo "::error::Release desactivado: pendiente de la Tarea 9: empaquetar el standalone de apps/web"
-          exit 1
+          mkdir -p "$RUNNER_TEMP/release"
+          bash scripts/package-dist.sh . "$RUNNER_TEMP/release"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: dist
           path: |
-            ${{ runner.temp }}/release/dist.tar.gz
-            ${{ runner.temp }}/release/dist.tar.gz.sha256
+            ${{ runner.temp }}/release/xpand-plataforma-v*.tar.gz
+            ${{ runner.temp }}/release/xpand-plataforma-v*.tar.gz.sha256
           if-no-files-found: error
           retention-days: 1
 
@@ -77,5 +88,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          gh release create "$TAG" dist.tar.gz dist.tar.gz.sha256 \
+          gh release create "$TAG" "xpand-plataforma-$TAG.tar.gz" "xpand-plataforma-$TAG.tar.gz.sha256" \
             --verify-tag --notes-file "$RUNNER_TEMP/notas.md"

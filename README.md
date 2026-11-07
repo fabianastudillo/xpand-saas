@@ -1,7 +1,7 @@
 # xpand-saas
 
-Interfaz nueva de XPAND (M0): un monorepo pnpm con la interfaz web, el servidor que la sirve y los paquetes que
-comparten. El contrato de la API vive aquí (`contracts/api`); el repositorio `xpand` ya no es una dependencia.
+Plataforma XPAND (M0): un monorepo pnpm con la app web (sitio, cuentas y «Explorar casos»), el lector de casos que la
+alimenta y los paquetes que comparten. El contrato de la API vive aquí (`contracts/api`); el repositorio `xpand` ya no es una dependencia.
 
 ## Estructura
 
@@ -11,7 +11,8 @@ comparten. El contrato de la API vive aquí (`contracts/api`); el repositorio `x
 | `packages/ui` | Componentes compartidos (`@xpand/ui`). |
 | `packages/api` | Cliente tipado de la API (`@xpand/api`). |
 | `contracts/api` | Contrato JSON Schema de la API. Es la fuente: se edita aquí y `packages/api` genera sus tipos. |
-| `scripts/package-dist.sh` | Empaqueta una build estática para el release (pendiente de adaptar al despliegue de la app Next: Task 9). |
+| `scripts/package-dist.sh` | Empaqueta la build de `apps/web` (salida standalone de Next) como `xpand-plataforma-vX.Y.Z.tar.gz`. Ver «Release». |
+| `config/casos-publicos.json` | Lista blanca de sistemas públicos (ver «Casos públicos e internos»). |
 
 ## Desarrollo local
 
@@ -105,6 +106,52 @@ pnpm --filter @xpand/web test:db:stop     # parar el contenedor
 
 Los valores de `apps/web/.env.test` (secreto de sesión, contraseña de Postgres) son locales y regenerables.
 
+## Primer administrador
+
+Con la base migrada, `ADMIN_EMAIL` en `apps/web/.env` y:
+
+```bash
+pnpm --filter @xpand/web script:create:admin
+```
+
+crea (o asciende) a ese correo como administrador. Entras con un enlace por correo (`EMAIL_SERVER` y `EMAIL_FROM`) o con
+Google (`GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`). En un servidor instalado desde el tarball no hay `pnpm`: el
+`README-instalar.md` da la sentencia SQL equivalente. Quien abre la app en su propia máquina no necesita sesión para
+«Explorar casos»; las cuentas y la administración sí necesitan Postgres.
+
+## Casos públicos e internos
+
+Un sistema es **público** solo si figura en la lista blanca `config/casos-publicos.json`; todo lo demás es **interno**.
+En M0 la plataforma solo sirve los públicos: un caso interno pedido por URL responde igual que uno que no existe (404
+`caso_no_encontrado`). Hoy la lista tiene solo los casos IEEE publicados (IEEE-24 e IEEE-118 clásicos); los datos del SNI,
+CENACE y SDDP nunca entran en este repositorio, ni en el tarball, ni en capturas o registros.
+
+Para añadir un caso: una entrada nueva en `config/casos-publicos.json` con su id, la carpeta de datos y una fuente pública
+verificable (un **DOI** o una **URL** que cualquiera pueda abrir); sin fuente verificable no entra. Después, vuelve a
+importar el almacén (`pnpm importar-casos --xpand ../xpand`) y, si tienes un xpand en marcha, comprueba que las cifras
+coinciden con `pnpm comparar-con-xpand` (igualdad exacta; una diferencia es un defecto de la plataforma, no se ajustan
+datos).
+
+## Variables de entorno
+
+| Variable | Para qué | Por defecto |
+|---|---|---|
+| `XPAND_ALMACEN` | Carpeta del almacén de casos (`<motor>/<sistema>/manifiesto.json`); fuera del repositorio | `~/.xpand-saas/almacen` |
+| `XPAND_ALMACEN_TTL_S` | Segundos que se recuerda el catálogo leído del almacén antes de volver a leerlo | `30` |
+| `XPAND_WEB_PORT` | Puerto de la app | `8870` |
+| `HOST` | Dirección de escucha; distinta de `127.0.0.1`/`localhost`/`::1` exige `XPAND_PERMITIR_RED=1` | `127.0.0.1` |
+| `XPAND_PERMITIR_RED` | `1` permite escuchar fuera de esta máquina | sin definir |
+| `XPAND_MODO_LOCAL` | Etiqueta «sesión local» de `/api/sesion`; solo rotula, no autoriza. `0` detrás de un proxy inverso | `1` en bucle local, `0` en red |
+| `AUTH_URL` | URL pública de la app; obligatoria en producción (los enlaces de entrada se montan sobre ella) | ninguno |
+| `NEXTAUTH_SECRET` | Secreto de firma de sesiones (`openssl rand -base64 32`) | ninguno |
+| `DATABASE_URL` | Conexión de Prisma a Postgres | ninguno |
+| `ADMIN_EMAIL` | Correo del primer administrador | ninguno |
+| `EMAIL_SERVER`, `EMAIL_FROM` | Correo de entrada (enlaces mágicos); vacío, no se ofrece | vacío |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Entrada con Google; sin ellas no se ofrece | vacío |
+| `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_ENDPOINT_SECRET` | Pagos; sin claves, apagados | vacío |
+
+`apps/web/.env.example` las lista todas con su explicación.
+
 ## Pruebas
 
 | Comando | Qué prueba | Dónde corre |
@@ -142,20 +189,26 @@ de terceros.
 
 ## Release
 
-Un release publica una build estática como `dist.tar.gz` y su `dist.tar.gz.sha256` en GitHub. **Pendiente (Task 9):** la
-SPA que empaquetaba ya no existe (la zona IDE es parte de la app Next); el workflow y `scripts/package-dist.sh` se
-adaptan al despliegue de la app Next.
+Un release publica `xpand-plataforma-vX.Y.Z.tar.gz` y su `.sha256` en GitHub: la app Next ya construida (`output:
+"standalone"`), con `.next/static`, `public/`, `prisma/` (esquema y migraciones), `contracts/`,
+`config/casos-publicos.json` y `README-instalar.md`. No lleva casos, `.env`, semillas ni mapas de código fuente.
+Se arranca con `node server.js` tras `prisma migrate deploy` (los pasos están en el `README-instalar.md` del tarball).
+El `server.js` de la raíz del tarball aplica las mismas reglas que `pnpm start`: escucha en `127.0.0.1:8870`, otra
+dirección exige `XPAND_PERMITIR_RED=1`, `AUTH_URL` es obligatoria (si no, código 64), y pasa a Next
+`XPAND_WEB_HOST` y `XPAND_MODO_LOCAL`. El paquete es para Linux x86_64 (motor de Prisma y `sharp`).
 
-1. En `main`, añade la sección `## vX.Y.Z` a `CHANGELOG.md` con las notas. Sin esa sección con contenido, el
-   workflow falla antes de publicar.
-2. Crea y sube el tag sobre ese commit: `git tag vX.Y.Z && git push origin vX.Y.Z`. La versión del tag debe ser la de
-   `apps/web/package.json`; el workflow lo comprueba (pendiente de actualizar en la Task 9).
+1. En `main`, sube la versión de `apps/web/package.json` y añade la sección `## vX.Y.Z` a `CHANGELOG.md`. Sin esa
+   sección con contenido, el workflow falla antes de publicar.
+2. Crea y sube el tag sobre ese commit: `git tag vX.Y.Z && git push origin vX.Y.Z`. El tag debe ser
+   `v<versión de apps/web/package.json>`; el empaquetado y el workflow lo comprueban.
 3. El workflow `.github/workflows/release.yml` se dispara con el tag `v*`:
-   - el job `build` instala con el lockfile, construye, empaqueta con `scripts/package-dist.sh` (rechaza mapas,
-     enlaces y ficheros especiales) y sube el artefacto; no tiene token de escritura;
+   - el job `build` instala con el lockfile (sin caché de pnpm), prueba el empaquetado, construye `apps/web`, empaqueta
+     con `scripts/package-dist.sh` (rechaza mapas, `.env`, almacenes, enlaces duros, ficheros especiales y enlaces
+     simbólicos que no sean relativos y internos) y sube el artefacto; no tiene token de escritura;
    - el job `release` (único con `contents: write`) crea el release con las notas de `CHANGELOG.md`.
 
-Probar el empaquetado sin publicar: `scripts/package-dist.sh <directorio de build> /ruta/de/salida`.
+Probar el empaquetado sin publicar: `pnpm --filter @xpand/web build && scripts/package-dist.sh . /ruta/de/salida`
+(`TAG=vX.Y.Z` opcional, para comprobar el tag).
 
 ## CI
 

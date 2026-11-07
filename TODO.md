@@ -1,6 +1,27 @@
 # TODO
 
-Pendientes conocidos que todavía no tienen rama ni PR.
+Pendientes conocidos que todavía no tienen rama ni PR. Primero los que deja el cierre de M0 (Task 9); después los
+menores aparcados de la revisión final.
+
+## Al cerrar M0 (2026-11-07)
+
+- **[HIGH] `construir_red` solo se porta con `tec=ac`.** Falta: las demás tecnologías (hvdc, bancos, statcom, sssc,
+  tcsc, svc, bess, ibr, gen/genexp, `menu`, `todos_candidatos`), `_aplicar_coords!` (coords.json: px/py, trazados),
+  `_reserva_del_caso`, `_mbase_desde_m!`, `avisos_hash_tablas`, `_marcar_estrellas!` y de geo.json todo menos los
+  nombres. La lista exacta está en la cabecera de `packages/casos/src/red.ts`. El comparador solo cubre `tec=ac`.
+- **[MEDIUM] Traducir las páginas de la plantilla en M1.** Las páginas del sitio (inicio, precios, entrada, perfil,
+  administración, términos y privacidad) siguen en el idioma de la plantilla; la zona IDE ya es ES/EN por claves.
+- **[MEDIUM] Pasar el catálogo de casos a TypeScript después de M2.** Hoy el catálogo y los métodos viven en xpand
+  (`catalogo.jl`); la plataforma solo lee el almacén que genera el importador.
+- **[MEDIUM] Más casos públicos.** Solo hay IEEE-24 e IEEE-118 clásicos; cada caso nuevo necesita una fuente con DOI o
+  URL verificable en `config/casos-publicos.json`. Sin ella, no entra.
+- **[MEDIUM] El release solo es para Linux x86_64 y la migración baja Prisma de la red.** `README-instalar.md` usa
+  `npx prisma@<versión> migrate deploy`; incluir el CLI de Prisma en el tarball (o una imagen de contenedor) quitaría la
+  dependencia de red en la instalación y de la plataforma del motor.
+- **[LOW] El tarball pesa ~25 MB con la disposición de pnpm.** La salida standalone arrastra `typescript` y ficheros
+  de varias versiones; revisar el rastreo (`outputFileTracingExcludes`) si importa el tamaño.
+- **[LOW] El job de CI no construye el standalone.** Solo el workflow de release lo construye y empaqueta; un cambio
+  que rompa el rastreo se vería recién al subir un tag. Añadir `build` + `package-dist.sh` al job `checks`.
 
 ## Menores aparcados de la revisión final de M0 (2026-11-07, ruling R18)
 

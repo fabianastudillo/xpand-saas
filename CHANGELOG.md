@@ -2,48 +2,34 @@
 
 Formato por versión. Cada release de GitHub toma sus notas de la sección `## vX.Y.Z` de este fichero.
 
-## Sin publicar
-
-- **Base nueva:** `apps/web` es la plantilla open-micro-saas (`saas-plantilla` 43e65a1, MIT) subida a Next 15,
-  React 19 y Tailwind 4, con cuentas (next-auth), Prisma + Postgres y administración. Pagos, analítica, soporte y
-  entrada con Google quedan apagados mientras no tengan claves: ninguna página falla ni habla con terceros.
-- **Seguridad de la plantilla:** las acciones de administración de usuarios y de banderas comprueban el rol de
-  administrador (antes cualquier sesión podía ascenderse), y los enlaces de entrada se montan sobre `AUTH_URL`,
-  no sobre la cabecera Host (obligatorio en producción).
-- **Arranque:** Next escucha solo en `127.0.0.1:8870` (`XPAND_WEB_PORT`); otra dirección exige
-  `XPAND_PERMITIR_RED=1`.
-- **Zona IDE en la app Next:** «Explorar casos» (`/casos`, `/casos/<motor>/<sistema>`) vive en `apps/web` con su propio
-  layout raíz, hoja de estilos y sin base de datos; usa las rutas `/api` reales. Se retira la SPA Vite (`apps/ide-spa`).
-  Nuevo en la interfaz: «Problemas» explica un catálogo vacío (`XPAND_ALMACEN`, `importar-casos`), un caso que no
-  existe (con enlace al catálogo, sin «Reintentar»), un caso que el lector no puede leer y un almacén no disponible
-  (503); pie «Plataforma X · Interfaz Y» (una sola versión si coinciden).
-- `@xpand/api`: los errores del servidor (`{ error: { codigo, mensaje } }`) conservan su `codigo` en `ApiError.code`.
-
 ## v0.1.0
 
-Primera versión de la interfaz nueva de XPAND (M0). Solo lectura: la interfaz consulta el catálogo, la red de un
-caso y la configuración del servidor, y no escribe nada en el motor.
+Primera versión de la plataforma XPAND (M0): `apps/web` (sitio, cuentas y «Explorar casos») más el lector del almacén
+de casos, en un solo servidor Next. Solo lectura: no escribe nada en el motor ni en xpand.
 
-- **Aplicación local** (`apps/local`), servida por el servidor de XPAND bajo `/app/`: armazón tipo IDE con árbol,
-  documentos, inspector, panel de problemas y paleta de comandos.
-- **Explorar casos:** catálogo de motores, sistemas y casos con filtro; al abrir un caso se ve su red y se puede
-  seleccionar una barra para consultar su demanda en el inspector.
-- **Cliente tipado de la API** (`packages/api`): rutas de M0 (`/api/catalogo`, `/api/red`, `/api/config`,
-  `/api/sesion`), validación contra el contrato JSON Schema y errores explícitos (sesión caducada, servidor caído,
-  respuesta cortada o cancelada).
-- **Sistema de diseño** (`packages/ui`): tokens, componentes base y textos por claves en español e inglés; cifras
-  con coma decimal en ES y punto en EN.
-- **Contrato sincronizado** (`contracts/api`) desde el repositorio XPAND con `scripts/sync-from-xpand.sh`.
-- **Calidad:** ESLint, TypeScript estricto, Vitest, pruebas Playwright con API simulada y comprobaciones de
-  accesibilidad (axe).
-- **Empaquetado:** `scripts/package-dist.sh` genera `dist.tar.gz` (contenido de la build en su raíz, sin mapas de
-  código fuente) y su `.sha256`; el workflow `release` los publica al subir un tag `v*`, tras comprobar que el tag
-  es `v<versión de apps/local/package.json>`. Solo se empaquetan fuentes `.woff2`.
-- **Ronda final de revisión (07/11/2026):** la validación contra el contrato corre también en producción (una
-  respuesta que no cumple es un aviso «schema» con su ruta en «Problemas», nunca un fallo de pantalla); los
-  identificadores de barra llegan como cadena o entero según el motor y la interfaz los lee siempre como texto; la
-  barra se rotula con `nombre`, si no `etiqueta`, si no su id; la barra de estado dice «Catálogo no disponible»
-  cuando falla la carga; las flechas en las pestañas de documentos solo mueven el foco (Enter/Espacio activan) y el
-  buscador del catálogo no roba el foco; la fila del catálogo rotula la referencia con su tecnología
-  («Referencia (ac): 6212,45»); la demanda del inspector se rotula como dato del caso; el aviso de sesión también
-  ofrece reintentar.
+- **Base:** plantilla open-micro-saas (`saas-plantilla` 43e65a1, MIT) subida a Next 15, React 19 y Tailwind 4, con
+  cuentas (next-auth), Prisma + Postgres y administración. Pagos, analítica, soporte y entrada con Google quedan
+  apagados mientras no tengan claves: ninguna página falla ni habla con terceros.
+- **Seguridad de la plantilla:** las acciones de administración de usuarios y banderas comprueban el rol de
+  administrador (antes cualquier sesión podía ascenderse); los enlaces de entrada se montan sobre `AUTH_URL`, no sobre
+  la cabecera Host (obligatoria en producción).
+- **Arranque:** Next escucha solo en `127.0.0.1:8870` (`XPAND_WEB_PORT`); otra dirección exige `XPAND_PERMITIR_RED=1`.
+- **Casos desde un almacén** (`XPAND_ALMACEN`, fuera del repositorio): las rutas `/api/catalogo`, `/api/red`,
+  `/api/config` y `/api/sesion` sirven el contrato de `contracts/api`. Solo los sistemas de la lista blanca
+  `config/casos-publicos.json` (hoy IEEE-24 e IEEE-118 clásicos) son públicos; un caso interno responde como uno
+  inexistente. Errores con la forma única `{ error: { codigo, mensaje } }`.
+- **Importador y comparador:** `pnpm importar-casos` llena el almacén desde un checkout de xpand (que solo se lee);
+  `pnpm comparar-con-xpand` compara la red de la plataforma con la de un xpand en marcha, con igualdad exacta.
+- **Zona IDE «Explorar casos»** (`/casos`, `/casos/<motor>/<sistema>`): layout propio, ES/EN, WCAG 2.2 AA, insignias de
+  honestidad y «Problemas» que explica un catálogo vacío, un caso inexistente o ilegible y un almacén no disponible.
+  Sigue funcionando sin Postgres.
+- **Cliente y contrato:** `@xpand/api` valida contra `contracts/api` también en producción; `@xpand/core` porta a
+  TypeScript la construcción de la red de xpand (parcial: ver TODO.md).
+- **Release:** `xpand-plataforma-vX.Y.Z.tar.gz` con la salida standalone de Next, `prisma/` (esquema y migraciones),
+  `contracts/`, `config/casos-publicos.json` y `README-instalar.md`; sin casos ni `.env`. Se arranca con `node server.js`
+  tras `prisma migrate deploy`; `server.js` aplica las mismas reglas de arranque que `pnpm start`.
+
+## Historia previa
+
+El `v0.1.0` anterior de este repositorio (una SPA Vite en `apps/local` servida por xpand) se retiró antes de publicarse: la
+interfaz es ahora parte de la app Next. Su tag nunca se creó.

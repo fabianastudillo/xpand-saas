@@ -1,3 +1,5 @@
+const path = require("node:path");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // The interface version (the status bar compares it with the platform's, /api/config): this package's.
@@ -6,6 +8,10 @@ const nextConfig = {
   // Only for the test that starts a second server without a database (tests/ide/sin-postgres.spec.ts), which must not
   // share the build folder of the first.
   distDir: process.env.XPAND_DIST_DIR || ".next",
+  // Release: server.js autónomo (.next/standalone) con solo lo que la app usa. La raíz del rastreo es la del monorepo
+  // para que entren los paquetes @xpand/* y sus dependencias; el servidor queda en apps/web/server.js.
+  output: "standalone",
+  outputFileTracingRoot: path.join(__dirname, "../.."),
   env: { NEXT_PUBLIC_XPAND_UI_VERSION: require("./package.json").version },
   // Los paquetes del monorepo exportan su TypeScript fuente: Next los compila con la app.
   transpilePackages: ["@xpand/api", "@xpand/casos", "@xpand/core", "@xpand/ui"],
