@@ -45,6 +45,15 @@ export const decidirArranque = ({ modo, env, modoLocalPorDefecto = "1" }) => {
     );
   }
 
+  // En desarrollo, sin AUTH_URL, Auth.js confía en la cabecera Host (host-confianza.ts): en loopback solo llega
+  // quien está en esta máquina, pero escuchando en la red cualquiera elegiría el host de los enlaces de entrada.
+  if (!HOSTS_LOCALES.has(host) && !env.AUTH_URL?.trim()) {
+    return rechazo(
+      `HOST=${host} escucha en la red: AUTH_URL es obligatorio (la URL con la que se entra a la app), también en ` +
+        "desarrollo; sin él los enlaces de entrada se montarían sobre la cabecera Host de la petición.",
+    );
+  }
+
   return {
     ok: true,
     host,

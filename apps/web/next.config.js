@@ -37,13 +37,14 @@ const nextConfig = {
     ];
   },
   images: {
-    // Only the avatar host of the Google provider; everything else is served from public/.
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "**googleusercontent.com",
-      },
-    ],
+    // /_next/image fetches only from these hosts: just the avatar host of the Google provider (lh3, not any
+    // subdomain of googleusercontent.com, which also hosts third-party content), and only when Google sign-in is
+    // configured. Read at build time: the release (standalone) keeps what its build saw. Today the avatar is a plain
+    // <img> (Radix Avatar), so nothing uses it yet.
+    remotePatterns:
+      process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+        ? [{ protocol: "https", hostname: "lh3.googleusercontent.com" }]
+        : [],
   },
 };
 

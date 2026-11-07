@@ -44,7 +44,7 @@ describe("decidirArranque", () => {
 
   it("listening on the network, XPAND_MODO_LOCAL is 0", () => {
     expect(
-      decidirArranque({ modo: "dev", env: { HOST: "0.0.0.0", XPAND_PERMITIR_RED: "1" } }).entorno,
+      decidirArranque({ modo: "dev", env: { ...base, HOST: "0.0.0.0", XPAND_PERMITIR_RED: "1" } }).entorno,
     ).toEqual({ XPAND_WEB_HOST: "0.0.0.0", XPAND_MODO_LOCAL: "0" });
   });
 
@@ -82,7 +82,7 @@ describe("decidirArranque", () => {
       expect(
         decidirArranque({
           modo: "dev",
-          env: { HOST: host, XPAND_PERMITIR_RED: "1" },
+          env: { ...base, HOST: host, XPAND_PERMITIR_RED: "1" },
         }),
       ).toMatchObject({
         ok: true,
@@ -124,6 +124,24 @@ describe("decidirArranque", () => {
       ok: false,
       codigo: CODIGO_USO,
     });
+  });
+
+  it.each(["dev", "start"])(
+    "%s on a host other than loopback requires AUTH_URL, also with XPAND_PERMITIR_RED=1",
+    (modo) => {
+      // Without it, Auth.js would trust the Host header (development) and build the sign-in links on it.
+      const env = { HOST: "0.0.0.0", XPAND_PERMITIR_RED: "1" };
+      const sinAuthUrl = decidirArranque({ modo, env });
+      expect(sinAuthUrl).toMatchObject({ ok: false, codigo: CODIGO_USO });
+      expect(sinAuthUrl.mensaje).toContain("AUTH_URL");
+
+      expect(decidirArranque({ modo, env: { ...env, AUTH_URL: " " } })).toMatchObject({ ok: false });
+      expect(decidirArranque({ modo, env: { ...env, ...base } })).toMatchObject({ ok: true, host: "0.0.0.0" });
+    },
+  );
+
+  it("dev on loopback does not need AUTH_URL", () => {
+    expect(decidirArranque({ modo: "dev", env: { HOST: "::1" } })).toMatchObject({ ok: true });
   });
 
   it("start (production server) requires AUTH_URL", () => {

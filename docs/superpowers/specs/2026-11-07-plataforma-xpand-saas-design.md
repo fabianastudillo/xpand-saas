@@ -122,7 +122,9 @@ workers, trabajos y resultados.
   (sin texto de marketing inventado: lo mínimo para identificar la plataforma). La zona IDE con «Explorar casos»
   de M0 sobre el enrutado de Next; las cuatro rutas `/api` de casos como *route handlers*, validadas contra
   `contracts/api`, con caché en memoria de catálogo y redes; el pie dice «Plataforma X · Interfaz Y» (una sola
-  versión si coinciden). `pnpm dev` levanta Postgres (docker compose) y Next en `127.0.0.1`.
+  versión si coinciden). `pnpm dev` levanta Next en `127.0.0.1`; Postgres (docker compose) se levanta aparte con
+  `pnpm db:start`, porque la zona IDE («Explorar casos») no necesita base de datos y así arranca y se prueba sin ella
+  (enmienda de la revisión final, ruling R21).
 - **La SPA Vite de M0 (`apps/local` → `apps/web` en la Tarea 1 del plan anterior) se retira** cuando la zona IDE
   pase sus pruebas; sus componentes, i18n y e2e se trasladan, no se reescriben.
 - **`contracts/api`:** pasa a ser fuente. Se quitan `sync-from-xpand.sh`, el job `contract` de CI y la necesidad de

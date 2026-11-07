@@ -10,7 +10,12 @@ alimenta y los paquetes que comparten. El contrato de la API vive aquí (`contra
 | `apps/web` | App Next (`@xpand/web`): la plantilla open-micro-saas (público, cuentas, administración), las rutas `/api` de los casos y la zona IDE «Explorar casos» (`/casos`). Ver «App web (`apps/web`)». |
 | `packages/ui` | Componentes compartidos (`@xpand/ui`). |
 | `packages/api` | Cliente tipado de la API (`@xpand/api`). |
+| `packages/core` | Construcción de la red portada de xpand a TypeScript (`@xpand/core`), con sus fixtures sintéticos o de casos públicos. |
+| `packages/casos` | Lector del almacén de casos (`@xpand/casos`): manifiestos, lectura confinada y la red de un caso (`construirRed`). |
 | `contracts/api` | Contrato JSON Schema de la API. Es la fuente: se edita aquí y `packages/api` genera sus tipos. |
+| `contracts/almacen` | Esquema del `manifiesto.json` de cada caso del almacén. |
+| `scripts/importar-casos.ts` (+ `scripts/importador/`, `scripts/julia/`) | Importador: llena el almacén desde un checkout de xpand, que solo lee (`pnpm importar-casos`). |
+| `scripts/comparar-con-xpand.ts` | Comparador de la API de la plataforma con un xpand en marcha, solo GET (`pnpm comparar-con-xpand`). |
 | `scripts/package-dist.sh` | Empaqueta la build de `apps/web` (salida standalone de Next) como `xpand-plataforma-vX.Y.Z.tar.gz`. Ver «Release». |
 | `config/casos-publicos.json` | Lista blanca de sistemas públicos (ver «Casos públicos e internos»). |
 
@@ -91,8 +96,9 @@ pnpm dev                                 # Next en http://localhost:8870/ (escuc
 ```
 
 `pnpm dev` y `pnpm start` pasan por `apps/web/scripts/arranque.mjs`: Next escucha solo en `127.0.0.1` y en el
-puerto `XPAND_WEB_PORT` (8870). Un `HOST` que no sea local sin `XPAND_PERMITIR_RED=1` aborta con código 64, y
-`pnpm start` exige `AUTH_URL`. El navegador ve la app como `localhost:8870`: Next normaliza todo host de bucle a
+puerto `XPAND_WEB_PORT` (8870). Un `HOST` que no sea local sin `XPAND_PERMITIR_RED=1` aborta con código 64;
+`pnpm start` exige `AUTH_URL`, y `pnpm dev` también cuando el host no es de bucle (si no, Auth.js montaría los enlaces de
+entrada sobre la cabecera Host). El navegador ve la app como `localhost:8870`: Next normaliza todo host de bucle a
 `localhost`, y Auth.js monta sobre él los enlaces de entrada.
 
 Pruebas de la app: `pnpm --filter @xpand/web test` (Vitest) y, con Postgres de prueba,
@@ -124,7 +130,8 @@ las cuentas y la administración necesitan Postgres.
 
 Un sistema es **público** solo si figura en la lista blanca `config/casos-publicos.json`; todo lo demás es **interno**.
 En M0 la plataforma solo sirve los públicos: un caso interno pedido por URL responde igual que uno que no existe (404
-`caso_no_encontrado`). Hoy la lista tiene solo los casos IEEE publicados (IEEE-24 e IEEE-118 clásicos); los datos del SNI,
+`caso_no_encontrado`). La lista blanca actúa en el importador, que marca cada caso `publico` o `interno` en su
+manifiesto; el servidor sirve lo que el manifiesto marca `publico` (no relee la lista). Hoy la lista tiene solo los casos IEEE publicados (IEEE-24 e IEEE-118 clásicos); los datos del SNI,
 CENACE y SDDP nunca entran en este repositorio, ni en el tarball, ni en capturas o registros.
 
 Para añadir un caso: una entrada nueva en `config/casos-publicos.json` con su id, la carpeta de datos y una fuente pública
@@ -143,7 +150,7 @@ datos).
 | `HOST` | Dirección de escucha; distinta de `127.0.0.1`/`localhost`/`::1` exige `XPAND_PERMITIR_RED=1` | `127.0.0.1` |
 | `XPAND_PERMITIR_RED` | `1` permite escuchar fuera de esta máquina | sin definir |
 | `XPAND_MODO_LOCAL` | Etiqueta «sesión local» de `/api/sesion`; solo rotula, no autoriza. Con proxy inverso, `0` | `pnpm dev`/`pnpm start`: `1` en bucle local; `server.js` del release: `0` (opt-in con `1`); en red siempre `0` |
-| `AUTH_URL` | URL pública de la app; obligatoria en producción (los enlaces de entrada se montan sobre ella) | ninguno |
+| `AUTH_URL` | URL pública de la app; obligatoria en producción y, en desarrollo, con un `HOST` que no sea de bucle (los enlaces de entrada se montan sobre ella) | ninguno |
 | `NEXTAUTH_SECRET` | Secreto de firma de sesiones (`openssl rand -base64 32`) | ninguno |
 | `DATABASE_URL` | Conexión de Prisma a Postgres | ninguno |
 | `ADMIN_EMAIL` | Correo del primer administrador | ninguno |

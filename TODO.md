@@ -23,6 +23,18 @@ menores aparcados de la revisión final.
 - **[LOW] El job de CI no construye el standalone.** Solo el workflow de release lo construye y empaqueta; un cambio
   que rompa el rastreo se vería recién al subir un tag. Añadir `build` + `package-dist.sh` al job `checks`.
 
+## Para M1, de la revisión final de rama de M0 (2026-11-07)
+
+- **[MEDIUM] Defensa en profundidad: que el servidor exija también la lista blanca.** Hoy la lista blanca
+  (`config/casos-publicos.json`) solo actúa en el importador; el servidor sirve lo que el manifiesto marca `publico`. Un
+  manifiesto editado a mano (o un almacén importado por otra versión) bastaría para publicar un caso. Que
+  `construirCatalogo`/`redVigente` (`apps/web/src/server/casos.ts`) exijan además que `sistema.id` y `origen.ruta` del
+  manifiesto figuren en la lista blanca empaquetada, con prueba (hallazgo M3 de la revisión final).
+- **[MEDIUM] Redactar ids de casos internos en `detalles`.** Con un almacén importado con `--incluir-internos`, un
+  manifiesto interno defectuoso deja su id y su ruta en el registro del servidor (`almacen.ts` `detalles` +
+  `casos.ts` `registrarDetalles`). En `detalles`, redactar el id de los casos cuya visibilidad sea `interno` o no se
+  pueda saber, con una prueba de registros como pide la entrega M1 (hallazgo M5; P6: nada interno en registros).
+
 ## Menores aparcados de la revisión final de M0 (2026-11-07, ruling R18)
 
 - **[MEDIUM] Fixture `red/sitios/sintetico` omitido de `packages/core`.** Un nombre de central procede de un caso

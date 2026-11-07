@@ -13,7 +13,10 @@ de casos, en un solo servidor Next. Solo lectura: no escribe nada en el motor ni
 - **Seguridad de la plantilla:** las acciones de administración de usuarios y banderas comprueban el rol de
   administrador (antes cualquier sesión podía ascenderse); los enlaces de entrada se montan sobre `AUTH_URL`, no sobre
   la cabecera Host (obligatoria en producción).
-- **Arranque:** Next escucha solo en `127.0.0.1:8870` (`XPAND_WEB_PORT`); otra dirección exige `XPAND_PERMITIR_RED=1`.
+- **Arranque:** Next escucha solo en `127.0.0.1:8870` (`XPAND_WEB_PORT`); otra dirección exige `XPAND_PERMITIR_RED=1`
+  y `AUTH_URL`, también en desarrollo.
+- **Zona pública:** identifica XPAND (qué es, «Explorar casos», «Entrar»); sin precios ni ruta `/pricing` (404) mientras
+  los pagos no tengan claves; privacidad y términos son borradores provisionales con lo que la plataforma hace hoy.
 - **Casos desde un almacén** (`XPAND_ALMACEN`, fuera del repositorio): las rutas `/api/catalogo`, `/api/red`,
   `/api/config` y `/api/sesion` sirven el contrato de `contracts/api`. Solo los sistemas de la lista blanca
   `config/casos-publicos.json` (hoy IEEE-24 e IEEE-118 clásicos) son públicos; un caso interno responde como uno

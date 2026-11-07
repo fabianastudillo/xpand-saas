@@ -72,5 +72,7 @@ Para entrar por correo hace falta `EMAIL_SERVER` y `EMAIL_FROM`; con Google, `GO
 
 El paquete no incluye casos. «Explorar casos» (`/casos`) lee el almacén de `XPAND_ALMACEN`, que se llena con el
 importador del repositorio (`pnpm importar-casos --xpand <checkout de xpand>`). Sin almacén o vacío, la zona muestra
-el catálogo vacío y «Problemas» explica cómo importarlos. `config/casos-publicos.json` es la lista blanca: solo esos
-sistemas se sirven.
+el catálogo vacío y «Problemas» explica cómo importarlos. `config/casos-publicos.json` es la lista blanca que usa el
+importador: solo esos sistemas entran en el almacén como `publico` (con `--incluir-internos`, el resto entra como
+`interno`). El servidor no lee esa lista: sirve los casos que el manifiesto del almacén marca `publico` y nunca los
+`interno`.
