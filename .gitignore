@@ -20,5 +20,12 @@ test-results/
 
 # Almacen de casos: vive fuera del repo; nunca se versiona (salvo el de prueba, escrito a mano)
 almacen/
+# Excepcion: solo los casos de prueba de packages/casos, uno por uno; una carpeta nueva ahi queda ignorada
 !packages/casos/test/almacen/
+packages/casos/test/almacen/*/*
+!packages/casos/test/almacen/jump_misocp/tnep_garver6/
+!packages/casos/test/almacen/jump_misocp/sintetico_interno/
+!packages/casos/test/almacen/jump_misocp/tnep_truncado/
+!packages/casos/test/almacen/jump_misocp/tnep_invalido/
+!packages/casos/test/almacen/fp_dc/tnep_garver6/
 !contracts/almacen/

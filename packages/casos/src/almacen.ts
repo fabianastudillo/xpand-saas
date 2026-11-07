@@ -3,7 +3,7 @@
 // confinada a la carpeta del caso (realpath del fichero contra el de la carpeta, asi que ni «..» ni enlaces
 // simbolicos sacan de ella).
 import Ajv from "ajv";
-import { readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
+import { closeSync, constants, fstatSync, openSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import path from "node:path";
 import type { Leer } from "@xpand/core";
 import manifiestoSchema from "../../../contracts/almacen/manifiesto.schema.json";
@@ -39,36 +39,81 @@ export interface OpcionesCaso {
 }
 
 export interface Almacen {
-  /** Problemas al abrir (almacen ausente o vacio, casos descartados); undefined si todo fue bien. */
-  readonly aviso?: string;
+  /**
+   * Resumen generico y apto para publico (sin rutas del disco, ids ni texto de validacion);
+   * undefined si todo fue bien. Es lo unico que puede llegar a una respuesta o a «Problemas».
+   */
+  readonly aviso?: string | undefined;
+  /**
+   * Motivos completos por caso (rutas, ids, errores de ajv). SOLO para el registro del servidor y el
+   * administrador: nunca se serializa en una respuesta.
+   */
+  readonly detalles: readonly string[];
   casos(opts: OpcionesCaso): Caso[];
   caso(motor: string, sistema: string, opts: OpcionesCaso): Caso | undefined;
+  /**
+   * Relee los manifiestos del disco y sustituye el listado de una vez. Si la relectura falla (p. ej. el
+   * almacen desaparece) se sigue sirviendo la foto anterior y el motivo queda en `detalles`.
+   */
+  recargar(): Promise<void>;
 }
 
 const NOMBRE_MANIFIESTO = "manifiesto.json";
 const PATRON_ID = /^[A-Za-z0-9_.-]+$/;
+/** Tope de tamano de un fichero de caso: la lectura es sincrona y bloquea el bucle de eventos. */
+export const MAX_BYTES_FICHERO = 64 * 1024 * 1024;
+const MAX_DETALLES_LECTURA = 100;
 
 const ajv = new Ajv({ strict: true, strictRequired: false, allowUnionTypes: true, allErrors: false });
-const validarManifiesto = ajv.compile(manifiestoSchema);
+const validarManifiesto = ajv.compile<Manifiesto>(manifiestoSchema);
 
 export function esIdValido(id: string): boolean {
   return typeof id === "string" && id !== "." && id !== ".." && PATRON_ID.test(id);
+}
+
+/** Un nombre de `archivos` es relativo y simple: sin NUL, barra invertida, raiz ni segmentos `..`/vacios. */
+export function esNombreArchivoValido(nombre: string): boolean {
+  if (nombre === "" || nombre.includes("\0") || nombre.includes("\\") || nombre.startsWith("/")) return false;
+  if (path.isAbsolute(nombre) || /^[A-Za-z]:/.test(nombre)) return false;
+  return nombre.split("/").every((seg) => seg !== "" && seg !== "..");
 }
 
 function dentroDe(raizReal: string, destino: string): boolean {
   return destino.startsWith(raizReal + path.sep);
 }
 
-/** Lector confinado a `dir` (ya resuelto con realpath). Nunca lanza: devuelve undefined ante cualquier problema. */
-function lectorConfinado(dirReal: string): Leer {
+function congelar<T>(valor: T): T {
+  if (valor !== null && typeof valor === "object" && !Object.isFrozen(valor)) {
+    Object.freeze(valor);
+    for (const v of Object.values(valor)) congelar(v);
+  }
+  return valor;
+}
+
+/**
+ * Lector confinado a `dirReal` (ya resuelto con realpath). Nunca lanza. El fichero se abre con O_NOFOLLOW y
+ * se lee por el descriptor (fstat sobre el fd), de modo que cambiar el fichero por un enlace despues de la
+ * comprobacion no sirve para salir.
+ */
+function lectorConfinado(dirReal: string, registrar: (msg: string) => void): Leer {
   return (ruta) => {
     if (typeof ruta !== "string" || ruta === "" || ruta.includes("\0") || path.isAbsolute(ruta)) return undefined;
+    let fd: number | undefined;
     try {
       const real = realpathSync(path.resolve(dirReal, ruta));
-      if (!dentroDe(dirReal, real) || !statSync(real).isFile()) return undefined;
-      return readFileSync(real, "utf8");
+      if (!dentroDe(dirReal, real)) return undefined;
+      fd = openSync(real, constants.O_RDONLY | constants.O_NOFOLLOW);
+      const st = fstatSync(fd);
+      if (!st.isFile()) return undefined;
+      if (st.size > MAX_BYTES_FICHERO) {
+        registrar(`${real}: ${String(st.size)} bytes superan el tope de ${String(MAX_BYTES_FICHERO)}`);
+        return undefined;
+      }
+      return readFileSync(fd, "utf8");
     } catch {
       return undefined;
+    } finally {
+      if (fd !== undefined) closeSync(fd);
     }
   };
 }
@@ -80,7 +125,12 @@ function subdirectorios(dir: string): string[] {
     .sort();
 }
 
-function cargarCaso(raizReal: string, motorId: string, sistemaId: string): { caso?: Caso; problema?: string } {
+function cargarCaso(
+  raizReal: string,
+  motorId: string,
+  sistemaId: string,
+  registrar: (msg: string) => void,
+): { caso?: Caso; problema?: string } {
   const etiqueta = `${motorId}/${sistemaId}`;
   let dirReal: string;
   try {
@@ -89,8 +139,7 @@ function cargarCaso(raizReal: string, motorId: string, sistemaId: string): { cas
     return { problema: `${etiqueta}: carpeta ilegible` };
   }
   if (!dentroDe(raizReal, dirReal)) return { problema: `${etiqueta}: la carpeta sale del almacen` };
-  const leer = lectorConfinado(dirReal);
-  const texto = leer(NOMBRE_MANIFIESTO);
+  const texto = lectorConfinado(dirReal, registrar)(NOMBRE_MANIFIESTO);
   if (texto === undefined) return { problema: `${etiqueta}: falta ${NOMBRE_MANIFIESTO}` };
   let json: unknown;
   try {
@@ -101,13 +150,20 @@ function cargarCaso(raizReal: string, motorId: string, sistemaId: string): { cas
   if (!validarManifiesto(json)) {
     return { problema: `${etiqueta}: manifiesto invalido (${ajv.errorsText(validarManifiesto.errors)})` };
   }
-  const manifiesto = json as unknown as Manifiesto;
-  if (manifiesto.motor.id !== motorId || manifiesto.sistema.id !== sistemaId) {
+  if (json.motor.id !== motorId || json.sistema.id !== sistemaId) {
     return { problema: `${etiqueta}: los ids del manifiesto no coinciden con las carpetas` };
   }
+  for (const [clave, valor] of Object.entries(json.archivos)) {
+    for (const nombre of Array.isArray(valor) ? valor : [valor]) {
+      if (!esNombreArchivoValido(nombre)) {
+        return { problema: `${etiqueta}: archivos.${clave} tiene un nombre no permitido (${JSON.stringify(nombre)})` };
+      }
+    }
+  }
+  const manifiesto = congelar(json);
   const caso: Caso = {
     manifiesto,
-    leer,
+    leer: lectorConfinado(dirReal, registrar),
     ruta(clave) {
       const v = Object.hasOwn(manifiesto.archivos, clave) ? manifiesto.archivos[clave] : undefined;
       return v === undefined ? [] : Array.isArray(v) ? [...v] : [v];
@@ -116,60 +172,92 @@ function cargarCaso(raizReal: string, motorId: string, sistemaId: string): { cas
   return { caso };
 }
 
-export function abrirAlmacen(dir: string): Promise<Almacen> {
-  return Promise.resolve(abrirSincrono(dir));
+interface Foto {
+  readonly casos: ReadonlyMap<string, Caso>;
+  readonly detalles: readonly string[];
+  readonly descartados: number;
 }
 
-function abrirSincrono(dir: string): Almacen {
-  const vacio = (aviso: string): Almacen => ({ aviso, casos: () => [], caso: () => undefined });
-  let raizReal: string;
-  try {
-    raizReal = realpathSync(dir);
-    if (!statSync(raizReal).isDirectory()) return vacio(`El almacen ${dir} no es un directorio.`);
-  } catch {
-    return vacio(`No existe el almacen de casos ${dir}.`);
-  }
+const FOTO_VACIA: Foto = { casos: new Map(), detalles: [], descartados: 0 };
 
-  const porClave = new Map<string, Caso>();
-  const problemas: string[] = [];
-  try {
-    for (const motorId of subdirectorios(raizReal)) {
-      if (!esIdValido(motorId)) {
-        problemas.push(`${motorId}: id de motor no valido`);
-        continue;
-      }
-      let sistemas: string[];
-      try {
-        sistemas = subdirectorios(path.join(raizReal, motorId));
-      } catch {
-        problemas.push(`${motorId}: carpeta ilegible`);
-        continue;
-      }
-      for (const sistemaId of sistemas) {
-        if (!esIdValido(sistemaId)) {
-          problemas.push(`${motorId}/${sistemaId}: id de sistema no valido`);
-          continue;
-        }
-        const { caso, problema } = cargarCaso(raizReal, motorId, sistemaId);
-        if (caso) porClave.set(`${motorId}\0${sistemaId}`, caso);
-        else if (problema) problemas.push(problema);
-      }
+/** Lee todo el almacen. Lanza si la raiz no se puede resolver o listar; los casos defectuosos se descartan. */
+function leerAlmacen(dir: string, registrar: (msg: string) => void): Foto {
+  const raizReal = realpathSync(dir);
+  if (!statSync(raizReal).isDirectory()) throw new Error(`${dir} no es un directorio`);
+  const casos = new Map<string, Caso>();
+  const detalles: string[] = [];
+  for (const motorId of subdirectorios(raizReal)) {
+    if (!esIdValido(motorId)) {
+      detalles.push(`${motorId}: id de motor no valido`);
+      continue;
     }
-  } catch {
-    return vacio(`No se pudo leer el almacen de casos ${dir}.`);
+    let sistemas: string[];
+    try {
+      sistemas = subdirectorios(path.join(raizReal, motorId));
+    } catch {
+      detalles.push(`${motorId}: carpeta ilegible`);
+      continue;
+    }
+    for (const sistemaId of sistemas) {
+      if (!esIdValido(sistemaId)) {
+        detalles.push(`${motorId}/${sistemaId}: id de sistema no valido`);
+        continue;
+      }
+      const { caso, problema } = cargarCaso(raizReal, motorId, sistemaId, registrar);
+      if (caso) casos.set(`${motorId}\0${sistemaId}`, caso);
+      else if (problema) detalles.push(problema);
+    }
   }
+  return { casos, detalles, descartados: detalles.length };
+}
 
-  if (porClave.size === 0) problemas.unshift(`El almacen ${dir} no tiene casos; importe los casos publicos para poblarlo.`);
-  const aviso = problemas.length > 0 ? problemas.join("\n") : undefined;
+function mensajeError(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}
+
+function crearAlmacen(dir: string): Almacen {
+  let foto: Foto = FOTO_VACIA;
+  let recargaFallida = false;
+  let detallesInicio: readonly string[] = [];
+  const lecturas: string[] = [];
+  const registrar = (msg: string) => {
+    if (lecturas.length < MAX_DETALLES_LECTURA) lecturas.push(msg);
+  };
+
+  const cargar = (): void => {
+    try {
+      foto = leerAlmacen(dir, registrar);
+      detallesInicio =
+        foto.casos.size === 0 ? [`El almacen ${dir} no tiene casos; importe los casos publicos para poblarlo.`, ...foto.detalles] : foto.detalles;
+      recargaFallida = false;
+    } catch (e) {
+      recargaFallida = true;
+      detallesInicio = [...detallesInicio, `No se pudo leer el almacen ${dir}: ${mensajeError(e)}`];
+    }
+  };
+  cargar();
+
   const visible = (c: Caso, o: OpcionesCaso) => o.incluirInternos || c.manifiesto.visibilidad === "publico";
-
-  const almacen: Almacen = {
-    casos: (opts) => [...porClave.values()].filter((c) => visible(c, opts)),
+  return {
+    get aviso() {
+      if (foto.casos.size === 0) return "El almacén de casos no existe o está vacío.";
+      if (recargaFallida) return "No se pudo actualizar el almacén de casos.";
+      if (foto.descartados > 0) return `${String(foto.descartados)} casos no se pudieron cargar.`;
+      return undefined;
+    },
+    get detalles() {
+      return [...detallesInicio, ...lecturas];
+    },
+    casos: (opts) => [...foto.casos.values()].filter((c) => visible(c, opts)),
     caso(motor, sistema, opts) {
       if (!esIdValido(motor) || !esIdValido(sistema)) return undefined;
-      const c = porClave.get(`${motor}\0${sistema}`);
+      const c = foto.casos.get(`${motor}\0${sistema}`);
       return c && visible(c, opts) ? c : undefined;
     },
+    recargar: () => new Promise<void>((resolve) => { cargar(); resolve(); }),
   };
-  return aviso === undefined ? almacen : { ...almacen, aviso };
+}
+
+export function abrirAlmacen(dir: string): Promise<Almacen> {
+  return new Promise((resolve) => { resolve(crearAlmacen(dir)); });
 }
