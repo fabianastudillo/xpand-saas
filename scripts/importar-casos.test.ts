@@ -263,6 +263,41 @@ describe("importarCasos: lista blanca y visibilidad", () => {
 });
 
 describe("importarCasos: rutas", () => {
+  it("rechaza un caso publico con un declarado que es enlace a una carpeta no publica del checkout", async () => {
+    const otro = path.join(xpand, "data/casos/misocp_tnep/otro");
+    writeFileSync(path.join(otro, "interno.dat"), "param x := 1;\n");
+    symlinkSync(path.join(otro, "interno.dat"), path.join(dirGarver(), "enlace.dat"));
+    const informe = await importar(volcado([sistema("tnep_garver6", { ...archivosGarver(), extra: path.join(dirGarver(), "enlace.dat") })]));
+
+    expect(informe.importados).toEqual([]);
+    expect(informe.omitidos).toEqual([{ motivo: "fuera_de_carpeta_publica", cuantos: 1 }]);
+    expect(readdirSync(almacen)).not.toContain("jump_misocp");
+  });
+
+  it("los vecinos del base salen de la carpeta publica real, no de la que declara el volcado", async () => {
+    // El volcado declara un base.dat en una carpeta no publica que es un enlace al base publico: la lista blanca ve
+    // la carpeta publica, pero los vecinos (econ.dat) y los demas declarados estan en la no publica.
+    const otro = path.join(xpand, "data/casos/misocp_tnep/otro");
+    rmSync(path.join(otro, "base.dat"));
+    symlinkSync(path.join(dirGarver(), "base.dat"), path.join(otro, "base.dat"));
+    writeFileSync(path.join(otro, "econ.dat"), "param irate := 0.9;\n");
+    const informe = await importar(volcado([sistema("tnep_garver6", { base: path.join(otro, "base.dat") })]));
+
+    expect(informe.importados).toEqual([{ motor: "jump_misocp", sistema: "tnep_garver6", visibilidad: "publico" }]);
+    const econ = readFileSync(path.join(almacen, "jump_misocp", "tnep_garver6", "econ.dat"), "utf8");
+    expect(econ).toBe(readFileSync(path.join(dirGarver(), "econ.dat"), "utf8"));
+  });
+
+  it("rechaza un caso publico que declara ficheros de otra carpeta via ..", async () => {
+    const otro = path.join(xpand, "data/casos/misocp_tnep/otro");
+    writeFileSync(path.join(otro, "interno.dat"), "param x := 1;\n");
+    const informe = await importar(
+      volcado([sistema("tnep_garver6", { ...archivosGarver(), extra: path.join(dirGarver(), "..", "otro", "interno.dat") })]),
+    );
+
+    expect(informe.omitidos).toEqual([{ motivo: "fuera_de_carpeta_publica", cuantos: 1 }]);
+  });
+
   it("rechaza un archivo fuera del checkout (absoluto o con ..) sin copiar nada de ese caso", async () => {
     const fuera = path.join(tmp, "fuera.dat");
     writeFileSync(fuera, "param x := 1;\n");

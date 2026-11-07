@@ -28,7 +28,8 @@ export type Motivo =
   | "patron_interno"
   | "no_disponible"
   | "metadatos_incompletos"
-  | "archivo_no_valido";
+  | "archivo_no_valido"
+  | "fuera_de_carpeta_publica";
 
 export interface OpcionesImportar {
   readonly xpand: string;
@@ -60,7 +61,11 @@ interface Contexto {
 
 const relativa = (ctx: Contexto, real: string) => path.relative(ctx.checkoutReal, real).split(path.sep).join("/");
 
-/** Copias y `archivos` del manifiesto (nombres sin carpeta, con la forma lista/cadena de cada clave). */
+/**
+ * Copias y `archivos` del manifiesto (nombres sin carpeta, con la forma lista/cadena de cada clave). `dirBase` es la
+ * carpeta REAL del primer base: los vecinos se buscan ahi y en las carpetas reales de los declarados, nunca en la ruta
+ * sin resolver del volcado (un enlace podria apuntar a otra carpeta).
+ */
 function resolverFicheros(
   ctx: Contexto,
   raiz: string,
@@ -74,8 +79,9 @@ function resolverFicheros(
     const nombres = rutas.map((r) => {
       const absoluta = path.resolve(raiz, r);
       const nombre = path.basename(absoluta);
-      copias.anadir(nombre, resolverEnCheckout(ctx.checkoutReal, absoluta));
-      if (!dirs.includes(path.dirname(absoluta))) dirs.push(path.dirname(absoluta));
+      const real = resolverEnCheckout(ctx.checkoutReal, absoluta);
+      copias.anadir(nombre, real);
+      if (!dirs.includes(path.dirname(real))) dirs.push(path.dirname(real));
       return nombre;
     });
     declarados[clave] = lista ? nombres : (nombres[0] ?? "");
@@ -118,10 +124,15 @@ function planificar(ctx: Contexto, motor: MotorVolcado, bloqueMotor: Manifiesto[
   if (sistema === undefined) return { motivo: "metadatos_incompletos" };
   let ficheros: ReturnType<typeof resolverFicheros>;
   try {
-    ficheros = resolverFicheros(ctx, raiz, archivos, path.dirname(path.resolve(raiz, principal)));
+    ficheros = resolverFicheros(ctx, raiz, archivos, dirDatos);
   } catch (e) {
     if (e instanceof FicheroNoValido) return { motivo: "archivo_no_valido" };
     throw e;
+  }
+  // La lista blanca aprueba una carpeta: un caso de la lista solo puede copiar ficheros cuya ruta real este dentro de
+  // ella. Un enlace o un «..» hacia otra carpeta del checkout (que puede ser interna) lo deja fuera, no solo no publico.
+  if (entrada !== undefined && [...ficheros.copias.porNombre.values()].some((real) => !dentroDe(dirDatos, real))) {
+    return { motivo: "fuera_de_carpeta_publica" };
   }
   const manifiesto: Manifiesto = {
     motor: bloqueMotor,
