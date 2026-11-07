@@ -18,3 +18,4 @@ export {
 } from "./sitios";
 export { redReal } from "./red-real";
 export { redHidro } from "./red-hidro";
+export type { Leer } from "./red-base";

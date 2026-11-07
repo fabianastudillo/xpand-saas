@@ -1,0 +1,23 @@
+# 07/10/2026: valores IGUALADOS celda a celda a benchmark_release/garver6_acdc_facts.dat (MISOCP TNEP, Zenodo; MD5 91ae5c87) por decision de GUI Laptop; comparacion AmplDat contra AmplDat: 0 params distintos. Respaldo del anterior: *.bak_20261007_release.
+# ============================================================================
+#  garver6/candidates_ac.dat  ---  15 corredores AC candidatos
+#  Fuente: audited .m mpc.ne_branch (MISO MTEP24, 345/230 kV por longitud).
+#  r,x,bch en pu (Sbase=100); rate MVA/100; cost MUSD por circuito.
+#  Nmax = 3 circuitos por corredor (sistema de calibracion).
+# ============================================================================
+param: LCAN: lc_f lc_t lc_r lc_x lc_bch lc_S lc_Nmax lc_cost :=
+  C12  1  2  0.04  0.4  0  1.2  3  516.1647
+  C13  1  3  0.009234418622  0.114961192  0.686424176  17.92  3  787.8648
+  C14  1  4  0.06  0.6  0  1  3  772.047
+  C15  1  5  0.02  0.2  0  1.2  3  260.2823
+  C16  1  6  0.017117065  0.264951607  1.228338  4  3  1366.1672
+  C23  2  3  0.02  0.2  0  1.2  3  260.2823
+  C24  2  4  0.04  0.4  0  1.2  3  516.1647
+  C25  2  5  0.007573867823  0.09783676193  0.559977618  17.92  3  648.8942
+  C26  2  6  0.017117065  0.264951607  1.228338  4  3  1366.1672
+  C34  3  4  0.01421607102  0.1663344824  1.065763853  17.92  3  1204.7766
+  C35  3  5  0.02  0.2  0  1.2  3  260.2823
+  C36  3  6  0.017117065  0.264951607  1.228338  4  3  1366.1672
+  C45  4  5  0.01516495719  0.176119871  1.138019029  17.92  3  1284.1884
+  C46  4  6  0.017117065  0.264951607  1.228338  4  3  1366.1672
+  C56  5  6  0.017117065  0.264951607  1.228338  4  3  1366.1672 ;

@@ -1,0 +1,17 @@
+# 07/10/2026: valores IGUALADOS celda a celda a benchmark_release/garver6_acdc_facts.dat (MISOCP TNEP, Zenodo; MD5 91ae5c87) por decision de GUI Laptop; comparacion AmplDat contra AmplDat: 0 params distintos. Respaldo del anterior: *.bak_20261007_release.
+# ============================================================================
+#  garver6/facts.dat  ---  STATCOM + SSSC candidatos (Caso C)
+#  COSTOS OFICIALES MISO MTEP24 Tabla 2.3-8 (USD 2024, incluyen material+
+#  instalacion; se suma 1 posicion de barra 230 kV = 2.2 MUSD, Tabla de bahias):
+#   STATCOM  = 226,013 USD/MVAr x 150 MVAr + 2.2 = 36.1 MUSD
+#   APFC/SSSC = 159,750 USD/MVAr x S_serie(=sc_Sabs=30 MVA) + 2.2 = 7.0 MUSD
+#  (el SSSC se tarifa por el MVA del convertidor SERIE, ec.(19), no del corredor)
+# ============================================================================
+param: NST: st_bus st_g st_b st_Vmin st_Vmax st_S st_cost :=
+  S2  2  0  -10  0.9  1.1  1.5  36.1
+  S4  4  0  -10  0.9  1.1  1.5  36.1
+  S5  5  0  -10  0.9  1.1  1.5  36.1 ;
+
+param: LSC: sc_line sc_r sc_x sc_Vmax sc_S sc_Sabs sc_cost :=
+  Q24  E24  0.04  0.40  0.25  1.2  0.3  6.9925
+  Q15  E15  0.02  0.20  0.25  1.2  0.3  6.9925 ;

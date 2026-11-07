@@ -1,0 +1,13 @@
+# ============================================================================
+#  garver6/svc.dat  ---  SVC candidatos (susceptancia shunt variable)
+#  Barras PQ 2, 4 y 5 (las mismas del STATCOM de facts.dat). Rango de
+#  susceptancia sv_Bmin..sv_Bmax en pu sobre Sbase = 100: -0.5 (50 MVAr
+#  inductivos) a 1.5 (150 MVAr capacitivos) a tension 1 pu; Q = B*V^2.
+#  COSTO OFICIAL MISO MTEP24 Tabla 2.3-8 (USD 2024): SVC = 114,185 USD/MVAr
+#  x 150 MVAr (tope capacitivo) = 17.13 MUSD + 1 posicion de barra 230 kV =
+#  2.2 MUSD (Tabla 4.2-1) = 19.3 MUSD, mismo criterio que facts.dat.
+# ============================================================================
+param: NSV: sv_bus sv_Bmin sv_Bmax sv_cost :=
+  V2   2   -0.5  1.5  19.3
+  V4   4   -0.5  1.5  19.3
+  V5   5   -0.5  1.5  19.3 ;

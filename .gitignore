@@ -17,3 +17,8 @@ test-results/
 
 # Entorno de pruebas de apps/web: valores locales regenerados, sin secretos reales
 !.env.test
+
+# Almacen de casos: vive fuera del repo; nunca se versiona (salvo el de prueba, escrito a mano)
+almacen/
+!packages/casos/test/almacen/
+!contracts/almacen/

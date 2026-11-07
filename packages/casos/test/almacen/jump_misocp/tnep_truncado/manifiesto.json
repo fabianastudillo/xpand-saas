@@ -1,0 +1,7 @@
+{
+  "motor": { "id": "jump_misocp", "nombre": "MISOCP AC/DC", "esquema_red": "misocp" },
+  "sistema": { "id": "tnep_truncado", "nombre": "Garver 6 truncado (prueba de lector)", "barras": 6 },
+  "archivos": { "base": "base.dat" },
+  "visibilidad": "publico",
+  "origen": { "repo": "XPAND-PLEXSYS/xpand", "commit": "b4c853fe63c05eee1d562a5177738df202500da6", "ruta": "data/casos/misocp_tnep/garver6/base.dat" }
+}
