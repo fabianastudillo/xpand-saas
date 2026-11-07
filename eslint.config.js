@@ -19,6 +19,13 @@ export default tseslint.config(
     },
   },
   {
+    // @xpand/ui runs in the browser (document, ResizeObserver, Intl…); the rest of the repo is Node tooling.
+    files: ["packages/ui/**/*.{ts,tsx}"],
+    languageOptions: {
+      globals: { ...globals.browser },
+    },
+  },
+  {
     files: ["**/*.js"],
     ...tseslint.configs.disableTypeChecked,
   },

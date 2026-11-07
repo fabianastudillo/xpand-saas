@@ -1,0 +1,13 @@
+{
+  "status.certified": "Certificado",
+  "status.uncertified": "NO CERTIFICADO",
+  "status.acFeasible": "Factible en AC",
+  "number.notAvailable": "No disponible",
+  "count.items": "{n} elementos",
+  "field.required": "Obligatorio",
+  "common.loading": "Cargando…",
+  "common.retry": "Reintentar",
+  "common.close": "Cerrar",
+  "locale.es": "Español",
+  "locale.en": "English"
+}

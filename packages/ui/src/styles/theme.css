@@ -1,0 +1,62 @@
+/*
+ * Tailwind 4 theme: maps the raw tokens of tokens.css to utility namespaces.
+ * `inline` keeps the var() reference in the generated utilities, so a later theme (dark, compact) only has
+ * to redefine the tokens. The default palette is dropped (`--color-*: initial`): the only colors available
+ * as utilities are the semantic ones, which is how "color only with meaning" is enforced at build time.
+ */
+@theme inline {
+  --color-*: initial;
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-grid-line: var(--grid-line);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-inverse: var(--ink-inverse);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-ok: var(--ok);
+  --color-ok-bg: var(--ok-bg);
+  --color-ok-ink: var(--ok-ink);
+  --color-ok-line: var(--ok-line);
+  --color-warn: var(--warn);
+  --color-warn-bg: var(--warn-bg);
+  --color-warn-ink: var(--warn-ink);
+  --color-warn-line: var(--warn-line);
+  --color-error: var(--error);
+  --color-error-bg: var(--error-bg);
+  --color-error-ink: var(--error-ink);
+  --color-error-line: var(--error-line);
+
+  --font-*: initial;
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --text-*: initial;
+  --text-xs: var(--text-xs);
+  --text-xs--line-height: var(--leading-tight);
+  --text-sm: var(--text-sm);
+  --text-sm--line-height: var(--leading-normal);
+  --text-base: var(--text-base);
+  --text-base--line-height: var(--leading-normal);
+  --text-md: var(--text-md);
+  --text-md--line-height: var(--leading-normal);
+  --text-lg: var(--text-lg);
+  --text-lg--line-height: var(--leading-tight);
+  --text-xl: var(--text-xl);
+  --text-xl--line-height: var(--leading-tight);
+
+  --radius-*: initial;
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+
+  --shadow-*: initial;
+  --shadow-pop: var(--shadow-pop);
+
+  --tracking-label: var(--tracking-label);
+}

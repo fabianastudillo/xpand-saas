@@ -1,8 +1,32 @@
 import { describe, expect, it } from "vitest";
-import { UI_PACKAGE_NAME } from "./index";
+import * as ui from "./index";
+
+const PUBLIC_EXPORTS = [
+  "Badge",
+  "Button",
+  "Field",
+  "Input",
+  "Kbd",
+  "Shortcut",
+  "NumberCell",
+  "Skeleton",
+  "Tabs",
+  "TabsList",
+  "TabsTrigger",
+  "TabsContent",
+  "Tooltip",
+  "TooltipProvider",
+  "t",
+  "getLocale",
+  "setLocale",
+  "useLocale",
+  "formatNumber",
+  "cn",
+  "DENSITY_ATTRIBUTE",
+] as const;
 
 describe("@xpand/ui", () => {
-  it("exposes its package name", () => {
-    expect(UI_PACKAGE_NAME).toBe("@xpand/ui");
+  it.each(PUBLIC_EXPORTS)("exports %s", (name) => {
+    expect(ui).toHaveProperty(name);
   });
 });
