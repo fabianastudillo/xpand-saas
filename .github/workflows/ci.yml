@@ -23,6 +23,9 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Dependencias de producción de todo el workspace sin avisos de severidad alta o crítica. Si un aviso no
+      # tiene corrección, se añade a pnpm-workspace.yaml (auditConfig.ignoreGhsas) con el motivo en un comentario.
+      - run: pnpm audit --prod --audit-level=high
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
@@ -48,6 +51,7 @@ jobs:
       - run: pnpm --filter @xpand/web exec playwright install --with-deps chromium firefox
       - run: pnpm --filter @xpand/web test:db:start
       - run: pnpm --filter @xpand/web test:db:prepare
+      # .env.test no trae NODE_ENV: `next build` y el arranque (`start`) usan production, como en el despliegue.
       - name: Pruebas Playwright de apps/web (build de producción, variables de .env.test)
         working-directory: apps/web
         run: set -a && . ./.env.test && set +a && pnpm exec playwright test

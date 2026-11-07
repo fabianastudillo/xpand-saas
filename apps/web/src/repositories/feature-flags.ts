@@ -10,7 +10,7 @@ export const createFeatureFlag = async (name: string, isEnabled?: boolean) => {
   return prisma.featureFlags.create({
     data: {
       name,
-      isEnabled: isEnabled || true,
+      isEnabled: isEnabled ?? true,
     },
   });
 };

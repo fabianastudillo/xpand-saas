@@ -19,15 +19,15 @@ test.describe("Feature flags update", () => {
       secondFeatureFlag.name,
     );
 
-    const toggleSwitch = featureFlagRow.getByRole("switch", {
-      name: /enabled/i,
-    });
+    // FEATURE_FLAG_2 is seeded disabled (tests/data/feature-flags.ts). The template's test expected it enabled
+    // because createFeatureFlag turned every `false` into `true` (`isEnabled || true`), a bug fixed in Task 2.
+    const toggleSwitch = featureFlagRow.getByRole("switch");
 
-    await expect(toggleSwitch).toBeChecked();
+    await expect(toggleSwitch).not.toBeChecked();
 
     await toggleSwitch.click();
 
-    await expect(toggleSwitch).not.toBeChecked();
+    await expect(toggleSwitch).toBeChecked();
 
     await expect(
       page.getByText(/Feature flag updated successfully/i),

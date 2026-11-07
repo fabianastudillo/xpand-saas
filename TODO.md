@@ -17,6 +17,19 @@ Pendientes conocidos que todavía no tienen rama ni PR.
 - **[LOW] El catálogo no muestra `nota` en la fila.** `apps/ide-spa/src/features/explorar/CatalogDocument.tsx`
   (`CatalogRow`): el aviso del sistema solo aparece al abrir el caso, como problema «info» (spec §5.1 no exige más).
   Un indicador textual en la fila avisaría antes de abrir (p. ej. que Garver 6 «no es el Garver clásico»).
-- **[LOW]** `packages/ui/src/styles/fonts.css` apunta a `../../node_modules/@fontsource/...`: depende de cómo pnpm
+- **[LOW]** `packages/ui/src/styles/fonts.css` y `apps/web/src/app/layout.tsx` (next/font/local) apuntan a `../../node_modules/@fontsource/...`: depende de cómo pnpm
   coloca los paquetes; un cambio de hoisting rompería el build. Resolver por especificador de paquete o copiar los
   `.woff2` en el build (revisión de la ronda final de M0).
+- **[HIGH] Webhook de Stripe sin implementar.** La plantilla traía `apps/web/src/app/api/webhooks/stripe.ts` al estilo
+  Pages Router (NextApiRequest, `micro`), que el App Router no sirve; se borró en la Task 2. Antes de activar los pagos
+  hay que escribirlo como `apps/web/src/app/api/webhooks/stripe/route.ts` con `req.text()`, verificación de firma
+  obligatoria (`stripe.webhooks.constructEvent`) y 503 si falta `STRIPE_ENDPOINT_SECRET`, y probarlo.
+- **[MEDIUM] Cabecera Content-Security-Policy en apps/web.** `next.config.js` pone nosniff, X-Frame-Options, Referrer-Policy y
+  Permissions-Policy; falta una CSP (exige enumerar los scripts en línea de Next y los terceros cuando se activen).
+- **[LOW] Un administrador puede degradarse a sí mismo o al último administrador** (`updateUserRoleAction` sin esa guardia);
+  y `session()` de auth-options lanza si la sesión no trae correo. Revisar en M1 con el rol de miembro.
+- **[LOW] `tests/utils.ts` espera con `networkidle` + 500 ms**; mejor una condición observable cuando la zona IDE tenga sus
+  propias señales de carga.
+- **[LOW] `.env` de apps/web sin recarga en caliente en `pnpm dev`.** `scripts/arranque.mjs` carga los ficheros con
+  @next/env y el hijo hereda los valores como si vinieran del shell, así que editar `.env.local` con `next dev` en marcha
+  no surte efecto hasta reiniciar. Alternativa: decidir con una copia del entorno y lanzar Next con el entorno original.

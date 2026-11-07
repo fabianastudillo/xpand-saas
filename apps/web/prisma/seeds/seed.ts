@@ -42,15 +42,16 @@ export async function createInactiveUser() {
   console.log({ inactiveUser });
 }
 
+// Awaited one by one: a `forEach(async …)` returned before the flags existed, so the setup could finish first.
 export async function createFeatureFlags() {
-  featureFlags.forEach(async (featureFlag) => {
+  for (const featureFlag of featureFlags) {
     const featureFlagCreated = await createFeatureFlag(
       featureFlag.name,
       featureFlag.isEnabled,
     );
 
     console.log({ featureFlagCreated });
-  });
+  }
 }
 
 async function main() {

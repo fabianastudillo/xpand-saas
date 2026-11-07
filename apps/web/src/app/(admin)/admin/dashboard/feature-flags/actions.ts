@@ -52,7 +52,10 @@ export const createFeatureFlagAction = async (
     };
   }
 
-  await createFeatureFlag(name, isEnabled);
+  await createFeatureFlag(
+    validatedFields.data.name,
+    validatedFields.data.isEnabled,
+  );
   revalidatePath("/admin/dashboard/feature-flags");
   return { success: true };
 };

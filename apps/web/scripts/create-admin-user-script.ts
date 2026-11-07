@@ -2,7 +2,8 @@ import { UserRole } from "@prisma/client";
 
 import { createOrUpdateUser } from "@/repositories/user-repository";
 
-const adminEmail = process.env.ADMIN_EMAIL;
+// Lower-cased: Auth.js normalises the magic-link e-mail, so an upper-case ADMIN_EMAIL would never match.
+const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
 
 async function makeAdminUser() {
   if (!adminEmail) {
