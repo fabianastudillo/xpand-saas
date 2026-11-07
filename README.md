@@ -34,6 +34,16 @@ Para llenar el almacén desde un checkout de xpand (necesita Julia y las depende
 pnpm importar-casos --xpand ../xpand [--almacen <dir>] [--incluir-internos] [--volcado <catalogo.json>]
 ```
 
+Para comparar la API de la plataforma con un xpand en marcha (solo GET; no se arranca ni se modifica xpand):
+
+```bash
+pnpm comparar-con-xpand --xpand-url http://127.0.0.1:8850 --plataforma-url http://127.0.0.1:8870 [--guardar-esperado <dir>]
+```
+
+Compara `/api/red` (tec=ac) campo a campo, solo en los campos de `contracts/api` y con igualdad exacta, y solo en casos
+públicos. Código 0 sin diferencias, 1 con diferencias (cada una con motor, sistema, ruta JSON y ambos valores), 64 uso
+incorrecto o servidor inalcanzable. `--guardar-esperado` escribe `esperado-red.json` de cada caso público que sirve la plataforma.
+
 El checkout solo se lee: el catálogo se vuelca con `scripts/julia/volcar-catalogo.jl` y todas las salidas de Julia van a
 una carpeta temporal; si `git status --ignored` del checkout cambia, se aborta. Solo entran como públicos los sistemas de
 `config/casos-publicos.json` (id, carpeta de datos y fuente pública con DOI o URL de cada uno); con `--incluir-internos` entra el resto

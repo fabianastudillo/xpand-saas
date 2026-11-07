@@ -124,6 +124,36 @@ describe("construirRed: Garver 6 de fp_dc (esquema matpower sin .m)", () => {
   });
 });
 
+// La red en el contrato con los ids como cadena: la forma de esperado-red.json (scripts/comparar-con-xpand.ts).
+function enContrato(red: Red): Record<string, unknown> {
+  const proyeccion: Record<string, unknown> = {};
+  for (const coleccion of Object.keys(CAMPOS) as (keyof typeof CAMPOS)[]) {
+    const registros = red[coleccion] as Record<string, unknown>[];
+    proyeccion[coleccion] = registros.map((registro) =>
+      Object.fromEntries(
+        CAMPOS[coleccion]
+          .filter((campo) => registro[campo] !== undefined)
+          .map((campo) => [campo, (campo === "id" || campo === "de" || campo === "a") && typeof registro[campo] === "number" ? String(registro[campo]) : registro[campo]]),
+      ),
+    );
+  }
+  return proyeccion;
+}
+
+describe("construirRed: igualdad exacta con xpand (esperado-red.json)", () => {
+  it.each(["jump_misocp", "fp_dc"])("%s/tnep_garver6: la red en el contrato es exactamente la que sirve xpand", async (motor) => {
+    // Arrange
+    const caso = casoDe(await abrirAlmacen(ALMACEN), motor, "tnep_garver6");
+    const esperado = JSON.parse(readFileSync(fileURLToPath(new URL(`../test/almacen/${motor}/tnep_garver6/esperado-red.json`, import.meta.url)), "utf8")) as unknown;
+
+    // Act
+    const red = enContrato(construirRed(caso, "ac"));
+
+    // Assert
+    expect(red).toStrictEqual(esperado);
+  });
+});
+
 describe("construirRed: casos que el lector no puede leer", () => {
   it("un base.dat truncado (tabla sin «;» final) lanza LectorError lector_fallo, sin rutas absolutas", async () => {
     const caso = casoDe(await abrirAlmacen(ALMACEN), "jump_misocp", "tnep_truncado");
