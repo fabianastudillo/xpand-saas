@@ -568,6 +568,9 @@ test.describe("Explore cases: the store, the situations around it and the langua
     await expect(problemList(page)).toContainText("XPAND_ALMACEN");
     await expect(problemList(page)).toContainText("importar-casos");
     await expect(page.getByText("Todavía no hay casos publicados.")).toBeVisible();
+    // Only that it is empty: no second note claiming that some cases failed (the store is just missing or empty).
+    await expect(problemList(page)).not.toContainText("Aviso del almacén de casos");
+    await expect(problemList(page)).not.toContainText("no se pudieron cargar");
     await expectNoViolations(page);
   });
 
@@ -652,6 +655,26 @@ test.describe("Explore cases: the store, the situations around it and the langua
     await page.reload();
     await expect(page.getByRole("searchbox", { name: "Search system" })).toBeVisible();
     await expectNoViolations(page);
+  });
+
+  test("an address with one segment says «case not found» exactly as a missing case, and leads to the catalog", async ({
+    page,
+  }) => {
+    await mockApi(page);
+    expectApiFailure(page);
+    await page.goto(MISSING_CASE_PATH);
+    const missingText = await notFoundText(page);
+
+    await page.goto("/casos/tnep_garver6");
+
+    expect(await notFoundText(page)).toBe(missingText);
+    await expect(page).toHaveURL(/\/casos\/tnep_garver6$/);
+    await expect(page).toHaveTitle("Caso no encontrado · XPAND");
+    await expect(problemList(page)).toContainText("Caso no encontrado");
+    await expectNoViolations(page);
+    await page.getByRole("link", { name: "Ir al catálogo" }).first().click();
+    await expect(page).toHaveURL(/\/casos$/);
+    await expect(catalogList(page).getByRole("link")).toHaveCount(PUBLIC_SYSTEMS_IN_STORE);
   });
 
   test("an address with more segments than a case goes back to the catalog", async ({ page }) => {

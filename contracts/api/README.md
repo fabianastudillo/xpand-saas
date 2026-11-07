@@ -31,6 +31,10 @@ Este directorio es la fuente del contrato: se edita aquí. `packages/api` genera
   - `nota` del sistema: el aviso del sistema («avisos si los hay»).
   - `dificultad` (p. ej. `"rapido"`).
   - `referencias[].valor`: el valor de referencia certificado. Solo algunos sistemas lo traen.
+- Raíz, opcionales: `aviso` (texto público del almacén de casos, en español) y `codigo_aviso`, su código estable:
+  `vacio` (el almacén no existe o no tiene casos), `relectura` (la última relectura falló; se sirve la anterior) o
+  `descartados` (algún caso no se pudo cargar). La interfaz muestra su propio texto por código, nunca el del servidor;
+  un código que no conoce recibe el texto genérico. Son cadenas, no un `enum`: un código nuevo no invalida el catálogo.
 
 ### `red` (`GET /api/red?motor=jump_misocp&sistema=tnep_garver6&tec=ac`)
 

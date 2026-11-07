@@ -148,6 +148,7 @@ describe("almacen ausente o vacio", () => {
     expect(a.casos(CON_INTERNOS)).toEqual([]);
     expect(a.aviso).toBeDefined();
     expect(a.aviso).not.toContain(ruta);
+    expect(a.codigoAviso).toBe("vacio");
     expect(a.detalles.join("\n")).toContain(ruta);
   });
 
@@ -158,6 +159,7 @@ describe("almacen ausente o vacio", () => {
       expect(a.casos(CON_INTERNOS)).toEqual([]);
       expect(a.aviso).toBeDefined();
       expect(a.aviso).not.toContain(vacio);
+      expect(a.codigoAviso).toBe("vacio");
       expect(a.detalles.join("\n")).toContain(vacio);
     } finally {
       await rm(vacio, { recursive: true, force: true });
@@ -195,12 +197,17 @@ describe("aviso publico y detalles de administrador", () => {
     expect(almacen.aviso).not.toMatch(/\d/);
   });
 
+  it("el codigo del aviso es estable: «descartados» cuando algun caso no se pudo cargar", () => {
+    expect(almacen.codigoAviso).toBe("descartados");
+  });
+
   it("un almacen sano no tiene aviso", async () => {
     const raiz = await mkdtemp(path.join(tmpdir(), "xpand-alm-sano-"));
     try {
       await cp(path.join(FIXTURE, "fp_dc"), path.join(raiz, "fp_dc"), { recursive: true });
       const a = await abrirAlmacen(raiz);
       expect(a.aviso).toBeUndefined();
+      expect(a.codigoAviso).toBeUndefined();
       expect(a.detalles).toEqual([]);
     } finally {
       await rm(raiz, { recursive: true, force: true });
@@ -243,6 +250,7 @@ describe("recargar", () => {
     expect(a.detalles.join("\n")).toContain(raiz);
     expect(a.aviso).toBeDefined();
     expect(a.aviso).not.toContain(raiz);
+    expect(a.codigoAviso).toBe("relectura");
   });
 });
 

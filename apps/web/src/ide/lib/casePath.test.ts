@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { casePath, parseCasePath } from "./casePath";
+import { casePath, parseCasePath, parseStrayCasePath } from "./casePath";
 
 describe("casoPath", () => {
   it("builds the case route from plain identifiers", () => {
@@ -57,5 +57,18 @@ describe("parseCasePath", () => {
 
   it("is null for an address with a broken percent sequence instead of throwing", () => {
     expect(parseCasePath("/casos/uno/%E0%A4%A")).toBeNull();
+  });
+});
+
+describe("parseStrayCasePath", () => {
+  it("gives the one segment of /casos/<segmento>, decoded: an address that is not a case", () => {
+    expect(parseStrayCasePath("/casos/tnep_garver6")).toBe("tnep_garver6");
+    expect(parseStrayCasePath("/casos/SNI%20a%C3%B1o")).toBe("SNI año");
+  });
+
+  it("is null for the catalog, for a case, for more segments and for a broken percent sequence", () => {
+    for (const path of [null, "/casos", "/casos/", "/casos/a/b", "/casos/a/b/c", "/otra/a", "/casos/%E0%A4%A"]) {
+      expect(parseStrayCasePath(path)).toBeNull();
+    }
   });
 });

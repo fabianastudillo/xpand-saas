@@ -9,7 +9,7 @@ import { formatSelection, parseSelection, type Selection } from "../features/exp
 import { caseKey, upsertOpenCase, withoutOpenCase, type OpenCase } from "../features/explorar/openCases";
 import { CASE_TECHNOLOGIES } from "../features/explorar/technologies";
 import { useAppText } from "../i18n/messages";
-import { casePath, CATALOG_PATH, parseCasePath } from "../lib/casePath";
+import { casePath, CATALOG_PATH, parseCasePath, parseStrayCasePath } from "../lib/casePath";
 import { textOf } from "../lib/values";
 import { isCaseNotFound } from "./caseErrors";
 import { CaseContext, IdeNavigationContext, type CaseContextValue, type IdeNavigationValue } from "./ideContext";
@@ -17,6 +17,8 @@ import { IdeFrame } from "./IdeFrame";
 
 const SELECTION_PARAM = "sel";
 const CATALOG_TAB_ID = "catalog";
+/** Tab of an address under the catalog that is not a case (`/casos/<segmento>`): shown, never kept open. */
+const STRAY_TAB_ID = "stray";
 const APP_NAME = "XPAND";
 
 export interface IdeLayoutProps {
@@ -38,6 +40,8 @@ export function IdeLayout({ children }: IdeLayoutProps): ReactElement {
   const engineId = caseRef?.engineId;
   const systemId = caseRef?.systemId;
   const key = engineId !== undefined && systemId !== undefined ? caseKey(engineId, systemId) : null;
+  // `/casos/<segmento>`: not a case, shown as «case not found» like one the server does not have.
+  const stray = parseStrayCasePath(pathname);
 
   const catalog = useCatalogo();
   const redQuery = useMemo(
@@ -76,7 +80,8 @@ export function IdeLayout({ children }: IdeLayoutProps): ReactElement {
   }, [key]);
 
   const catalogTitle = translate("catalog.title");
-  const title = key === null ? catalogTitle : notFound ? translate("case.notFound") : systemName;
+  const title =
+    key === null ? (stray === null ? catalogTitle : translate("case.notFound")) : notFound ? translate("case.notFound") : systemName;
 
   // The selection lives in the address, replaced in place (no history entry, no request to the server).
   const select = (next: Selection): void => {
@@ -87,7 +92,7 @@ export function IdeLayout({ children }: IdeLayoutProps): ReactElement {
 
   const closeCase = (closing: string): void => {
     setOpenCases((current) => withoutOpenCase(current, closing));
-    if (closing === key) router.push(CATALOG_PATH);
+    if (closing === key || closing === STRAY_TAB_ID) router.push(CATALOG_PATH);
   };
 
   const activate = (id: string): void => {
@@ -103,7 +108,9 @@ export function IdeLayout({ children }: IdeLayoutProps): ReactElement {
     { id: CATALOG_TAB_ID, title: catalogTitle, closable: false },
     ...openCases.filter((entry) => entry.key !== notFoundKey).map((entry) => ({ id: entry.key, title: entry.title })),
     ...(notFoundKey === null ? [] : [{ id: notFoundKey, title: systemName }]),
+    ...(stray === null ? [] : [{ id: STRAY_TAB_ID, title: stray }]),
   ];
+  const activeId = key ?? (stray === null ? CATALOG_TAB_ID : STRAY_TAB_ID);
   const caseContext = useMemo<CaseContextValue>(() => ({ red }), [red]);
   const navigation = useMemo<IdeNavigationValue>(
     () => ({
@@ -124,10 +131,10 @@ export function IdeLayout({ children }: IdeLayoutProps): ReactElement {
           path={key === null ? [] : [engineName, systemName]}
           errors={redErrors}
           onCloseDocument={
-            key === null
+            key === null && stray === null
               ? undefined
               : () => {
-                  closeCase(key);
+                  closeCase(key ?? STRAY_TAB_ID);
                 }
           }
           left={
@@ -143,7 +150,7 @@ export function IdeLayout({ children }: IdeLayoutProps): ReactElement {
           }
           right={caseRef === null ? undefined : <CaseInspector red={red.data} selection={selection} />}
           center={
-            <DocumentTabs documents={documents} activeId={key ?? CATALOG_TAB_ID} onActivate={activate} onClose={closeCase}>
+            <DocumentTabs documents={documents} activeId={activeId} onActivate={activate} onClose={closeCase}>
               {children}
             </DocumentTabs>
           }

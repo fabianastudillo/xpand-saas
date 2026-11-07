@@ -38,12 +38,21 @@ export interface OpcionesCaso {
   incluirInternos: boolean;
 }
 
+/**
+ * Codigo estable del aviso publico, para que la interfaz diga el suyo (traducido) sin interpretar el texto:
+ * `vacio` (el almacen no existe o no tiene casos), `relectura` (la ultima relectura fallo; se sirve la foto anterior),
+ * `descartados` (algun caso no se pudo cargar).
+ */
+export type CodigoAviso = "vacio" | "relectura" | "descartados";
+
 export interface Almacen {
   /**
    * Resumen generico y apto para publico (sin rutas del disco, ids ni texto de validacion);
    * undefined si todo fue bien. Es lo unico que puede llegar a una respuesta o a «Problemas».
    */
   readonly aviso?: string | undefined;
+  /** Codigo estable de `aviso`; undefined exactamente cuando no hay aviso. */
+  readonly codigoAviso?: CodigoAviso | undefined;
   /**
    * Motivos completos por caso (rutas, ids, errores de ajv). SOLO para el registro del servidor y el
    * administrador: nunca se serializa en una respuesta.
@@ -220,6 +229,12 @@ function leerAlmacen(dir: string, registrar: (msg: string) => void): Foto {
 
 const PREFIJO_FALLO = "No se pudo leer el almacen ";
 
+const TEXTO_AVISO: Readonly<Record<CodigoAviso, string>> = {
+  vacio: "El almacén de casos no existe o está vacío.",
+  relectura: "No se pudo actualizar el almacén de casos.",
+  descartados: "Algunos casos no se pudieron cargar.",
+};
+
 function mensajeError(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
@@ -251,13 +266,20 @@ function crearAlmacen(dir: string): Almacen {
   cargar();
 
   const visible = (c: Caso, o: OpcionesCaso) => o.incluirInternos || c.manifiesto.visibilidad === "publico";
+  const codigoAviso = (): CodigoAviso | undefined => {
+    if (foto.casos.size === 0) return "vacio";
+    if (recargaFallida) return "relectura";
+    // Sin numero en el texto: la cuenta incluiria casos internos, que no deben dejarse adivinar.
+    if (foto.descartados > 0) return "descartados";
+    return undefined;
+  };
   return {
     get aviso() {
-      if (foto.casos.size === 0) return "El almacén de casos no existe o está vacío.";
-      if (recargaFallida) return "No se pudo actualizar el almacén de casos.";
-      // Sin numero: la cuenta incluiria casos internos, que no deben dejarse adivinar.
-      if (foto.descartados > 0) return "Algunos casos no se pudieron cargar.";
-      return undefined;
+      const codigo = codigoAviso();
+      return codigo === undefined ? undefined : TEXTO_AVISO[codigo];
+    },
+    get codigoAviso() {
+      return codigoAviso();
     },
     get detalles() {
       return [...detallesInicio, ...lecturas];

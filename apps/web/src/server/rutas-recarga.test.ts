@@ -115,6 +115,34 @@ describe("relectura fallida: espera exponencial y foto anterior", () => {
     expect(almacen.recargar).toHaveBeenCalledTimes(1);
   });
 
+  it("un almacen sin casos (raiz que aun no existe) no entra en la espera creciente: se reintenta cada TTL", async () => {
+    // Primer arranque sin almacen: abrirAlmacen no falla (foto vacia) pero cada relectura si, hasta que se importa.
+    const importado = { listo: false };
+    const almacen: Almacen & { recargar: ReturnType<typeof vi.fn> } = {
+      get aviso() {
+        return importado.listo ? undefined : "El almacén de casos no existe o está vacío.";
+      },
+      get codigoAviso() {
+        return importado.listo ? undefined : ("vacio" as const);
+      },
+      detalles: [],
+      casos: () => (importado.listo ? [casoFalso("tnep_garver6")] : []),
+      caso: () => undefined,
+      recargar: vi.fn(() => Promise.resolve(importado.listo)),
+    };
+    vi.mocked(abrirAlmacen).mockResolvedValue(almacen);
+    expect(await sistemasDelCatalogo()).toStrictEqual([]);
+
+    for (let i = 1; i <= 5; i++) {
+      pasar(TTL_S + 1);
+      await getCatalogo();
+      expect(almacen.recargar).toHaveBeenCalledTimes(i); // cada TTL, no TTL, 2·TTL, 4·TTL...
+    }
+    importado.listo = true; // la importacion termina
+    pasar(TTL_S + 1);
+    expect(await sistemasDelCatalogo()).toStrictEqual(["tnep_garver6"]); // visible en <= TTL
+  });
+
   it("si el almacen no se puede abrir: 503 almacen_no_disponible con la forma unica, sin la causa; se reintenta con espera", async () => {
     vi.mocked(abrirAlmacen).mockRejectedValue(new Error("EACCES /ruta/secreta"));
     for (const r of [

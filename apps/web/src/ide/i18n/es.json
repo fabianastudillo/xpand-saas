@@ -75,7 +75,9 @@
   "problems.catalogEmpty.title": "El catálogo está vacío",
   "problems.catalogEmpty.cause": "El servidor no tiene casos publicados. Apunta XPAND_ALMACEN a la carpeta del almacén, impórtalos con importar-casos y recarga la página.",
   "problems.catalogNotice.title": "Aviso del almacén de casos",
-  "problems.catalogNotice.cause": "Algunos casos no se pudieron cargar.",
+  "problems.catalogNotice.cause": "El servidor avisa de un problema con el almacén de casos.",
+  "problems.catalogNotice.relectura": "No se pudo actualizar el almacén de casos; se muestra la última lectura.",
+  "problems.catalogNotice.descartados": "Algunos casos no se pudieron cargar.",
   "case.notFound": "Caso no encontrado",
   "case.notFound.detail": "El catálogo no tiene este caso.",
   "case.notFound.back": "Ir al catálogo"

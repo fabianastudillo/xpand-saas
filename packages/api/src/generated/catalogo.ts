@@ -17,6 +17,14 @@ export type Motor1 = {
  */
 export interface Catalogo {
   motores: Motor[];
+  /**
+   * Aviso público del almacén de casos (texto del servidor, en español). Solo cuando hay algo que avisar.
+   */
+  aviso?: string;
+  /**
+   * Código estable de «aviso»: vacio, relectura o descartados. La interfaz muestra su propio texto por código; uno que no conoce recibe el texto genérico.
+   */
+  codigo_aviso?: string;
   [k: string]: unknown;
 }
 export interface Sistema {

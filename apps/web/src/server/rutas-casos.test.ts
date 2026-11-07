@@ -19,6 +19,7 @@ const SESION_USUARIO = { user: { name: "Usuaria", email: "u@ejemplo.test", role:
 interface CuerpoCatalogo {
   motores: { id: string; sistemas: { id: string }[] }[];
   aviso?: string;
+  codigo_aviso?: string;
 }
 
 const pedirRed = (consulta: string) => getRed(new Request(`http://127.0.0.1:8870/api/red?${consulta}`));
@@ -83,7 +84,15 @@ describe("GET /api/catalogo", () => {
     expect(c.motores).toStrictEqual([]);
     expect(validador.check("catalogo", c)).toBeUndefined();
     expect(c.aviso).toEqual(expect.any(String));
+    expect(c.codigo_aviso).toBe("vacio");
     expect(JSON.stringify(c)).not.toContain("xpand-almacen-que-no-existe");
+  });
+
+  it("el aviso llega con su codigo estable: el almacen de prueba tiene casos descartados", async () => {
+    const c = (await cuerpo(await getCatalogo())) as CuerpoCatalogo;
+    expect(validador.check("catalogo", c)).toBeUndefined();
+    expect(c.aviso).toEqual(expect.any(String));
+    expect(c.codigo_aviso).toBe("descartados");
   });
 });
 

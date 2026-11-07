@@ -10,6 +10,14 @@
     "motores": {
       "type": "array",
       "items": { "$ref": "#/definitions/motor" }
+    },
+    "aviso": {
+      "type": "string",
+      "description": "Aviso público del almacén de casos (texto del servidor, en español). Solo cuando hay algo que avisar."
+    },
+    "codigo_aviso": {
+      "type": "string",
+      "description": "Código estable de «aviso»: vacio, relectura o descartados. La interfaz muestra su propio texto por código; uno que no conoce recibe el texto genérico."
     }
   },
   "definitions": {

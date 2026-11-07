@@ -6,8 +6,9 @@
 // - Se guardan el catalogo, las redes ya construidas (motor/sistema/tec) y los fallos del lector (cache negativa
 //   acotada: un caso roto se lee y se registra una vez por carga, no en cada peticion); todo se tira al releer.
 // - Si la relectura falla (devuelve false o lanza) se sigue sirviendo la foto anterior y el siguiente intento espera
-//   el TTL, luego el doble, ... hasta 5 min; al ir bien vuelve al TTL. Sin foto anterior (el almacen no se pudo
-//   abrir) las rutas responden 503 almacen_no_disponible.
+//   el TTL, luego el doble, ... hasta 5 min; al ir bien vuelve al TTL. Si la foto anterior no tiene casos (la raiz
+//   aun no existe: primer arranque antes de importar) no hay espera creciente: se reintenta cada TTL. Sin foto
+//   anterior (el almacen no se pudo abrir) las rutas responden 503 almacen_no_disponible.
 // - `detalles` (rutas, ids, motivos) va al registro del servidor una vez por carga; nunca a una respuesta.
 // - En M0 los casos `interno` no se sirven nunca: todo se pide con incluirInternos false.
 import os from "node:os";
@@ -95,8 +96,12 @@ function construirCatalogo(almacen: Almacen): Catalogo {
     const previo = motores.get(motor.id) ?? { ...(soloCampos(motor, CAMPOS_MOTOR_PUBLICOS) as Manifiesto["motor"]), sistemas: [] };
     motores.set(motor.id, { ...previo, sistemas: [...previo.sistemas, sistemaDelCatalogo(motor.id, sistema)] });
   }
-  const aviso = almacen.aviso;
-  return { motores: [...motores.values()], ...(aviso === undefined ? {} : { aviso }) };
+  const { aviso, codigoAviso } = almacen;
+  return {
+    motores: [...motores.values()],
+    ...(aviso === undefined ? {} : { aviso }),
+    ...(codigoAviso === undefined ? {} : { codigo_aviso: codigoAviso }),
+  };
 }
 
 function registrarDetalles(almacen: Almacen): void {
@@ -124,13 +129,21 @@ function esperaTrasFallos(n: number): number {
   return Math.min(Math.max(ttlMs(), MS_POR_S) * 2 ** (n - 1), ESPERA_MAXIMA_MS);
 }
 
+/** La foto vigente no tiene ningun caso (ni interno): p. ej. la raiz aun no existe porque no se ha importado nada. */
+function fotoVacia(previo: Estado | undefined): boolean {
+  return previo !== undefined && previo.almacen.casos({ incluirInternos: true }).length === 0;
+}
+
 function anotarFallo(e: unknown): Estado {
-  fallosSeguidos += 1;
-  const espera = esperaTrasFallos(fallosSeguidos);
+  // Sin casos que proteger no hay nada que ganar esperando mas: se reintenta cada TTL, para que una importacion
+  // recien hecha se vea como mucho un TTL despues (el primer arranque sin almacen no entra en la espera creciente).
+  const sinCasos = fotoVacia(estado);
+  fallosSeguidos = sinCasos ? 0 : fallosSeguidos + 1;
+  const espera = sinCasos ? ttlMs() : esperaTrasFallos(fallosSeguidos);
   proximoIntento = Date.now() + espera;
   const motivo = e instanceof Error ? e.message : String(e);
   console.warn(
-    `[almacen de casos] ${estado ? "relectura" : "apertura"} fallida (${String(fallosSeguidos)} seguidas): ${motivo}; ` +
+    `[almacen de casos] ${estado ? "relectura" : "apertura"} fallida (${sinCasos ? "almacen sin casos" : `${String(fallosSeguidos)} seguidas`}): ${motivo}; ` +
       `${estado ? "se sirve la foto anterior; " : ""}proximo intento en ${String(espera / MS_POR_S)} s`,
   );
   if (estado) return estado;

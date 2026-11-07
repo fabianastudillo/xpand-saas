@@ -28,3 +28,22 @@ export function parseCasePath(pathname: string | null): CaseRef | null {
     return null;
   }
 }
+
+const STRAY_SEGMENTS = 2;
+
+/**
+ * The one segment of `/casos/<segmento>`, decoded: an address under the catalog that is not a case. The zone shows it
+ * as «case not found», like a case the server does not have (spec §6.3: one story for «this address is not a case»).
+ * Null for any other address, and for a broken percent sequence.
+ */
+export function parseStrayCasePath(pathname: string | null): string | null {
+  if (pathname === null) return null;
+  const segments = pathname.split("/").slice(1);
+  const [root, segment] = segments;
+  if (segments.length !== STRAY_SEGMENTS || root !== CATALOG_PATH.slice(1) || !segment) return null;
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return null;
+  }
+}

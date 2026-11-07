@@ -54,7 +54,7 @@ export const SPECIAL_SYSTEM_NAME = "SNI año/2032 ñ (sintético)";
 const SYNTHETIC_ENGINES = ["jump_misocp", "fp_dc"] as const;
 const SYNTHETIC_DIFFICULTIES = ["rapido", "medio", "pesado"] as const;
 /** What the real /api/catalogo answers when the store folder is missing or empty (task 5). */
-const EMPTY_CATALOG = { motores: [], aviso: "El almacén de casos no existe o está vacío." };
+const EMPTY_CATALOG = { motores: [], aviso: "El almacén de casos no existe o está vacío.", codigo_aviso: "vacio" };
 
 const unexpected = new WeakMap<Page, string[]>();
 const expectedFailure = new WeakSet<Page>();

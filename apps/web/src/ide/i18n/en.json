@@ -75,7 +75,9 @@
   "problems.catalogEmpty.title": "The catalog is empty",
   "problems.catalogEmpty.cause": "The server has no published cases. Point XPAND_ALMACEN to the store folder, import the cases with importar-casos and reload the page.",
   "problems.catalogNotice.title": "Notice from the case store",
-  "problems.catalogNotice.cause": "Some cases could not be loaded.",
+  "problems.catalogNotice.cause": "The server reports a problem with the case store.",
+  "problems.catalogNotice.relectura": "The case store could not be updated; the last reading is shown.",
+  "problems.catalogNotice.descartados": "Some cases could not be loaded.",
   "case.notFound": "Case not found",
   "case.notFound.detail": "The catalog does not have this case.",
   "case.notFound.back": "Go to the catalog"
