@@ -24,6 +24,7 @@ pnpm install --frozen-lockfile   # instalar dependencias
 pnpm lint                        # ESLint (configuración plana)
 pnpm typecheck                   # TypeScript estricto en cada paquete
 pnpm test                        # Vitest
+pnpm --filter @xpand/api gen    # regenerar los tipos de contracts/api (pnpm test comprueba que no difieren)
 pnpm e2e                         # placeholder hasta la Tarea 8
 pnpm build                       # build de los paquetes que lo definan
 pnpm test:scripts                # pruebas de scripts/sync-from-xpand.sh (también en pnpm test)
