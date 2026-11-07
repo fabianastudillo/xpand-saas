@@ -132,8 +132,24 @@ describe("GET /api/red", () => {
     expect(Object.keys(b)).toStrictEqual(["error"]);
     expect((await getCatalogo()).status).toBe(200);
     expect((await pedirRed("motor=jump_misocp&sistema=tnep_garver6&tec=ac")).status).toBe(200);
-    // Un fallo no se guarda en la cache: se vuelve a intentar y vuelve a fallar igual.
+    // El mismo fallo en la siguiente peticion (cache negativa), con el mismo cuerpo.
+    const r2 = await pedirRed("motor=jump_misocp&sistema=tnep_truncado&tec=ac");
+    expect(r2.status).toBe(500);
+    expect(await cuerpo(r2)).toStrictEqual(b);
+  });
+
+  it("cache negativa: un caso roto se lee y se registra una vez por carga del almacen, no en cada peticion", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-07T12:00:00Z"));
+    vi.stubEnv("XPAND_ALMACEN_TTL_S", "30");
+    usarAlmacen(ALMACEN);
+    const registrosDelTruncado = () =>
+      vi.mocked(console.error).mock.calls.filter((c) => c.join(" ").includes("tnep_truncado")).length;
+    for (let i = 0; i < 5; i++) expect((await pedirRed("motor=jump_misocp&sistema=tnep_truncado&tec=ac")).status).toBe(500);
+    expect(registrosDelTruncado()).toBe(1);
+    vi.setSystemTime(new Date(Date.now() + 31_000)); // relectura: la cache negativa se tira y se vuelve a intentar
     expect((await pedirRed("motor=jump_misocp&sistema=tnep_truncado&tec=ac")).status).toBe(500);
+    expect(registrosDelTruncado()).toBe(2);
   });
 
   it.each(["tec=hvdc", "tec=ac,hvdc", "tec=", ""])("%s: 400 tec_no_soportada (antes de mirar el caso)", async (tec) => {

@@ -2,13 +2,23 @@
 // invocandola con objetos Request. /api/sesion vive en sesion.ts: asi estas rutas no cargan la pila de next-auth.
 import { LectorError } from "@xpand/casos";
 import paquete from "../../package.json";
-import { catalogoVigente, redVigente } from "./casos";
+import { AlmacenNoDisponible, catalogoVigente, redVigente } from "./casos";
 import { error, json } from "./respuestas";
 
 const TEC_SOPORTADA = "ac";
 
+function almacenNoDisponible(): Response {
+  return error(503, "almacen_no_disponible", "El almacén de casos no está disponible; se reintentará.");
+}
+
 export async function responderCatalogo(): Promise<Response> {
-  return json(await catalogoVigente());
+  try {
+    return json(await catalogoVigente());
+  } catch (e) {
+    if (e instanceof AlmacenNoDisponible) return almacenNoDisponible();
+    console.error("[api/catalogo] error inesperado", e);
+    return error(500, "error_interno", "No se pudo leer el catálogo.");
+  }
 }
 
 export async function responderRed(request: Request): Promise<Response> {
@@ -27,9 +37,10 @@ export async function responderRed(request: Request): Promise<Response> {
     if (!red) return error(404, "caso_no_encontrado", "No existe el caso pedido.");
     return json(red);
   } catch (e) {
+    if (e instanceof AlmacenNoDisponible) return almacenNoDisponible();
     if (e instanceof LectorError) {
-      console.error(`[api/red] ${motor}/${sistema}: ${e.message}`, e.cause ?? "");
-      // El mensaje del LectorError solo nombra ficheros relativos del caso: apto para «Problemas».
+      // Ya registrado (una vez por carga) en redVigente. El mensaje del LectorError solo nombra ficheros
+      // relativos del caso: apto para «Problemas».
       return error(500, e.codigo, `No se pudo leer la red del caso: ${e.message}.`);
     }
     console.error(`[api/red] ${motor}/${sistema}: error inesperado`, e);

@@ -190,6 +190,11 @@ describe("aviso publico y detalles de administrador", () => {
     expect(almacen.detalles.length).toBeGreaterThan(0);
   });
 
+  it("aviso no dice cuantos casos fallaron (contaria tambien los internos)", () => {
+    expect(almacen.aviso).toBeDefined();
+    expect(almacen.aviso).not.toMatch(/\d/);
+  });
+
   it("un almacen sano no tiene aviso", async () => {
     const raiz = await mkdtemp(path.join(tmpdir(), "xpand-alm-sano-"));
     try {
@@ -219,7 +224,7 @@ describe("recargar", () => {
       await rm(path.join(raiz, "fp_dc"), { recursive: true });
       expect(a.casos(SIN_INTERNOS)).toHaveLength(2); // foto: aun no surte efecto
 
-      await a.recargar();
+      expect(await a.recargar()).toBe(true);
       expect(a.caso("jump_misocp", "tnep_garver6", SIN_INTERNOS)).toBeUndefined();
       expect(a.caso("fp_dc", "tnep_garver6", CON_INTERNOS)).toBeUndefined();
       expect(a.caso("jump_misocp", "tnep_garver6", CON_INTERNOS)).toBeDefined();
@@ -233,7 +238,7 @@ describe("recargar", () => {
     await cp(path.join(FIXTURE, "fp_dc"), path.join(raiz, "fp_dc"), { recursive: true });
     const a = await abrirAlmacen(raiz);
     await rm(raiz, { recursive: true, force: true });
-    await a.recargar();
+    expect(await a.recargar()).toBe(false);
     expect(a.casos(SIN_INTERNOS)).toHaveLength(1);
     expect(a.detalles.join("\n")).toContain(raiz);
     expect(a.aviso).toBeDefined();

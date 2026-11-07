@@ -22,7 +22,30 @@ describe("decidirArranque", () => {
       host: "127.0.0.1",
       puerto: 8870,
       args: ["dev", "-H", "127.0.0.1", "-p", "8870"],
+      entorno: { XPAND_WEB_HOST: "127.0.0.1", XPAND_MODO_LOCAL: "1" },
     });
+  });
+
+  it("passes Next the listening host and, on loopback, XPAND_MODO_LOCAL=1 (the «local» label of /api/sesion)", () => {
+    for (const modo of ["dev", "start"]) {
+      expect(decidirArranque({ modo, env: { ...base, HOST: "::1" } }).entorno).toEqual({
+        XPAND_WEB_HOST: "::1",
+        XPAND_MODO_LOCAL: "1",
+      });
+    }
+  });
+
+  it("keeps an explicit XPAND_MODO_LOCAL (=0 behind a reverse proxy on this machine)", () => {
+    expect(decidirArranque({ modo: "start", env: { ...base, XPAND_MODO_LOCAL: "0" } }).entorno).toEqual({
+      XPAND_WEB_HOST: "127.0.0.1",
+      XPAND_MODO_LOCAL: "0",
+    });
+  });
+
+  it("listening on the network, XPAND_MODO_LOCAL is 0", () => {
+    expect(
+      decidirArranque({ modo: "dev", env: { HOST: "0.0.0.0", XPAND_PERMITIR_RED: "1" } }).entorno,
+    ).toEqual({ XPAND_WEB_HOST: "0.0.0.0", XPAND_MODO_LOCAL: "0" });
   });
 
   it("takes the port from XPAND_WEB_PORT", () => {

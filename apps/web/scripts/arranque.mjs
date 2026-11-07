@@ -30,7 +30,7 @@ const SILENCIO = { info() {}, error: console.error };
 /**
  * Decide host, puerto y argumentos de Next a partir del modo y el entorno.
  * @param {{ modo: string | undefined, env: Record<string, string | undefined> }} entrada
- * @returns {{ ok: true, host: string, puerto: number, args: string[] } | { ok: false, codigo: number, mensaje: string }}
+ * @returns {{ ok: true, host: string, puerto: number, args: string[], entorno: { XPAND_WEB_HOST: string, XPAND_MODO_LOCAL: string } } | { ok: false, codigo: number, mensaje: string }}
  */
 export const decidirArranque = ({ modo, env }) => {
   if (modo === undefined || !MODOS.has(modo)) {
@@ -65,10 +65,22 @@ export const decidirArranque = ({ modo, env }) => {
     host,
     puerto,
     args: [modo, "-H", host, "-p", String(puerto)],
+    entorno: entornoDeNext({ host, env }),
   };
 };
 
 const rechazo = (mensaje) => ({ ok: false, codigo: CODIGO_USO, mensaje });
+
+/**
+ * Variables que el proceso de Next recibe además del entorno: XPAND_WEB_HOST (la dirección de `-H`) y
+ * XPAND_MODO_LOCAL, la etiqueta «local» de /api/sesion (src/server/local.ts; nunca autoriza nada). Escuchando en
+ * loopback vale 1 salvo que venga ya definida (XPAND_MODO_LOCAL=0 detrás de un proxy inverso en esta máquina);
+ * escuchando en la red, 0.
+ */
+const entornoDeNext = ({ host, env }) => ({
+  XPAND_WEB_HOST: host,
+  XPAND_MODO_LOCAL: HOSTS_LOCALES.has(host) ? (env.XPAND_MODO_LOCAL?.trim() || "1") : "0",
+});
 
 /**
  * Loads the env files of `dir` for `modo` into process.env with Next's own loader and precedence. Variables
@@ -108,11 +120,10 @@ const ejecutar = () => {
   }
 
   const nextBin = fileURLToPath(import.meta.resolve("next/dist/bin/next"));
-  // XPAND_WEB_HOST: la dirección en la que escucha Next. /api/sesion decide con ella si toda petición es de esta
-  // máquina (src/server/local.ts); pisa cualquier valor de los .env, que no saben con qué -H se arrancó.
+  // decision.entorno pisa lo que traigan los .env: ellos no saben con qué -H se arrancó.
   const hijo = spawn(process.execPath, [nextBin, ...decision.args], {
     stdio: "inherit",
-    env: { ...process.env, XPAND_WEB_HOST: decision.host },
+    env: { ...process.env, ...decision.entorno },
   });
   hijo.on("error", (error) => {
     console.error(`arranque: no se pudo ejecutar next (${error.message})`);

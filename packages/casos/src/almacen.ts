@@ -53,9 +53,10 @@ export interface Almacen {
   caso(motor: string, sistema: string, opts: OpcionesCaso): Caso | undefined;
   /**
    * Relee los manifiestos del disco y sustituye el listado de una vez. Si la relectura falla (p. ej. el
-   * almacen desaparece) se sigue sirviendo la foto anterior y el motivo queda en `detalles`.
+   * almacen desaparece) se sigue sirviendo la foto anterior, el motivo queda en `detalles` y devuelve false
+   * (true si la relectura fue bien). No lanza.
    */
-  recargar(): Promise<void>;
+  recargar(): Promise<boolean>;
 }
 
 // Los tipos de @types/node los dan por definidos, pero en Windows O_NOFOLLOW y O_NONBLOCK son undefined.
@@ -232,17 +233,19 @@ function crearAlmacen(dir: string): Almacen {
     if (lecturas.length < MAX_DETALLES_LECTURA) lecturas.push(msg);
   };
 
-  const cargar = (): void => {
+  const cargar = (): boolean => {
     try {
       foto = leerAlmacen(dir, registrar);
       detallesInicio =
         foto.casos.size === 0 ? [`El almacen ${dir} no tiene casos; importe los casos publicos para poblarlo.`, ...foto.detalles] : foto.detalles;
       recargaFallida = false;
       lecturas.length = 0; // los fallos de lectura de la foto anterior ya no aplican
+      return true;
     } catch (e) {
       recargaFallida = true;
       // Se sustituye la entrada de fallo anterior (si la hay) para que N relecturas fallidas dejen detalles acotados.
       detallesInicio = [...detallesInicio.filter((d) => !d.startsWith(PREFIJO_FALLO)), `${PREFIJO_FALLO}${dir}: ${mensajeError(e)}`];
+      return false;
     }
   };
   cargar();
@@ -252,7 +255,8 @@ function crearAlmacen(dir: string): Almacen {
     get aviso() {
       if (foto.casos.size === 0) return "El almacén de casos no existe o está vacío.";
       if (recargaFallida) return "No se pudo actualizar el almacén de casos.";
-      if (foto.descartados > 0) return `${String(foto.descartados)} casos no se pudieron cargar.`;
+      // Sin numero: la cuenta incluiria casos internos, que no deben dejarse adivinar.
+      if (foto.descartados > 0) return "Algunos casos no se pudieron cargar.";
       return undefined;
     },
     get detalles() {
@@ -264,7 +268,7 @@ function crearAlmacen(dir: string): Almacen {
       const c = foto.casos.get(`${motor}\0${sistema}`);
       return c && visible(c, opts) ? c : undefined;
     },
-    recargar: () => new Promise<void>((resolve) => { cargar(); resolve(); }),
+    recargar: () => new Promise<boolean>((resolve) => { resolve(cargar()); }),
   };
 }
 
