@@ -23,12 +23,12 @@ export const PublicNavbar = () => {
       aria-label="main navbar"
     >
       <MobileNav links={publicNavLinks} />
-      <div className="hidden lg:flex items-center flex-shrink-0 mr-6">
+      <div className="hidden lg:flex items-center shrink-0 mr-6">
         <Link href="/" className="btn btn-ghost text-xl">
           {siteMetadata.title}
         </Link>
       </div>
-      <NavigationMenuList className="hidden lg:flex flex-grow lg:items-center lg:w-auto">
+      <NavigationMenuList className="hidden lg:flex grow lg:items-center lg:w-auto">
         {publicNavLinks.map((link) => (
           <NavigationMenuItem key={link.url}>
             <NavigationMenuLink

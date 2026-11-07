@@ -16,6 +16,8 @@
     "test": "vitest run && pnpm test:scripts && pnpm --filter @xpand/api gen:check",
     "e2e": "pnpm --filter @xpand/ide-spa e2e",
     "build": "pnpm -r --if-present run build",
+    "db:start": "pnpm --filter @xpand/web db:start",
+    "e2e:web": "pnpm --filter @xpand/web e2e",
     "test:scripts": "bash scripts/package-dist.test.sh"
   },
   "devDependencies": {

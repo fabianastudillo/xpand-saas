@@ -2,6 +2,18 @@
 
 Formato por versión. Cada release de GitHub toma sus notas de la sección `## vX.Y.Z` de este fichero.
 
+## Sin publicar
+
+- **Base nueva:** `apps/web` es la plantilla open-micro-saas (`saas-plantilla` 43e65a1, MIT) subida a Next 15,
+  React 19 y Tailwind 4, con cuentas (next-auth), Prisma + Postgres y administración. Pagos, analítica, soporte y
+  entrada con Google quedan apagados mientras no tengan claves: ninguna página falla ni habla con terceros.
+- **Seguridad de la plantilla:** las acciones de administración de usuarios y de banderas comprueban el rol de
+  administrador (antes cualquier sesión podía ascenderse), y los enlaces de entrada se montan sobre `AUTH_URL`,
+  no sobre la cabecera Host (obligatorio en producción).
+- **Arranque:** Next escucha solo en `127.0.0.1:8870` (`XPAND_WEB_PORT`); otra dirección exige
+  `XPAND_PERMITIR_RED=1`.
+- La SPA Vite de M0 pasa a `apps/ide-spa` hasta que la zona IDE se monte en la app Next.
+
 ## v0.1.0
 
 Primera versión de la interfaz nueva de XPAND (M0). Solo lectura: la interfaz consulta el catálogo, la red de un

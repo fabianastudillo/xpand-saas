@@ -20,7 +20,7 @@ export const UserNavbar = () => {
       aria-label="main navbar"
     >
       <MobileNav links={authenticatedUserNavLinks} />
-      <div className="hidden lg:flex items-center flex-shrink-0 mr-6">
+      <div className="hidden lg:flex items-center shrink-0 mr-6">
         <Link
           href={authConfig.normalUserCallbackUrl}
           className="btn btn-ghost text-xl"

@@ -29,3 +29,31 @@ jobs:
       - run: pnpm --filter @xpand/ide-spa exec playwright install --with-deps chromium
       - run: pnpm e2e
 
+  # Pruebas Playwright de la app Next (plantilla open-micro-saas): necesitan Postgres y un servidor SMTP de
+  # prueba que levanta la propia suite. Los valores de apps/web/.env.test son locales y regenerables, no secretos.
+  e2e-web:
+    runs-on: ubuntu-latest
+    env:
+      CI: "1"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @xpand/web exec playwright install --with-deps chromium firefox
+      - run: pnpm --filter @xpand/web test:db:start
+      - run: pnpm --filter @xpand/web test:db:prepare
+      - name: Pruebas Playwright de apps/web (build de producción, variables de .env.test)
+        working-directory: apps/web
+        run: set -a && . ./.env.test && set +a && pnpm exec playwright test
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: failure()
+        with:
+          name: playwright-report-web
+          path: apps/web/playwright-report/
+          retention-days: 7

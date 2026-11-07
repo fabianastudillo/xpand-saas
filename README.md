@@ -42,11 +42,44 @@ pnpm --filter @xpand/api gen     # regenerar los tipos de contracts/api (pnpm te
 
 > **Por qué TypeScript está fijado a `~5.9.3`:** typescript-eslint 8.x no da soporte a TypeScript 7. Se sube a 7 cuando la versión de typescript-eslint en uso lo declare como compatible en su `peerDependencies` (y el lint y typecheck pasen).
 
+## App web (`apps/web`)
+
+`apps/web` es la plantilla [open-micro-saas](https://github.com/product-makers-hub/open-micro-saas) (MIT,
+`apps/web/LICENSE.md`), copiada de `saas-plantilla` en el commit `43e65a1` y subida a Next 15, React 19 y
+Tailwind 4. Da las zonas pública, de usuario y de administración, cuentas con next-auth (enlace mágico por
+correo y Google opcional), Prisma con Postgres y, apagados mientras no tengan claves, pagos (Stripe), analítica y
+soporte. Sin claves ninguna página falla ni habla con terceros (lo prueba `tests/**/sin-terceros*.spec.ts`).
+
+```bash
+cp apps/web/.env.example apps/web/.env   # rellena NEXTAUTH_SECRET y la contraseña de Postgres
+pnpm db:start                            # Postgres de desarrollo (docker compose) en 127.0.0.1:6500
+pnpm --filter @xpand/web db:migrate:dev  # migraciones de Prisma
+pnpm dev                                 # Next en http://localhost:8870/ (escucha en 127.0.0.1)
+```
+
+`pnpm dev` y `pnpm start` pasan por `apps/web/scripts/arranque.mjs`: Next escucha solo en `127.0.0.1` y en el
+puerto `XPAND_WEB_PORT` (8870). Un `HOST` que no sea local sin `XPAND_PERMITIR_RED=1` aborta con código 64, y
+`pnpm start` exige `AUTH_URL`. El navegador ve la app como `localhost:8870`: Next normaliza todo host de bucle a
+`localhost`, y Auth.js monta sobre él los enlaces de entrada.
+
+Pruebas de la app: `pnpm --filter @xpand/web test` (Vitest) y, con Postgres de prueba,
+
+```bash
+pnpm --filter @xpand/web test:db:start    # Postgres de prueba en 127.0.0.1:5433 (apps/web/.env.test)
+pnpm --filter @xpand/web test:db:prepare  # migraciones
+pnpm --filter @xpand/web exec playwright install chromium firefox   # una vez
+pnpm e2e:web                              # Playwright de apps/web (levanta `pnpm dev` y un SMTP de prueba)
+pnpm --filter @xpand/web test:db:stop     # parar el contenedor
+```
+
+Los valores de `apps/web/.env.test` (secreto de sesión, contraseña de Postgres) son locales y regenerables.
+
 ## Pruebas
 
 | Comando | Qué prueba | Dónde corre |
 |---|---|---|
-| `pnpm test` | Vitest (unitarias de los paquetes y de la aplicación), pruebas de `scripts/` y `gen:check` | Local y CI |
+| `pnpm test` | Vitest (unitarias de los paquetes y de las aplicaciones), pruebas de `scripts/` y `gen:check` | Local y CI |
+| `pnpm e2e:web` | Playwright de `apps/web` (plantilla: entrada, perfil, administración, accesibilidad, sin terceros). Necesita el Postgres de prueba (ver «App web»). | Local y CI (job `e2e-web`) |
 | `pnpm e2e` | Playwright contra la build de `apps/ide-spa` (`vite build` + `vite preview` en `127.0.0.1:4173`), con la API simulada de `apps/ide-spa/e2e/mock-api.ts` y `contracts/api/examples`. No hace falta el servidor. | Local y CI |
 
 Antes del primer `pnpm e2e` instala Chromium una vez: `pnpm --filter @xpand/ide-spa exec playwright install chromium`.

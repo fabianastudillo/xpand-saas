@@ -11,9 +11,9 @@ export const WhyChooseUs = () => {
       </Typography>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {reasons.map((reason, index) => (
-          <div key={index} className="rounded-lg shadow p-6">
+          <div key={index} className="rounded-lg shadow-sm p-6">
             <div className="flex flex-col gap-4 items-center space-x-4">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 {/* Placeholder for an icon or image */}
                 <svg
                   className="h-12 w-12 text-blue-500"

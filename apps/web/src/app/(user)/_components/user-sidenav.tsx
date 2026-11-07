@@ -4,7 +4,7 @@ import { NavLink } from "@/components/ui/nav-link";
 export const UserSidenav = () => {
   return (
     <aside
-      className="hidden max-h-full lg:block w-64 flex-shrink-0 border-r-2 px-4"
+      className="hidden max-h-full lg:block w-64 shrink-0 border-r-2 px-4"
       aria-label="User sidenav"
     >
       <ul>
