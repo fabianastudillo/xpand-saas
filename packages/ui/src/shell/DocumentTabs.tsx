@@ -26,9 +26,26 @@ const CLOSE_KEYS = "Delete Control+Backspace";
 const CLOSE =
   "ml-0.5 inline-flex h-6 w-6 items-center justify-center rounded-sm text-ink-muted hover:bg-surface-sunken hover:text-ink";
 
+/**
+ * Radix derives the element ids of a tab and its panel from its value, and ids must not hold spaces or stray
+ * characters. Each character outside [A-Za-z0-9] is escaped as `_<hex>_` (the underscore too), so the mapping is
+ * injective and the value is IDREF-safe whatever the document identifier is (a case may be "SNI año/2032 ñ").
+ */
+export function tabValue(documentId: string): string {
+  return Array.from(documentId, (character) =>
+    /[A-Za-z0-9-]/.test(character) ? character : `_${character.codePointAt(0)?.toString(16) ?? "0"}_`,
+  ).join("");
+}
+
 interface PendingFocus {
   closedId: string;
   nextId: string | null;
+}
+
+/** The tab of a document, found by its identifier (never by a selector built from it). */
+function triggerOf(list: HTMLElement | null, documentId: string): HTMLElement | null {
+  if (list === null) return null;
+  return [...list.querySelectorAll<HTMLElement>("[data-document-id]")].find((element) => element.dataset["documentId"] === documentId) ?? null;
 }
 
 function isCloseKey(event: KeyboardEvent): boolean {
@@ -62,8 +79,10 @@ export function DocumentTabs({
     if (documents.some((document) => document.id === pending.closedId)) return; // not closed (yet)
     pendingFocus.current = null;
     if (pending.nextId === null) return;
-    listRef.current?.querySelector<HTMLElement>(`[data-document-id="${pending.nextId}"]`)?.focus();
+    triggerOf(listRef.current, pending.nextId)?.focus();
   }, [documents]);
+
+  const documentOf = (value: string): ShellDocument | undefined => documents.find((entry) => tabValue(entry.id) === value);
 
   if (documents.length === 0) {
     return <p className="px-3 py-2 text-sm text-ink-muted">{t("shell.documents.empty")}</p>;
@@ -79,7 +98,14 @@ export function DocumentTabs({
   };
 
   return (
-    <Tabs value={activeId ?? ""} onValueChange={onActivate} className={cn("min-h-0 flex-1", className)}>
+    <Tabs
+      value={activeId === null ? "" : tabValue(activeId)}
+      onValueChange={(value) => {
+        const document = documentOf(value);
+        if (document !== undefined) onActivate(document.id);
+      }}
+      className={cn("min-h-0 flex-1", className)}
+    >
       <span id={hintId} className="xp-sr-only">
         {t("shell.documents.closeHint")}
       </span>
@@ -89,7 +115,7 @@ export function DocumentTabs({
           return (
             <div key={document.id} role="none" className="flex items-center">
               <TabsTrigger
-                value={document.id}
+                value={tabValue(document.id)}
                 data-document-id={document.id}
                 className="pr-1"
                 {...(closable ? { "aria-keyshortcuts": CLOSE_KEYS, "aria-describedby": hintId } : {})}
@@ -115,7 +141,7 @@ export function DocumentTabs({
                   aria-hidden="true"
                   className={CLOSE}
                   onClick={() => {
-                    close(document, listRef.current?.querySelector(`[data-document-id="${document.id}"]`) ?? null);
+                    close(document, triggerOf(listRef.current, document.id));
                   }}
                 >
                   ×
@@ -127,7 +153,7 @@ export function DocumentTabs({
       </TabsList>
       {/* A bounded column: the document scrolls itself (a long list windows inside it), the tabs stay put. */}
       {activeId !== null ? (
-        <TabsContent value={activeId} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <TabsContent value={tabValue(activeId)} className="flex min-h-0 flex-1 flex-col overflow-auto">
           {children}
         </TabsContent>
       ) : null}

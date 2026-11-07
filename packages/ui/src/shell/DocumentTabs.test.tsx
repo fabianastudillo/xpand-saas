@@ -121,3 +121,34 @@ describe("<DocumentTabs>", () => {
     expect(screen.queryByRole("tablist")).toBeNull();
   });
 });
+
+describe("<DocumentTabs> element ids", () => {
+  const awkward: readonly ShellDocument[] = [
+    { id: "jump_misocp/SNI año/2032 ñ", title: "SNI año/2032 ñ" },
+    { id: "fp_dc/tnep garver 6", title: "Garver 6" },
+  ];
+
+  it("gives the tabs and their panels ids without whitespace or invalid characters, and the references resolve", () => {
+    const { container } = render(
+      <DocumentTabs documents={awkward} activeId="jump_misocp/SNI año/2032 ñ" onActivate={() => {}} onClose={() => {}}>
+        <p>contenido</p>
+      </DocumentTabs>,
+    );
+    const ids = [...container.querySelectorAll("[id]")].map((element) => element.id);
+    expect(ids.length).toBeGreaterThan(0);
+    for (const id of ids) expect(id, id).toMatch(/^[A-Za-z0-9_-]+$/);
+    // Radix renders only the active panel: the selected tab is the one whose reference must resolve.
+    for (const element of container.querySelectorAll('[role="tab"][aria-selected="true"][aria-controls]')) {
+      for (const reference of (element.getAttribute("aria-controls") ?? "").split(/\s+/)) {
+        expect(ids).toContain(reference);
+      }
+    }
+  });
+
+  it("activates the document whose identifier is awkward, and only that one", async () => {
+    const onActivate = vi.fn();
+    render(<DocumentTabs documents={awkward} activeId={null} onActivate={onActivate} onClose={() => {}} />);
+    await userEvent.click(screen.getByRole("tab", { name: "Garver 6" }));
+    expect(onActivate).toHaveBeenCalledWith("fp_dc/tnep garver 6");
+  });
+});

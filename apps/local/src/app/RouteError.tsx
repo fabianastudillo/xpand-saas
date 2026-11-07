@@ -17,6 +17,10 @@ export function RouteError(): ReactElement {
   const cause = error instanceof Error ? error.message : String(error);
 
   useEffect(() => {
+    document.title = `${translate("problems.route.title")} · XPAND`;
+  }, [translate]);
+
+  useEffect(() => {
     problemsStore.add({
       id: ROUTE_PROBLEM_ID,
       severity: "error",

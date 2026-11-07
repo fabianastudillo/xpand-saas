@@ -17,7 +17,7 @@
   "catalog.empty": "Ningún sistema coincide con los filtros.",
   "catalog.error": "No se pudo cargar el catálogo. Revisa «Problemas».",
   "catalog.difficulty": "Esfuerzo: {value}",
-  "catalog.reference": "Valor de referencia (sin unidad declarada)",
+  "catalog.reference": "Valor de referencia",
   "unit.buses": "barras",
   "case.error": "No se pudo cargar el caso. Revisa «Problemas».",
   "case.tree.buses": "Barras",
@@ -63,5 +63,6 @@
   "difficulty.medium": "medio",
   "difficulty.heavy": "pesado",
   "problems.route.title": "La pantalla no se pudo mostrar",
-  "problems.route.cause": "Esta pantalla no se pudo preparar. Revisa el aviso en «Problemas»."
+  "problems.route.cause": "Esta pantalla no se pudo preparar. Revisa el aviso en «Problemas».",
+  "catalog.referenceLegend": "Valor de referencia: sin unidad declarada en el contrato."
 }

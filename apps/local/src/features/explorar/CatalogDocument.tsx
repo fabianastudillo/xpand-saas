@@ -1,6 +1,6 @@
 import type { Catalogo } from "@xpand/api";
 import { Field, Input, Skeleton, formatNumber, t, useWindowedRows } from "@xpand/ui";
-import { useEffect, useRef, useState, type KeyboardEvent, type ReactElement, type SyntheticEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactElement, type SyntheticEvent } from "react";
 import { Link } from "react-router";
 import { casePath, FROM_CATALOG } from "../../lib/casePath";
 import { useAppText, type AppMessageKey } from "../../i18n/messages";
@@ -138,6 +138,9 @@ export function CatalogDocument({
               ? translate("catalog.count.one")
               : translate("catalog.count", { n: formatNumber(visibleEntries.length, { digits: 0 }) })}
           </p>
+          {visibleEntries.some((entry) => entry.system.referencias?.[0] !== undefined) ? (
+            <p className="text-xs text-ink-muted">{translate("catalog.referenceLegend")}</p>
+          ) : null}
           <CatalogList entries={visibleEntries} label={translate("catalog.list")} />
         </>
       )}
@@ -162,20 +165,23 @@ interface CatalogListProps {
 }
 
 /**
- * The list of systems, windowed: only the rows near the viewport are in the DOM. One tab stop (roving focus) moves
- * with the arrow keys, Home and End, and reveals the row it lands on, so the keyboard reaches every system.
+ * The list of systems, windowed: only the rows near the viewport are in the DOM. The focused row is always mounted:
+ * outside the window it is pinned at its own offset (as CaseTree does), so scrolling never drops the focus, and it is
+ * the single tab stop of the list. Arrow keys, Home and End move the focus and reveal the row they land on.
  */
 function CatalogList({ entries, label }: CatalogListProps): ReactElement {
   const [focusIndex, setFocusIndex] = useState(0);
   const focusPending = useRef(false);
-  const { scrollRef, measureRowRef, range, windowed, onScroll, reveal } = useWindowedRows({
+  const { scrollRef, measureRowRef, range, rowHeight, windowed, onScroll, reveal } = useWindowedRows({
     count: entries.length,
     threshold: WINDOW_THRESHOLD,
     defaultRowHeight: ROW_HEIGHT_PX,
     defaultViewportHeight: VIEWPORT_FALLBACK_PX,
     overscan: OVERSCAN_ROWS,
   });
+  // Clamped on every render: a filter that shortens the list moves the tab stop to its last row.
   const current = Math.min(focusIndex, Math.max(0, entries.length - 1));
+  const pinnedIndex = windowed && entries.length > 0 ? current : null;
 
   // After a key moved the focus, the target row is mounted in the same batch: give it the focus.
   useEffect(() => {
@@ -194,32 +200,51 @@ function CatalogList({ entries, label }: CatalogListProps): ReactElement {
     setFocusIndex(target);
   };
 
-  const visible = entries.slice(range.start, range.end);
+  const visible = entries
+    .slice(range.start, range.end)
+    .map((entry, offset) => ({ entry, index: range.start + offset }))
+    .filter(({ index }) => index !== pinnedIndex);
+  const pinned = pinnedIndex === null ? undefined : entries[pinnedIndex];
   return (
     <div ref={scrollRef} onScroll={windowed ? onScroll : undefined} className="min-h-0 flex-1 overflow-auto">
       <div style={windowed ? { height: range.totalHeight, position: "relative" } : undefined}>
         <ul
           aria-label={label}
           className="m-0 list-none p-0"
-          style={windowed ? { transform: `translateY(${String(range.offsetTop)}px)` } : undefined}
+          style={windowed ? { position: "relative", transform: `translateY(${String(range.offsetTop)}px)` } : undefined}
         >
-          {visible.map((entry, offset) => {
-            const index = range.start + offset;
-            return (
-              <CatalogRow
-                key={`${entry.engine.id}/${entry.system.id}`}
-                entry={entry}
-                index={index}
-                total={entries.length}
-                tabbable={index === current}
-                onFocusRow={() => {
-                  setFocusIndex(index);
-                }}
-                onMove={moveFocus}
-                rowRef={offset === 0 ? measureRowRef : undefined}
-              />
-            );
-          })}
+          {visible.map(({ entry, index }, offset) => (
+            <CatalogRow
+              key={`${entry.engine.id}/${entry.system.id}`}
+              entry={entry}
+              index={index}
+              total={entries.length}
+              tabbable={!windowed && index === current}
+              // Only in the flow layout: a focused row that becomes pinned would be remounted, and lose the focus.
+              onFocusRow={
+                windowed
+                  ? undefined
+                  : () => {
+                      setFocusIndex(index);
+                    }
+              }
+              onMove={moveFocus}
+              rowRef={offset === 0 ? measureRowRef : undefined}
+            />
+          ))}
+          {pinned === undefined || pinnedIndex === null ? null : (
+            <CatalogRow
+              key={`${pinned.engine.id}/${pinned.system.id}`}
+              entry={pinned}
+              index={pinnedIndex}
+              total={entries.length}
+              tabbable
+              onFocusRow={undefined}
+              onMove={moveFocus}
+              rowRef={undefined}
+              style={{ position: "absolute", top: pinnedIndex * rowHeight - range.offsetTop, left: 0, right: 0 }}
+            />
+          )}
         </ul>
       </div>
     </div>
@@ -244,12 +269,14 @@ interface CatalogRowProps {
   index: number;
   total: number;
   tabbable: boolean;
-  onFocusRow: () => void;
+  /** Set when the row is in the flow layout (see CatalogList). */
+  onFocusRow: (() => void) | undefined;
   onMove: (event: KeyboardEvent<HTMLAnchorElement>, from: number) => void;
   rowRef: ((element: HTMLElement | null) => void) | undefined;
+  style?: CSSProperties;
 }
 
-function CatalogRow({ entry, index, total, tabbable, onFocusRow, onMove, rowRef }: CatalogRowProps): ReactElement {
+function CatalogRow({ entry, index, total, tabbable, onFocusRow, onMove, rowRef, style }: CatalogRowProps): ReactElement {
   const translate = useAppText();
   const { engine, system } = entry;
   const difficulty = difficultyLabel(system.dificultad, translate);
@@ -257,6 +284,7 @@ function CatalogRow({ entry, index, total, tabbable, onFocusRow, onMove, rowRef 
   return (
     <li
       ref={rowRef}
+      style={style}
       data-index={index}
       aria-setsize={total}
       aria-posinset={index + 1}

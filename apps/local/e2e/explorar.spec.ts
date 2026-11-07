@@ -66,6 +66,11 @@ function problemList(page: Page): Locator {
   return page.getByRole("group", { name: "Lista de problemas" });
 }
 
+/** The one focusable row of the catalog list (roving tab stop), as a keyboard user reaches it with Tab. */
+async function focusListTabStop(page: Page): Promise<void> {
+  await page.locator('ul[aria-label="Sistemas"] a[tabindex="0"]').focus();
+}
+
 function catalogList(page: Page): Locator {
   return page.getByRole("list", { name: "Sistemas" });
 }
@@ -284,8 +289,8 @@ test.describe("Explore cases", () => {
     const rendered = await rows.count();
     expect(rendered, "rendered rows").toBeGreaterThan(0);
     expect(rendered, "rendered rows").toBeLessThanOrEqual(MAX_RENDERED_ROWS);
-    await expect(rows.first()).toHaveAttribute("aria-posinset", "1");
-    await expect(rows.first()).toHaveAttribute("aria-setsize", String(SYNTHETIC_TOTAL));
+    // The focusable row is pinned after the window, so the first row is found by its position, not by DOM order.
+    await expect(catalogList(page).locator(':scope > li[aria-posinset="1"]')).toHaveAttribute("aria-setsize", String(SYNTHETIC_TOTAL));
 
     // Filter to the one system with an accent, a space and a slash, and open it with Enter.
     await page.getByRole("searchbox", { name: "Buscar sistema" }).fill("2032");
@@ -298,6 +303,31 @@ test.describe("Explore cases", () => {
     await page.reload();
     await expect(page).toHaveURL(new RegExp(`${SPECIAL_CASE_PATH}$`));
     await expect(firstBusItem(page)).toBeVisible();
+    // The tab of this case has an awkward identifier: its element ids and references must still be valid.
+    await expectNoViolations(page);
+  });
+
+  test("large catalog: the focus stays reachable after scrolling far away", async ({ page }) => {
+    await mockApi(page, "large");
+    await page.goto(CATALOG_PATH);
+    const rows = catalogList(page).locator(":scope > li");
+    await expect(rows.first()).toBeVisible();
+
+    await focusListTabStop(page);
+    await page.evaluate(() => {
+      const list = document.querySelector<HTMLElement>('ul[aria-label="Sistemas"]');
+      const scroller = list?.closest<HTMLElement>(".overflow-auto");
+      if (scroller) scroller.scrollTop = 20000;
+    });
+
+    await page.keyboard.press("Tab");
+    await expect(page.locator('ul[aria-label="Sistemas"] a:focus')).toHaveCount(0);
+    await page.keyboard.press("Shift+Tab");
+    await expect(page.locator('ul[aria-label="Sistemas"] a:focus')).toHaveCount(1);
+
+    await page.keyboard.press("ArrowDown");
+    await expect(catalogList(page).locator(':scope > li[aria-posinset="2"] a')).toBeFocused();
+    expect(await rows.count(), "rendered rows").toBeLessThanOrEqual(MAX_RENDERED_ROWS);
   });
 
   test("large catalog: arrow keys move the focus past the first window", async ({ page }) => {
@@ -306,7 +336,7 @@ test.describe("Explore cases", () => {
     const rows = catalogList(page).locator(":scope > li");
     await expect(rows.first()).toBeVisible();
 
-    await rows.first().getByRole("link").focus();
+    await focusListTabStop(page);
     for (let step = 0; step < ARROW_STEPS_PAST_FIRST_WINDOW; step += 1) {
       await page.keyboard.press("ArrowDown");
     }

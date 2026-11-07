@@ -17,7 +17,7 @@
   "catalog.empty": "No system matches the filters.",
   "catalog.error": "The catalog could not be loaded. Check “Problems”.",
   "catalog.difficulty": "Effort: {value}",
-  "catalog.reference": "Reference value (no unit declared)",
+  "catalog.reference": "Reference value",
   "unit.buses": "buses",
   "case.error": "The case could not be loaded. Check “Problems”.",
   "case.tree.buses": "Buses",
@@ -63,5 +63,6 @@
   "difficulty.medium": "medium",
   "difficulty.heavy": "heavy",
   "problems.route.title": "The screen could not be shown",
-  "problems.route.cause": "This screen could not be prepared. Check the notice in “Problems”."
+  "problems.route.cause": "This screen could not be prepared. Check the notice in “Problems”.",
+  "catalog.referenceLegend": "Reference value: no unit declared in the contract."
 }
