@@ -37,12 +37,15 @@ pnpm importar-casos --xpand ../xpand [--almacen <dir>] [--incluir-internos] [--v
 Para comparar la API de la plataforma con un xpand en marcha (solo GET; no se arranca ni se modifica xpand):
 
 ```bash
-pnpm comparar-con-xpand --xpand-url http://127.0.0.1:8850 --plataforma-url http://127.0.0.1:8870 [--guardar-esperado <dir>]
+pnpm comparar-con-xpand --xpand-url http://127.0.0.1:8850 --plataforma-url http://127.0.0.1:8870 [--publicos <fichero>] [--publicos-de-prueba] [--guardar-esperado <dir>]
 ```
 
 Compara `/api/red` (tec=ac) campo a campo, solo en los campos de `contracts/api` y con igualdad exacta, y solo en casos
 públicos. Código 0 sin diferencias, 1 con diferencias (cada una con motor, sistema, ruta JSON y ambos valores), 64 uso
-incorrecto o servidor inalcanzable. `--guardar-esperado` escribe `esperado-red.json` de cada caso público que sirve la plataforma.
+incorrecto o servidor inalcanzable (y 1 si no hay ningún caso público que comparar). El conjunto público es el de
+`--publicos` (por defecto `config/casos-publicos.json`); un caso que la plataforma sirve fuera de él se informa solo por id.
+`--publicos-de-prueba` relaja la exigencia de DOI o URL en la fuente, solo para una lista de prueba.
+`--guardar-esperado` escribe `esperado-red.json` de cada caso público que sirve la plataforma.
 
 El checkout solo se lee: el catálogo se vuelca con `scripts/julia/volcar-catalogo.jl` y todas las salidas de Julia van a
 una carpeta temporal; si `git status --ignored` del checkout cambia, se aborta. Solo entran como públicos los sistemas de

@@ -1,10 +1,10 @@
 // Pruebas del comparador con xpand con dos servidores falsos (node:http en el puerto 0): sin Julia ni datos de xpand.
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { ejecutar, type OpcionesEjecutar } from "./comparar-con-xpand";
+import { diferenciasRed, ejecutar, type OpcionesEjecutar, type Proyeccion } from "./comparar-con-xpand";
 import type { ListaBlanca } from "./importador/lista-blanca";
 
 const CODIGO_OK = 0;
@@ -16,19 +16,20 @@ const LISTA: ListaBlanca = {
 };
 const ARCHIVOS_PUBLICOS = { base: "/checkout/data/casos/misocp_tnep/ieee24_clasico/base.dat" };
 const ARCHIVOS_INTERNOS = { base: "/checkout/data/casos/ecuador/sni_2025/base.dat" };
+const OPCIONES: OpcionesEjecutar = { listaBlanca: LISTA };
 
 interface RespuestaFalsa {
   estado: number;
   cuerpo: unknown;
 }
 
-function red(pdBarra2 = 291): unknown {
+function red(pdBarra2 = 291, s = 200): unknown {
   return {
     barras: [
       { id: "1", etiqueta: "1", kv: 0, pd: 0, qd: 0, vmin: 0.95, vmax: 1.05, tipo: 3 },
       { id: "2", etiqueta: "2", nombre: "Barra dos", kv: 0, pd: pdBarra2, qd: 60, vmin: 0.95, vmax: 1.05 },
     ],
-    ac_existentes: [{ id: "L1", de: "1", a: "2", r: 0.0026, x: 0.0139, s: 200 }],
+    ac_existentes: [{ id: "L1", de: "1", a: "2", r: 0.0026, x: 0.0139, s }],
     ac_candidatos: [{ id: "C1_2_1", de: 1, a: "2", r: 0.0026, x: 0.0139, s: 200, costo: 3, nmax: 5 }],
   };
 }
@@ -37,17 +38,17 @@ const catalogo = (motores: Record<string, { sistemas: { id: string; archivos?: R
   motores: Object.entries(motores).map(([id, m]) => ({ id, ...m })),
 });
 
+interface Falso {
+  url: string;
+  cerrar(): Promise<void>;
+}
+
 function cerrarServidor(servidor: Server): Promise<void> {
   return new Promise<void>((resolver) => {
     servidor.close(() => {
       resolver();
     });
   });
-}
-
-interface Falso {
-  url: string;
-  cerrar(): Promise<void>;
 }
 
 /** Servidor que responde /api/catalogo y /api/red como xpand (o la plataforma) con lo que se le da. */
@@ -99,8 +100,8 @@ async function arrancar(cat: unknown, redes: Record<string, RespuestaFalsa>): Pr
   return s;
 }
 
-/** Un par de servidores: xpand con un caso público y uno interno, y la plataforma con el público. */
-async function dosServidores(redXpand: unknown, redPlataforma: unknown) {
+/** xpand con un caso público y uno interno; la plataforma sirve el público (y, si se pide, el interno). */
+async function dosServidores(redXpand: unknown, redPlataforma: unknown, servirInterno = false) {
   const xpand = await arrancar(
     catalogo({
       jump_misocp: {
@@ -112,13 +113,14 @@ async function dosServidores(redXpand: unknown, redPlataforma: unknown) {
     }),
     {
       "jump_misocp/tnep_ieee24_clasico": ok(redXpand),
-      "jump_misocp/tnep_secreto": ok(red()),
+      "jump_misocp/tnep_secreto": ok(red(291)),
     },
   );
-  const plataforma = await arrancar(
-    catalogo({ jump_misocp: { sistemas: [{ id: "tnep_ieee24_clasico" }] } }),
-    { "jump_misocp/tnep_ieee24_clasico": ok(redPlataforma) },
-  );
+  const sistemasPlataforma = [{ id: "tnep_ieee24_clasico" }, ...(servirInterno ? [{ id: "tnep_secreto" }] : [])];
+  const plataforma = await arrancar(catalogo({ jump_misocp: { sistemas: sistemasPlataforma } }), {
+    "jump_misocp/tnep_ieee24_clasico": ok(redPlataforma),
+    "jump_misocp/tnep_secreto": ok(red(999)),
+  });
   return { xpand, plataforma };
 }
 
@@ -129,15 +131,14 @@ const argv = (xpand: Falso, plataforma: Falso, extra: string[] = []) => [
   plataforma.url,
   ...extra,
 ];
-const opciones: OpcionesEjecutar = { listaBlanca: LISTA };
 
-describe("comparar-con-xpand", () => {
+describe("comparar-con-xpand: contrato del comparador", () => {
   it("devuelve 0 cuando la red de la plataforma es igual a la de xpand", async () => {
     // Arrange
     const { xpand, plataforma } = await dosServidores(red(), red());
 
     // Act
-    const salida = await ejecutar(argv(xpand, plataforma), opciones);
+    const salida = await ejecutar(argv(xpand, plataforma), OPCIONES);
 
     // Assert
     expect(salida.codigo).toBe(CODIGO_OK);
@@ -150,11 +151,23 @@ describe("comparar-con-xpand", () => {
     const { xpand, plataforma } = await dosServidores(red(291), red(290));
 
     // Act
-    const salida = await ejecutar(argv(xpand, plataforma), opciones);
+    const salida = await ejecutar(argv(xpand, plataforma), OPCIONES);
 
     // Assert
     expect(salida.codigo).toBe(CODIGO_DIFERENCIAS);
     expect(salida.texto).toContain("jump_misocp/tnep_ieee24_clasico barras[1].pd: xpand=291 plataforma=290");
+  });
+
+  it("distingue 220.00000000000003 de 220 (exactitud, no tolerancia)", async () => {
+    // Arrange
+    const { xpand, plataforma } = await dosServidores(red(291, 220.00000000000003), red(291, 220));
+
+    // Act
+    const salida = await ejecutar(argv(xpand, plataforma), OPCIONES);
+
+    // Assert
+    expect(salida.codigo).toBe(CODIGO_DIFERENCIAS);
+    expect(salida.texto).toContain("ac_existentes[0].s: xpand=220.00000000000003 plataforma=220");
   });
 
   it("reporta como diferencia un caso público de la lista que la plataforma no sirve", async () => {
@@ -166,7 +179,7 @@ describe("comparar-con-xpand", () => {
     const plataforma = await arrancar(catalogo({ jump_misocp: { sistemas: [] } }), {});
 
     // Act
-    const salida = await ejecutar(argv(xpand, plataforma), opciones);
+    const salida = await ejecutar(argv(xpand, plataforma), OPCIONES);
 
     // Assert
     expect(salida.codigo).toBe(CODIGO_DIFERENCIAS);
@@ -179,7 +192,7 @@ describe("comparar-con-xpand", () => {
     const { xpand, plataforma } = await dosServidores(red(), red());
 
     // Act
-    const salida = await ejecutar(argv(xpand, plataforma), opciones);
+    const salida = await ejecutar(argv(xpand, plataforma), OPCIONES);
 
     // Assert
     expect(salida.codigo).toBe(CODIGO_OK);
@@ -193,7 +206,7 @@ describe("comparar-con-xpand", () => {
     const destino = path.join(tmp, "esperado");
 
     // Act
-    const salida = await ejecutar(argv(xpand, plataforma, ["--guardar-esperado", destino]), opciones);
+    const salida = await ejecutar(argv(xpand, plataforma, ["--guardar-esperado", destino]), OPCIONES);
 
     // Assert
     expect(salida.codigo).toBe(CODIGO_OK);
@@ -211,7 +224,7 @@ describe("comparar-con-xpand", () => {
     const { xpand, plataforma } = await dosServidores(red(), sinNombre);
 
     // Act
-    const salida = await ejecutar(argv(xpand, plataforma), opciones);
+    const salida = await ejecutar(argv(xpand, plataforma), OPCIONES);
 
     // Assert
     expect(salida.codigo).toBe(CODIGO_DIFERENCIAS);
@@ -230,7 +243,7 @@ describe("comparar-con-xpand", () => {
     );
 
     // Act
-    const salida = await ejecutar(argv(xpand, plataforma), opciones);
+    const salida = await ejecutar(argv(xpand, plataforma), OPCIONES);
 
     // Assert
     expect(salida.codigo).toBe(CODIGO_DIFERENCIAS);
@@ -245,7 +258,7 @@ describe("comparar-con-xpand", () => {
     servidores.splice(servidores.indexOf(cerrado), 1);
 
     // Act
-    const salida = await ejecutar(argv(cerrado, plataforma), opciones);
+    const salida = await ejecutar(argv(cerrado, plataforma), OPCIONES);
 
     // Assert
     expect(salida.codigo).toBe(CODIGO_USO);
@@ -256,10 +269,235 @@ describe("comparar-con-xpand", () => {
     const xpand = await arrancar(catalogo({}), {});
 
     // Act
-    const salida = await ejecutar(["--xpand-url", xpand.url], opciones);
+    const salida = await ejecutar(["--xpand-url", xpand.url], OPCIONES);
 
     // Assert
     expect(salida.codigo).toBe(CODIGO_USO);
     expect(salida.texto).toContain("--plataforma-url");
+  });
+});
+
+describe("comparar-con-xpand: no da por bueno lo que no ha comparado", () => {
+  it("con cero casos públicos que comparar devuelve 1 y lo dice", async () => {
+    // Arrange: xpand solo tiene un interno y la plataforma no sirve nada.
+    const xpand = await arrancar(catalogo({ jump_misocp: { sistemas: [{ id: "tnep_secreto", archivos: ARCHIVOS_INTERNOS }] } }), {});
+    const plataforma = await arrancar(catalogo({ jump_misocp: { sistemas: [] } }), {});
+
+    // Act
+    const salida = await ejecutar(argv(xpand, plataforma), OPCIONES);
+
+    // Assert
+    expect(salida.codigo).toBe(CODIGO_DIFERENCIAS);
+    expect(salida.texto).toContain("ningún caso público que comparar");
+    expect(salida.texto).toContain("Casos comparados: 0");
+  });
+
+  it("un caso que la plataforma sirve y no está en el conjunto público se nombra por id, sin valores, y no se escribe", async () => {
+    // Arrange: la plataforma sirve un interno (pd 999) que xpand tiene fuera de la lista; hay un público correcto.
+    const { xpand, plataforma } = await dosServidores(red(), red(), true);
+    const destino = path.join(tmp, "esperado");
+
+    // Act
+    const salida = await ejecutar(argv(xpand, plataforma, ["--guardar-esperado", destino]), OPCIONES);
+
+    // Assert
+    expect(salida.codigo).toBe(CODIGO_DIFERENCIAS);
+    expect(salida.texto).toContain("jump_misocp/tnep_secreto");
+    expect(salida.texto).toContain("fuera del conjunto público");
+    expect(salida.texto).not.toContain("999");
+    expect(existsSync(path.join(destino, "jump_misocp", "tnep_secreto"))).toBe(false);
+    expect(salida.texto).toContain("Casos comparados: 1");
+  });
+});
+
+describe("comparar-con-xpand: --publicos", () => {
+  const escribirLista = (contenido: unknown, nombre = "publicos.json"): string => {
+    const fichero = path.join(tmp, nombre);
+    writeFileSync(fichero, JSON.stringify(contenido));
+    return fichero;
+  };
+
+  it("solo compara los casos del fichero --publicos", async () => {
+    // Arrange: el fichero no lista el caso público de xpand, así que no se compara nada.
+    const { xpand, plataforma } = await dosServidores(red(), red());
+    const lista = escribirLista({ sistemas: [{ sistema: "otro", datos: "data/casos/misocp_tnep/otro", fuente: "https://ejemplo.org/otro" }] });
+
+    // Act
+    const salida = await ejecutar(argv(xpand, plataforma, ["--publicos", lista]));
+
+    // Assert
+    expect(salida.codigo).toBe(CODIGO_DIFERENCIAS);
+    expect(salida.texto).toContain("ningún caso público que comparar");
+  });
+
+  it("una entrada con «motores» solo cuenta en esos motores: en los demás el caso no es público", async () => {
+    // Arrange: xpand tiene el mismo caso público en dos motores; la lista solo lo aprueba en uno.
+    const xpand = await arrancar(
+      catalogo({
+        jump_misocp: { sistemas: [{ id: "tnep_ieee24_clasico", archivos: ARCHIVOS_PUBLICOS }] },
+        fp_dc: { sistemas: [{ id: "tnep_ieee24_clasico", archivos: ARCHIVOS_PUBLICOS }] },
+      }),
+      { "jump_misocp/tnep_ieee24_clasico": ok(red()), "fp_dc/tnep_ieee24_clasico": ok(red()) },
+    );
+    const plataforma = await arrancar(
+      catalogo({
+        jump_misocp: { sistemas: [{ id: "tnep_ieee24_clasico" }] },
+        fp_dc: { sistemas: [{ id: "tnep_ieee24_clasico" }] },
+      }),
+      { "jump_misocp/tnep_ieee24_clasico": ok(red()), "fp_dc/tnep_ieee24_clasico": ok(red(999)) },
+    );
+    const lista = escribirLista({
+      sistemas: [{ sistema: "tnep_ieee24_clasico", datos: "data/casos/misocp_tnep/ieee24_clasico", fuente: "https://ejemplo.org/x", motores: ["jump_misocp"] }],
+    });
+
+    // Act
+    const salida = await ejecutar(argv(xpand, plataforma, ["--publicos", lista]));
+
+    // Assert
+    expect(salida.codigo).toBe(CODIGO_DIFERENCIAS);
+    expect(salida.texto).toContain("Casos comparados: 1");
+    expect(salida.texto).toContain("fp_dc/tnep_ieee24_clasico (caso): xpand=(fuera del conjunto público)");
+    expect(salida.texto).not.toContain("999");
+  });
+
+  it("una lista con «motores» que no es una lista de ids se rechaza", async () => {
+    // Arrange
+    const { xpand, plataforma } = await dosServidores(red(), red());
+    const lista = escribirLista({
+      sistemas: [{ sistema: "tnep_ieee24_clasico", datos: "data/casos/misocp_tnep/ieee24_clasico", fuente: "https://ejemplo.org/x", motores: "jump" }],
+    });
+
+    // Act
+    const salida = await ejecutar(argv(xpand, plataforma, ["--publicos", lista]));
+
+    // Assert
+    expect(salida.codigo).toBe(CODIGO_USO);
+  });
+
+  it("rechaza una fuente sin DOI o URL, salvo con --publicos-de-prueba", async () => {
+    // Arrange
+    const { xpand, plataforma } = await dosServidores(red(), red());
+    const lista = escribirLista({
+      sistemas: [{ sistema: "tnep_ieee24_clasico", datos: "data/casos/misocp_tnep/ieee24_clasico", fuente: "Garver (1970), sin enlace" }],
+    });
+
+    // Act
+    const estricta = await ejecutar(argv(xpand, plataforma, ["--publicos", lista]));
+    const deuda = await ejecutar(argv(xpand, plataforma, ["--publicos", lista, "--publicos-de-prueba"]));
+
+    // Assert
+    expect(estricta.codigo).toBe(CODIGO_USO);
+    expect(estricta.texto).toContain("DOI o URL");
+    expect(deuda.codigo).toBe(CODIGO_OK);
+  });
+
+  it("--publicos-de-prueba sin --publicos es un uso incorrecto", async () => {
+    // Arrange
+    const { xpand, plataforma } = await dosServidores(red(), red());
+
+    // Act
+    const salida = await ejecutar(argv(xpand, plataforma, ["--publicos-de-prueba"]), OPCIONES);
+
+    // Assert
+    expect(salida.codigo).toBe(CODIGO_USO);
+    expect(salida.texto).toContain("--publicos");
+  });
+});
+
+describe("diferenciasRed: igualdad exacta y emparejamiento por id", () => {
+  const proyeccion = (partes: Partial<Proyeccion>): Proyeccion => ({ barras: [], ac_existentes: [], ac_candidatos: [], ...partes });
+
+  it("0 y -0 son distintos", () => {
+    // Arrange
+    const xpand = proyeccion({ barras: [{ id: "1", pd: 0 }] });
+    const plataforma = proyeccion({ barras: [{ id: "1", pd: -0 }] });
+
+    // Act
+    const hallazgos = diferenciasRed(xpand, plataforma);
+
+    // Assert
+    expect(hallazgos).toEqual([{ ruta: "barras[0].pd", xpand: "0", plataforma: "-0" }]);
+  });
+
+  it("0.1 + 0.2 no es 0.3", () => {
+    // Arrange
+    const xpand = proyeccion({ barras: [{ id: "1", pd: 0.1 + 0.2 }] });
+    const plataforma = proyeccion({ barras: [{ id: "1", pd: 0.3 }] });
+
+    // Act
+    const hallazgos = diferenciasRed(xpand, plataforma);
+
+    // Assert
+    expect(hallazgos).toHaveLength(1);
+    expect(hallazgos[0]?.ruta).toBe("barras[0].pd");
+  });
+
+  it("una barra que falta en la plataforma se nombra por id y no desplaza al resto", () => {
+    // Arrange
+    const xpand = proyeccion({ barras: [{ id: "1", pd: 1 }, { id: "2", pd: 2 }, { id: "3", pd: 3 }] });
+    const plataforma = proyeccion({ barras: [{ id: "1", pd: 1 }, { id: "3", pd: 3 }] });
+
+    // Act
+    const hallazgos = diferenciasRed(xpand, plataforma);
+
+    // Assert
+    expect(hallazgos).toEqual([{ ruta: "barras[id=2]", xpand: "presente", plataforma: "(ausente)" }]);
+  });
+
+  it("una barra extra en la plataforma se nombra por id", () => {
+    // Arrange
+    const xpand = proyeccion({ barras: [{ id: "1", pd: 1 }] });
+    const plataforma = proyeccion({ barras: [{ id: "1", pd: 1 }, { id: "9", pd: 9 }] });
+
+    // Act
+    const hallazgos = diferenciasRed(xpand, plataforma);
+
+    // Assert
+    expect(hallazgos).toEqual([{ ruta: "barras[id=9]", xpand: "(ausente)", plataforma: "presente" }]);
+  });
+
+  it("el mismo contenido en otro orden da una sola línea de orden", () => {
+    // Arrange
+    const xpand = proyeccion({ barras: [{ id: "1", pd: 1 }, { id: "2", pd: 2 }] });
+    const plataforma = proyeccion({ barras: [{ id: "2", pd: 2 }, { id: "1", pd: 1 }] });
+
+    // Act
+    const hallazgos = diferenciasRed(xpand, plataforma);
+
+    // Assert
+    expect(hallazgos).toEqual([{ ruta: "barras (orden)", xpand: "orden de xpand", plataforma: "orden distinto" }]);
+  });
+
+  it("con ids repetidos empareja por de, a y ocurrencia", () => {
+    // Arrange
+    const xpand = proyeccion({
+      ac_candidatos: [
+        { id: "C", de: "1", a: "2", costo: 1 },
+        { id: "C", de: "1", a: "3", costo: 2 },
+      ],
+    });
+    const plataforma = proyeccion({
+      ac_candidatos: [
+        { id: "C", de: "1", a: "2", costo: 1 },
+        { id: "C", de: "1", a: "3", costo: 5 },
+      ],
+    });
+
+    // Act
+    const hallazgos = diferenciasRed(xpand, plataforma);
+
+    // Assert
+    expect(hallazgos).toEqual([{ ruta: "ac_candidatos[1].costo", xpand: "2", plataforma: "5" }]);
+  });
+
+  it("dos redes iguales no tienen diferencias", () => {
+    // Arrange
+    const red1 = proyeccion({ barras: [{ id: "1", pd: 1, nombre: "a" }], ac_existentes: [{ id: "L", de: "1", a: "2", r: 0.1 }] });
+
+    // Act
+    const hallazgos = diferenciasRed(red1, structuredClone(red1));
+
+    // Assert
+    expect(hallazgos).toStrictEqual([]);
   });
 });

@@ -1,0 +1,11 @@
+{
+  "descripcion": "Conjunto público de prueba para scripts/comparar-con-xpand.ts (--publicos ... --publicos-de-prueba). Solo los dos Garver 6 del almacén de prueba; la fuente no tiene DOI ni URL en xpand, por eso el comparador relaja esa comprobación con --publicos-de-prueba. No es la lista de producción.",
+  "sistemas": [
+    {
+      "sistema": "tnep_garver6",
+      "datos": "data/casos/misocp_tnep/garver6",
+      "fuente": "Garver (1970), IEEE Trans. PAS 89(7); datos y menús del proyecto MISOCP AC/DC FACTS de xpand (sin DOI en xpand)",
+      "motores": ["jump_misocp", "fp_dc"]
+    }
+  ]
+}

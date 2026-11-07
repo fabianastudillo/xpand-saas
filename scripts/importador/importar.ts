@@ -133,7 +133,8 @@ function planificar(ctx: Contexto, motor: MotorVolcado, bloqueMotor: Manifiesto[
     if (e instanceof FicheroNoValido) return { motivo: "archivo_no_valido" };
     throw e;
   }
-  const entrada = buscarEnLista(ctx.opts.listaBlanca, s.id, relativa(ctx, dirDatos));
+  const motorId = typeof motor.id === "string" ? motor.id : undefined;
+  const entrada = buscarEnLista(ctx.opts.listaBlanca, s.id, relativa(ctx, dirDatos), motorId);
   if (entrada === undefined && !ctx.opts.incluirInternos) return { motivo: "no_publico" };
   const sistema = sistemaDelManifiesto(s, entrada?.fuente);
   if (sistema === undefined) return { motivo: "metadatos_incompletos" };

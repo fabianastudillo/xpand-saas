@@ -19,12 +19,22 @@ const ejemploCatalogo = JSON.parse(
   readFileSync(fileURLToPath(new URL("../../../contracts/api/examples/catalogo.json", import.meta.url)), "utf8"),
 ) as { motores: { id: string; sistemas: { id: string; barras: number }[] }[] };
 
-// Campos del contrato (contracts/api/README.md) por coleccion; `nombre` es opcional pero el ejemplo lo trae.
-const CAMPOS = {
-  barras: ["id", "etiqueta", "nombre", "kv", "pd", "qd", "vmin", "vmax"],
-  ac_existentes: ["id", "de", "a", "r", "x", "s"],
-  ac_candidatos: ["id", "de", "a", "r", "x", "s", "costo", "nmax"],
-} as const;
+// Campos del contrato por coleccion, leidos de contracts/api/red.schema.json (no a mano: un campo nuevo del contrato
+// entra aqui y en el comparador a la vez).
+type Coleccion = "barras" | "ac_existentes" | "ac_candidatos";
+const DEFINICION_DE: Record<Coleccion, string> = { barras: "barra", ac_existentes: "lineaExistente", ac_candidatos: "lineaCandidata" };
+const CAMPOS = ((): Record<Coleccion, string[]> => {
+  const schema = JSON.parse(readFileSync(fileURLToPath(new URL("../../../contracts/api/red.schema.json", import.meta.url)), "utf8")) as {
+    definitions: Record<string, { properties: Record<string, unknown> }>;
+  };
+  const campos = {} as Record<Coleccion, string[]>;
+  for (const coleccion of Object.keys(DEFINICION_DE) as Coleccion[]) {
+    const propiedades = schema.definitions[DEFINICION_DE[coleccion]]?.properties;
+    if (propiedades === undefined) throw new Error(`red.schema.json no define ${DEFINICION_DE[coleccion]}`);
+    campos[coleccion] = Object.keys(propiedades);
+  }
+  return campos;
+})();
 
 function porId(lista: readonly { id: unknown }[]): Map<string, Record<string, unknown>> {
   return new Map(lista.map((r) => [String(r.id), r as Record<string, unknown>]));
