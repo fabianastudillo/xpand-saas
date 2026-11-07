@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AppShell } from "./AppShell";
 import { CaseTree } from "./CaseTree";
@@ -46,6 +47,46 @@ describe("<AppShell> focus management", () => {
     expect(leftZone()).toContainElement(document.activeElement as HTMLElement);
     await user.keyboard("{Control>}b{/Control}"); // closes: back to the opener
     expect(center).toHaveFocus();
+  });
+
+  it("sends the focus to <main>, never to <body>, when the zone was opened with nothing focused", async () => {
+    const user = userEvent.setup();
+    render(<AppShell left={<button type="button">Dentro</button>} center={<p>documentos</p>} />);
+    (document.activeElement as HTMLElement | null)?.blur();
+    await user.keyboard("{Control>}b{/Control}"); // close, nothing focused
+    await user.keyboard("{Control>}b{/Control}"); // open from <body>: the body must not become the opener
+    expect(screen.getByRole("button", { name: "Dentro" })).toHaveFocus();
+    await user.keyboard("{Control>}b{/Control}"); // close with the focus inside
+    expect(screen.getByRole("main")).toHaveFocus();
+    expect(document.activeElement).not.toBe(document.body);
+  });
+
+  it("does not return the focus to an opener that is hidden or gone any more", async () => {
+    const user = userEvent.setup();
+    function Harness(): React.JSX.Element {
+      const [withOpener, setWithOpener] = useState(true);
+      return (
+        <AppShell
+          left={<button type="button">Dentro</button>}
+          center={
+            <div>
+              {withOpener ? <button type="button">Abridor</button> : null}
+              <button type="button" onClick={() => { setWithOpener(false); }}>
+                Quitar abridor
+              </button>
+            </div>
+          }
+        />
+      );
+    }
+    render(<Harness />);
+    await user.keyboard("{Control>}b{/Control}");
+    await user.click(screen.getByRole("button", { name: "Abridor" }));
+    await user.keyboard("{Control>}b{/Control}"); // opens, opener = Abridor
+    await user.click(screen.getByRole("button", { name: "Quitar abridor" }));
+    screen.getByRole("button", { name: "Dentro" }).focus();
+    await user.keyboard("{Control>}b{/Control}"); // closes: the opener is gone → main
+    expect(screen.getByRole("main")).toHaveFocus();
   });
 
   it("never lets Tab reach a hidden zone", async () => {

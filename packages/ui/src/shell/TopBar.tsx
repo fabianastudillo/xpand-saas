@@ -86,7 +86,9 @@ function ZoneToggleButton({ toggle, zone }: { toggle: ZoneToggle; zone: ZoneStat
       aria-keyshortcuts={shortcutAriaKeys(toggle.key)}
       title={shortcutLabel(toggle.key)}
       onClick={zone.toggle}
-      className={zone.open ? "text-ink" : "text-ink-muted"}
+      data-state={zone.open ? "open" : "closed"}
+      // Open: ink plus a 2px inset accent rule under the text, so the state is not told by color alone.
+      className={zone.open ? "text-ink shadow-[inset_0_-2px_0_var(--accent)]" : "text-ink-muted"}
     >
       {t(toggle.label)}
     </Button>

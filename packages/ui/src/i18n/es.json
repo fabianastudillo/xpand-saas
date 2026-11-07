@@ -66,5 +66,7 @@
   "shell.palette.results.one": "1 resultado",
   "shell.palette.results.many": "{n} resultados",
   "shell.documents.closeHint": "Suprimir o Control+Retroceso cierran el documento",
-  "shell.problems.listLabel": "Lista de problemas"
+  "shell.problems.listLabel": "Lista de problemas",
+  "shell.drawer.close.left": "Cerrar explorador",
+  "shell.drawer.close.right": "Cerrar inspector"
 }

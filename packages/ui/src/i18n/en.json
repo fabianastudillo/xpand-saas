@@ -66,5 +66,7 @@
   "shell.palette.results.one": "1 result",
   "shell.palette.results.many": "{n} results",
   "shell.documents.closeHint": "Delete or Control+Backspace close the document",
-  "shell.problems.listLabel": "Problems list"
+  "shell.problems.listLabel": "Problems list",
+  "shell.drawer.close.left": "Close explorer",
+  "shell.drawer.close.right": "Close inspector"
 }

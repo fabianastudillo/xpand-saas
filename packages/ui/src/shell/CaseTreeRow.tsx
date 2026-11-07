@@ -17,7 +17,8 @@ export interface CaseTreeRowProps {
   index: number;
   tabbable: boolean;
   selected: boolean;
-  measureRef: ((element: HTMLElement | null) => void) | undefined;
+  /** Measures the first row and/or tracks the focused one (see CaseTree). */
+  rowRef: ((element: HTMLElement | null) => void) | undefined;
   /** Set when the row is pinned outside the window (absolute position at its own offset). */
   style?: CSSProperties;
   onFocus: () => void;
@@ -30,7 +31,7 @@ export function CaseTreeRow({
   index,
   tabbable,
   selected,
-  measureRef,
+  rowRef,
   style,
   onFocus,
   onClick,
@@ -40,7 +41,7 @@ export function CaseTreeRow({
     <div
       role="treeitem"
       data-index={index}
-      ref={measureRef}
+      ref={rowRef}
       tabIndex={tabbable ? 0 : -1}
       aria-level={row.level}
       aria-setsize={row.setSize}

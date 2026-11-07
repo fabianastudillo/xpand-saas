@@ -103,6 +103,18 @@ describe("useShortcuts", () => {
     expect(palette).toHaveBeenCalledTimes(1);
   });
 
+  it("also treats an open Radix dialog (role=dialog, data-state=open, no aria-modal) as a modal", () => {
+    const zone = vi.fn();
+    render(
+      <>
+        <div role="dialog" data-state="open" aria-label="Paleta" />
+        <Harness bindings={[{ key: "b", run: zone }]} />
+      </>,
+    );
+    document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "b", ctrlKey: true, bubbles: true }));
+    expect(zone).not.toHaveBeenCalled();
+  });
+
   it("uses the bindings of the latest render", () => {
     const first = vi.fn();
     const second = vi.fn();

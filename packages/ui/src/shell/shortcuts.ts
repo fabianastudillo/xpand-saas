@@ -24,7 +24,8 @@ export interface ShortcutBinding {
 
 const NON_TEXT_INPUT_TYPES = new Set(["button", "checkbox", "radio", "range", "submit", "reset", "file", "color"]);
 const EDITABLE_VALUES = new Set(["", "true", "plaintext-only"]);
-const MODAL_SELECTOR = '[aria-modal="true"]';
+/** Open modal dialogs: ARIA's own marker, plus Radix Dialog, which sets role and data-state but no aria-modal. */
+export const MODAL_SELECTOR = '[aria-modal="true"], [role="dialog"][data-state="open"]';
 
 function isEditable(element: HTMLElement): boolean {
   // isContentEditable covers inherited editability; the attribute covers jsdom, which does not implement it.

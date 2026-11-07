@@ -57,9 +57,12 @@ export function ProblemsList({ problems, onNavigate, className }: ProblemsListPr
   useEffect(() => {
     const last = activated.current;
     if (!last || shown.some((problem) => problem.id === last.id)) return;
-    activated.current = null;
+    activated.current = null; // one move per activation, whether or not it happens
     const root = rootRef.current;
     if (!root) return;
+    // Only when the focus is lost (the button went away) or still here: a user who moved on keeps their place.
+    const active = document.activeElement;
+    if (active !== null && active !== document.body && !root.contains(active)) return;
     const items = root.querySelectorAll<HTMLElement>("li");
     const next = items[Math.min(last.index, items.length - 1)];
     (next?.querySelector<HTMLElement>("button") ?? root).focus();

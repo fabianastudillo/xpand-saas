@@ -75,7 +75,12 @@ export function createProblemsStore(initial: readonly Problem[] = []): ProblemsS
     add: (problem) => {
       const index = list.findIndex((entry) => entry.id === problem.id);
       const existing = list[index];
-      if (existing && sameProblem(existing, problem)) return; // a retry reporting the same thing: no churn
+      if (existing && sameProblem(existing, problem)) {
+        // A retry reporting the same thing: no churn for subscribers, but keep the fresh object (its
+        // action.run closes over the latest state; the old one may be stale).
+        list = list.with(index, problem);
+        return;
+      }
       publish(index === -1 ? [...list, problem] : list.with(index, problem));
     },
     remove: (id) => {

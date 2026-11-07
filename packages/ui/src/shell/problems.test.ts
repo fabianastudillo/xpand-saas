@@ -42,6 +42,15 @@ describe("createProblemsStore", () => {
     store.subscribe(listener);
     store.add({ ...reserve }); // same fields, new object
     expect(listener).not.toHaveBeenCalled();
+
+    // Same report with a fresh closure: silent, but the new run is kept (the old one may be stale).
+    const retry = createProblemsStore([{ ...session, action: { label: "Entrar", run: () => {} } }]);
+    const notify = vi.fn();
+    retry.subscribe(notify);
+    const newRun = (): void => {};
+    retry.add({ ...session, action: { label: "Entrar", run: newRun } });
+    expect(notify).not.toHaveBeenCalled();
+    expect(retry.getList()[0]?.action?.run).toBe(newRun);
     store.add({ ...reserve, cause: "1200 MW de 1457,8 MW exigidos" });
     expect(listener).toHaveBeenCalledTimes(1);
   });

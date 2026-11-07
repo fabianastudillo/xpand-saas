@@ -159,6 +159,39 @@ describe("<CommandPalette> focus and announcements", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
+  it("does not open over another Radix dialog, which carries no aria-modal", async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <div role="dialog" data-state="open" aria-label="Confirmar">
+          <button type="button">Sí</button>
+        </div>
+        <CommandPalette commands={[{ id: "a", label: "Acción", group: "G", run: noop }]} />
+      </>,
+    );
+    await user.click(screen.getByRole("button", { name: "Sí" }));
+    await user.keyboard("{Control>}k{/Control}");
+    expect(screen.queryByRole("dialog", { name: "Paleta de comandos" })).toBeNull();
+  });
+
+  it("scrolls again when the filter changes the command under the same highlight index", async () => {
+    const user = userEvent.setup();
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", { value: scrollIntoView, configurable: true });
+    render(
+      <Harness
+        list={[
+          { id: "a", label: "Abrir Garver 6", group: "Casos", run: noop },
+          { id: "b", label: "Abrir IEEE 24", group: "Casos", run: noop },
+        ]}
+      />,
+    );
+    await user.keyboard("{Control>}k{/Control}");
+    const before = scrollIntoView.mock.calls.length;
+    await user.keyboard("ieee"); // the highlight stays at index 0, but it is another command now
+    expect(scrollIntoView.mock.calls.length).toBeGreaterThan(before);
+  });
+
   it("does not open over another modal dialog", async () => {
     const user = userEvent.setup();
     render(

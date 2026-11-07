@@ -51,8 +51,13 @@ describe("<TopBar>", () => {
     expect(explorer).toHaveAttribute("aria-keyshortcuts", "Control+B Meta+B");
     expect(panel).toHaveAttribute("aria-keyshortcuts", "Control+J Meta+J");
 
+    // The state is also shown without color: a data-state the styles key on, and an inset accent rule.
+    expect(explorer).toHaveAttribute("data-state", "open");
+    expect(explorer.className).toMatch(/inset_0_-2px_0/);
     await user.click(explorer);
     expect(explorer).toHaveAttribute("aria-expanded", "false");
+    expect(explorer).toHaveAttribute("data-state", "closed");
+    expect(explorer.className).not.toMatch(/inset_0_-2px_0/);
     expect(screen.queryByRole("complementary", { name: "Explorador del caso" })).toBeNull();
     // The target of aria-controls still exists while hidden.
     expect(document.getElementById(left.id)).not.toBeNull();

@@ -26,18 +26,41 @@ describe("<CaseTree> windowing", () => {
     const row = screen.getByRole("treeitem", { name: /^Barra 3$/ });
     expect(row).toHaveFocus();
 
-    fireEvent.scroll(screen.getByRole("tree"), { target: { scrollTop: 20_000 } });
+    const focus = vi.spyOn(HTMLElement.prototype, "focus");
+    const tree = screen.getByRole("tree");
+    fireEvent.scroll(tree, { target: { scrollTop: 20_000 } });
     expect(screen.getByRole("treeitem", { name: /^Barra 715$/ })).toBeInTheDocument(); // the window moved
     expect(screen.queryByRole("treeitem", { name: /^Barra 4$/ })).toBeNull();
     const pinned = screen.getByRole("treeitem", { name: /^Barra 3$/ });
+    expect(pinned).not.toBe(row); // remounted outside the window
     expect(pinned).toHaveFocus();
     expect(pinned.tabIndex).toBe(0);
     expect(screen.getAllByRole("treeitem").filter((item) => item.tabIndex === 0)).toHaveLength(1);
+    // The restore must not scroll the tree back to the row: the user is scrolling away on purpose.
+    expect(focus).toHaveBeenLastCalledWith({ preventScroll: true });
+    expect(tree.scrollTop).toBe(20_000);
+    focus.mockRestore();
 
     await user.tab({ shift: true });
     expect(pinned).not.toHaveFocus();
     await user.tab();
     expect(screen.getByRole("treeitem", { name: /^Barra 3$/ })).toHaveFocus();
+  });
+
+  it("does not take the focus back when the user had left the tree before the row remounted", async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <CaseTree groups={[buses(938)]} onSelect={vi.fn()} />
+        <button type="button">Fuera</button>
+      </>,
+    );
+    await user.tab();
+    await user.keyboard("{ArrowDown}");
+    await user.click(screen.getByRole("button", { name: "Fuera" }));
+    fireEvent.scroll(screen.getByRole("tree"), { target: { scrollTop: 20_000 } });
+    expect(screen.getByRole("button", { name: "Fuera" })).toHaveFocus();
+    expect(screen.getByRole("treeitem", { name: /^Barra 1$/ }).tabIndex).toBe(0); // still the tab stop
   });
 
   it("enters on the selected row, also when it is far down the windowed list", async () => {

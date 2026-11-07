@@ -96,6 +96,31 @@ describe("<ProblemsList>", () => {
     expect(screen.getByText("Sin problemas")).toHaveFocus();
   });
 
+  it("does not steal the focus when the problem disappears later and the user has moved on", async () => {
+    const user = userEvent.setup();
+    function Async(): React.JSX.Element {
+      const [list, setList] = useState<readonly Problem[]>([
+        { id: "a", severity: "error", title: "Error a", action: { label: "Reintentar", run: () => {} } },
+        { id: "b", severity: "error", title: "Error b", action: { label: "Reintentar", run: () => {} } },
+      ]);
+      return (
+        <div>
+          <ProblemsList problems={list} />
+          <button type="button" onClick={() => { setList((current) => current.filter((p) => p.id !== "a")); }}>
+            Resuelto
+          </button>
+        </div>
+      );
+    }
+    render(<Async />);
+    const [first] = screen.getAllByRole("button", { name: "Reintentar" });
+    await user.click(first as HTMLElement); // the retry is asynchronous: nothing changes yet
+    const outside = screen.getByRole("button", { name: "Resuelto" });
+    await user.click(outside); // the problem disappears while the focus is elsewhere
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    expect(outside).toHaveFocus();
+  });
+
   it("says «Sin problemas» when the list is empty", () => {
     render(<ProblemsList problems={[]} />);
     expect(screen.getByText("Sin problemas")).toBeInTheDocument();

@@ -2,6 +2,7 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppShell } from "./AppShell";
+import { TopBar } from "./TopBar";
 
 type Listener = (event: { matches: boolean }) => void;
 
@@ -60,6 +61,49 @@ describe("<AppShell> below the reflow breakpoint", () => {
     await user.keyboard("{Escape}");
     expect(leftZone()).toBeNull();
     expect(screen.getByRole("button", { name: "Centro" })).toHaveFocus();
+  });
+
+  it("an open drawer has an overlay that closes it on click, a visible close button, and makes the rest inert", async () => {
+    mockMatchMedia(true);
+    const user = userEvent.setup();
+    render(
+      <AppShell
+        top={<TopBar />}
+        left={<button type="button">Dentro</button>}
+        center={<button type="button">Centro</button>}
+        right={<span>inspector</span>}
+        bottom={<span>problemas</span>}
+      />,
+    );
+    expect(screen.queryByTestId("shell-overlay")).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Centro" }));
+    await user.keyboard("{Control>}b{/Control}");
+    expect(screen.getByRole("main")).toHaveAttribute("inert");
+    expect(screen.getByTestId("shell-bottom")).toHaveAttribute("inert");
+    expect(screen.getByRole("banner")).not.toHaveAttribute("inert");
+    expect(screen.getByRole("button", { name: "Explorador" })).toHaveAttribute("aria-expanded", "true");
+
+    await user.click(screen.getByTestId("shell-overlay"));
+    expect(leftZone()).toBeNull();
+    expect(screen.getByRole("main")).not.toHaveAttribute("inert");
+    expect(screen.getByRole("button", { name: "Centro" })).toHaveFocus();
+
+    await user.keyboard("{Control>}b{/Control}");
+    await user.click(screen.getByRole("button", { name: "Cerrar explorador" }));
+    expect(leftZone()).toBeNull();
+    expect(screen.getByRole("button", { name: "Centro" })).toHaveFocus();
+  });
+
+  it("moves the focus to <main> when the viewport turns narrow while a side zone holds it", async () => {
+    const media = mockMatchMedia(false);
+    const user = userEvent.setup();
+    render(<AppShell left={<button type="button">Dentro</button>} center={<p>c</p>} />);
+    await user.click(screen.getByRole("button", { name: "Dentro" }));
+    act(() => {
+      media.change(true);
+    });
+    expect(leftZone()).toBeNull();
+    expect(screen.getByRole("main")).toHaveFocus();
   });
 
   it("does not persist the collapsed state that the breakpoint forced", async () => {

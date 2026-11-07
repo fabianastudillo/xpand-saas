@@ -42,9 +42,10 @@ export function PaletteBody({ commands, onChoose }: PaletteBodyProps): ReactElem
   const optionId = (command: Command): string => `${listId}-o${String(matches.indexOf(command))}`;
   const activeId = activeCommand ? optionId(activeCommand) : undefined;
 
+  // Keyed on the command too: a new filter can put another command under the same index-based id.
   useEffect(() => {
     if (activeId !== undefined) document.getElementById(activeId)?.scrollIntoView({ block: "nearest" });
-  }, [activeId]);
+  }, [activeId, activeCommand]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {

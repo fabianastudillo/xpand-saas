@@ -4,7 +4,7 @@ import { t, useLocale } from "../i18n";
 import { cn } from "../lib/cn";
 import type { Command } from "./commandFilter";
 import { PaletteBody } from "./PaletteBody";
-import { isMacPlatform, isTypingTarget, useShortcuts } from "./shortcuts";
+import { MODAL_SELECTOR, isMacPlatform, isTypingTarget, useShortcuts } from "./shortcuts";
 
 export interface CommandPaletteProps {
   commands: readonly Command[];
@@ -13,7 +13,6 @@ export interface CommandPaletteProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-const MODAL_SELECTOR = '[aria-modal="true"]';
 const OPENER_SELECTOR = "[data-shell-palette-opener]";
 
 /** Who gets the focus back when nothing had it (Safari leaves the body focused after a click). */

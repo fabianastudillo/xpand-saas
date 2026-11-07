@@ -29,6 +29,14 @@ const OVERSCAN_ROWS = 4;
 const ACTIVATION_KEYS = new Set(["Enter", " "]);
 const NAVIGATION_KEYS = new Set(["ArrowDown", "ArrowUp", "Home", "End", "ArrowLeft", "ArrowRight"]);
 
+type RefCallback = (element: HTMLElement | null) => void;
+
+function composeRefs(...refs: readonly RefCallback[]): RefCallback {
+  return (element) => {
+    for (const ref of refs) ref(element);
+  };
+}
+
 function indexOfSelection(rows: readonly TreeRow[], selected: TreeSelection | undefined): number {
   if (!selected) return -1;
   return rows.findIndex((row) => row.kind === "item" && row.groupId === selected.group && row.item.id === selected.id);
@@ -66,17 +74,36 @@ export function CaseTree({ groups, onSelect, selected, label, defaultExpanded, c
     overscan: OVERSCAN_ROWS,
   });
 
-  // Whether the focus is inside the tree. Removing a focused node fires no blur, so the flag survives the
-  // remount of the focused row (window → pinned and back) and the effect below gives the focus back to it.
-  const treeHasFocus = useRef(false);
+  // After a keyboard move the target row is mounted (reveal ran in the same batch): give it the focus.
   useEffect(() => {
-    const tree = scrollRef.current;
-    if (!tree) return;
-    const row = tree.querySelector<HTMLElement>(`[data-index="${String(focused)}"]`);
-    const shouldFocus = focusPending.current || (treeHasFocus.current && !tree.contains(document.activeElement));
+    if (!focusPending.current) return;
     focusPending.current = false;
-    if (shouldFocus && row && document.activeElement !== row) row.focus();
-  });
+    const row = scrollRef.current?.querySelector<HTMLElement>(`[data-index="${String(focused)}"]`);
+    if (row && document.activeElement !== row) row.focus();
+  }, [focused, scrollRef]);
+
+  // The focused row is remounted when it crosses the window edge (windowed ⇄ pinned). React detaches the old
+  // ref before removing the node: if it held the focus at that moment, the new node takes it back, without
+  // scrolling (the user may be scrolling away on purpose). No blur involved: Chrome fires one on removal.
+  const focusedNode = useRef<HTMLElement | null>(null);
+  const refocusOnMount = useRef(false);
+  const focusedRowRef = useCallback((element: HTMLElement | null) => {
+    if (element) {
+      focusedNode.current = element;
+      if (refocusOnMount.current) {
+        refocusOnMount.current = false;
+        element.focus({ preventScroll: true });
+      }
+      return;
+    }
+    if (focusedNode.current !== null && document.activeElement === focusedNode.current) refocusOnMount.current = true;
+    focusedNode.current = null;
+  }, []);
+  const firstAndFocusedRef = useMemo(() => composeRefs(measureRowRef, focusedRowRef), [measureRowRef, focusedRowRef]);
+  const rowRef = (index: number, offset: number): ((element: HTMLElement | null) => void) | undefined => {
+    if (index === focused) return offset === 0 ? firstAndFocusedRef : focusedRowRef;
+    return offset === 0 ? measureRowRef : undefined;
+  };
 
   // A new selection moves the tab stop while the tree is not being navigated.
   const selectedIndex = indexOfSelection(rows, selected);
@@ -159,31 +186,19 @@ export function CaseTree({ groups, onSelect, selected, label, defaultExpanded, c
         ref={scrollRef}
         onScroll={windowed ? onScroll : undefined}
         onKeyDown={onKeyDown}
-        onFocus={() => {
-          treeHasFocus.current = true;
-        }}
-        onBlur={(event) => {
-          if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) {
-            treeHasFocus.current = false;
-          }
-        }}
         className={cn("min-h-0 flex-1 overflow-auto", className)}
       >
         <div role="none" style={windowed ? { height: range.totalHeight, position: "relative" } : undefined}>
           <div role="none" style={windowed ? { transform: `translateY(${String(range.offsetTop)}px)` } : undefined}>
             {visible.map((row, offset) => (
-              <CaseTreeRow
-                key={row.key}
-                {...rowProps(row, range.start + offset)}
-                measureRef={offset === 0 ? measureRowRef : undefined}
-              />
+              <CaseTreeRow key={row.key} {...rowProps(row, range.start + offset)} rowRef={rowRef(range.start + offset, offset)} />
             ))}
           </div>
           {pinned ? (
             <CaseTreeRow
               key={pinned.key}
               {...rowProps(pinned, focused)}
-              measureRef={undefined}
+              rowRef={focusedRowRef}
               style={{ position: "absolute", top: focused * rowHeight, left: 0, right: 0 }}
             />
           ) : null}
