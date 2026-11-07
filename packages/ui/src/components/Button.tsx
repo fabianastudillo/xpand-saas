@@ -1,10 +1,17 @@
 import { Slot } from "@radix-ui/react-slot";
-import type { ComponentProps, ReactElement } from "react";
+import type { ComponentProps, KeyboardEvent, MouseEvent, ReactElement } from "react";
 import { cn } from "../lib/cn";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 export type ButtonSize = "sm" | "md";
 
+/**
+ * Two ways to disable:
+ * - `disabled`: the native attribute; the button leaves the tab order and cannot show a tooltip.
+ * - `aria-disabled`: «disabled with a reason». The button stays focusable (so a <Tooltip> can say why) and
+ *   looks disabled, but clicks, Enter and Space are swallowed, also when `asChild` wraps a link.
+ * Icon-only buttons must carry their own `aria-label`: the icon is not a name.
+ */
 export interface ButtonProps extends ComponentProps<"button"> {
   /** `primary` is the one accent action per view («Resolver»); everything else is secondary or ghost. */
   variant?: ButtonVariant;
@@ -17,7 +24,7 @@ const BASE =
   "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md border font-medium " +
   "select-none transition-colors " +
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent " +
-  "disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50";
+  "disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
 
 const VARIANT: Readonly<Record<ButtonVariant, string>> = {
   primary: "border-accent bg-accent text-accent-ink hover:bg-accent-hover hover:border-accent-hover",
@@ -31,23 +38,54 @@ const SIZE: Readonly<Record<ButtonSize, string>> = {
   md: "h-(--control-h) px-3 text-sm",
 };
 
+const ACTIVATION_KEYS = new Set(["Enter", " "]);
+
+function isAriaDisabled(value: ButtonProps["aria-disabled"]): boolean {
+  return value === true || value === "true";
+}
+
 export function Button({
   variant = "secondary",
   size = "md",
   asChild = false,
   className,
   type,
+  onClick,
+  onKeyDown,
+  "aria-disabled": ariaDisabled,
   ...props
 }: ButtonProps): ReactElement {
   const Component = asChild ? Slot : "button";
+  const softDisabled = isAriaDisabled(ariaDisabled);
   // A <button> defaults to type="submit" in forms; here it is a plain button unless told otherwise.
   const typeProps = asChild ? {} : { type: type ?? "button" };
+
+  const handleClick = (event: MouseEvent<HTMLButtonElement>): void => {
+    if (softDisabled) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    onClick?.(event);
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>): void => {
+    if (softDisabled && ACTIVATION_KEYS.has(event.key)) {
+      event.preventDefault();
+      return;
+    }
+    onKeyDown?.(event);
+  };
+
   return (
     <Component
       data-slot="button"
       data-variant={variant}
       data-size={size}
       className={cn(BASE, VARIANT[variant], SIZE[size], className)}
+      aria-disabled={softDisabled ? true : ariaDisabled}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
       {...typeProps}
       {...props}
     />

@@ -2,22 +2,23 @@
 @layer base {
   html {
     font-family: var(--font-sans);
-    font-size: 16px;
+    /* Respect the user's browser font size; the scale in tokens.css is in rem. */
+    font-size: 100%;
     line-height: var(--leading-normal);
+    /* Figures everywhere line up: tabular digits also in the sans face. */
+    font-variant-numeric: tabular-nums;
     color: var(--ink);
     background: var(--surface);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    /* Anchors and focused elements scroll clear of the sticky top and status bars. */
+    scroll-padding-top: var(--topbar-h);
+    scroll-padding-bottom: var(--statusbar-h);
   }
 
   body {
     margin: 0;
     font-size: var(--text-base);
-  }
-
-  /* Figures everywhere line up: tabular digits also in the sans face. */
-  html {
-    font-variant-numeric: tabular-nums;
   }
 
   /* Keyboard focus is always visible and always the same: a solid accent outline outside the element. */
@@ -28,6 +29,18 @@
 
   ::selection {
     background: var(--accent-soft);
+  }
+
+  /* Motion is never load-bearing: with reduced motion everything settles at once. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 

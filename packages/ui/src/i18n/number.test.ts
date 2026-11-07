@@ -22,4 +22,9 @@ describe("formatNumber", () => {
   it("keeps the minus sign readable", () => {
     expect(formatNumber(-12.5, { digits: 1, locale: "en" })).toBe("-12.5");
   });
+
+  it("never shows a negative zero after rounding", () => {
+    expect(formatNumber(-0.04, { digits: 1, locale: "es" })).toBe("0,0");
+    expect(formatNumber(-0, { digits: 0, locale: "en" })).toBe("0");
+  });
 });

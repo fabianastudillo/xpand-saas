@@ -4,14 +4,16 @@ export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from ".
 export { Field, type FieldProps } from "./components/Field";
 export { Input, type InputProps } from "./components/Input";
 export { Kbd, Shortcut, type ShortcutProps } from "./components/Kbd";
+export { LocaleName, type LocaleNameProps } from "./components/LocaleName";
 export { NumberCell, type NumberCellProps } from "./components/NumberCell";
 export { Skeleton, type SkeletonProps } from "./components/Skeleton";
 export { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/Tabs";
-export { Tooltip, TooltipProvider, type TooltipProps } from "./components/Tooltip";
+export { Tooltip, TooltipProvider, toAriaKeyshortcuts, type TooltipProps } from "./components/Tooltip";
 
 // i18n and formatting
 export {
   LOCALES,
+  LOCALE_NAMES,
   formatNumber,
   getLocale,
   isLocale,

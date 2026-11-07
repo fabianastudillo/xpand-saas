@@ -16,6 +16,8 @@ const PUBLIC_EXPORTS = [
   "TabsContent",
   "Tooltip",
   "TooltipProvider",
+  "LocaleName",
+  "LOCALE_NAMES",
   "t",
   "getLocale",
   "setLocale",

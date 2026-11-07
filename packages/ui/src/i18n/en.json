@@ -7,7 +7,5 @@
   "field.required": "Required",
   "common.loading": "Loading…",
   "common.retry": "Retry",
-  "common.close": "Close",
-  "locale.es": "Español",
-  "locale.en": "English"
+  "common.close": "Close"
 }

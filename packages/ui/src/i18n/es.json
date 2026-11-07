@@ -7,7 +7,5 @@
   "field.required": "Obligatorio",
   "common.loading": "Cargando…",
   "common.retry": "Reintentar",
-  "common.close": "Cerrar",
-  "locale.es": "Español",
-  "locale.en": "English"
+  "common.close": "Cerrar"
 }

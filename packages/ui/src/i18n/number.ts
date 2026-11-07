@@ -23,6 +23,8 @@ function formatterFor(locale: Locale, digits: number): Intl.NumberFormat {
     maximumFractionDigits: digits,
     // No thousands grouping: engineering figures (1457,8 MW) read better aligned than grouped.
     useGrouping: false,
+    // A value that rounds to zero is shown as 0,0, never as -0,0.
+    signDisplay: "negative",
   });
   formatters.set(cacheKey, formatter);
   return formatter;

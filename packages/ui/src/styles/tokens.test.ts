@@ -1,8 +1,19 @@
 import { describe, expect, it } from "vitest";
+import rawFontsCss from "./fonts.css?raw";
+import rawThemeCss from "./theme.css?raw";
 import rawCss from "./tokens.css?raw";
 
-/** The stylesheet without comments, so prose never trips the parsers below. */
-const css = rawCss.replace(/\/\*[\s\S]*?\*\//g, "");
+function stripComments(source: string): string {
+  return source.replace(/\/\*[\s\S]*?\*\//g, "");
+}
+
+/** The stylesheets without comments, so prose never trips the parsers below. */
+const css = stripComments(rawCss);
+const themeCss = stripComments(rawThemeCss);
+const fontsCss = stripComments(rawFontsCss);
+
+/** WCAG 2.5.8: every pointer target at least 24×24 CSS px, also in compact density. */
+const MIN_TARGET_PX = 24;
 
 /** Minimum WCAG 2.2 AA contrast for text (1.4.3) and for UI component boundaries (1.4.11). */
 const TEXT_MIN = 4.5;
@@ -100,15 +111,25 @@ const TEXT_PAIRS: ReadonlyArray<readonly [string, string]> = [
   ["--ok-ink", "--surface"],
   ["--warn-ink", "--surface"],
   ["--error-ink", "--surface"],
+  // Muted text also sits on hovered rows and on the canvas grid; buttons keep their ink while hovered.
+  ["--ink-muted", "--surface-sunken"],
+  ["--ink-muted", "--grid-line"],
+  ["--accent-ink", "--accent-hover"],
+  ["--ink-inverse", "--ink"],
 ];
 
-/** Non-text boundaries and status marks over the surface. */
+/** Non-text boundaries and status marks over the surfaces a control can sit on. */
 const GRAPHIC_PAIRS: ReadonlyArray<readonly [string, string]> = [
   ["--line-strong", "--surface"],
+  ["--line-strong", "--surface-sunken"],
+  ["--line-strong", "--grid-line"],
   ["--ok", "--surface"],
   ["--warn", "--surface"],
   ["--error", "--surface"],
 ];
+
+/** Heights of interactive controls, in both density blocks. */
+const INTERACTIVE_HEIGHTS = ["--control-h", "--control-h-sm", "--row-h"] as const;
 
 describe("tokens.css", () => {
   it("defines every token the brief names", () => {
@@ -147,6 +168,41 @@ describe("tokens.css", () => {
 
   it("stays plain CSS: hex literals and var() only, so the app can load it without Tailwind", () => {
     expect(css).not.toMatch(/@theme|@apply|oklch\(|color-mix\(/);
+  });
+
+  it.each(INTERACTIVE_HEIGHTS)("%s keeps a 24px target in normal and compact density", (name) => {
+    expect(Number.parseFloat(resolve(root, name))).toBeGreaterThanOrEqual(MIN_TARGET_PX);
+    expect(Number.parseFloat(resolve(compact, name))).toBeGreaterThanOrEqual(MIN_TARGET_PX);
+  });
+
+  it("declares the sticky bar heights that scroll-padding uses", () => {
+    expect(root.has("--topbar-h")).toBe(true);
+    expect(root.has("--statusbar-h")).toBe(true);
+  });
+});
+
+describe("theme.css", () => {
+  it("is an inline reference theme: Tailwind emits no variables, so a mapping like --font-sans: var(--font-sans) never self-references", () => {
+    expect(themeCss).toMatch(/@theme\s+inline\s+reference\s*\{/);
+    expect(themeCss.match(/@theme/g)).toHaveLength(1);
+  });
+
+  it("only references tokens that tokens.css defines", () => {
+    const referenced = [...themeCss.matchAll(/var\((--[\w-]+)\)/g)].map((m) => m[1] ?? "");
+    expect(referenced.length).toBeGreaterThan(20);
+    for (const name of referenced) {
+      expect(root.has(name), name).toBe(true);
+    }
+  });
+});
+
+describe("fonts.css", () => {
+  it("bundles only the latin subsets and no italic faces", () => {
+    const imports = [...fontsCss.matchAll(/@import\s+"([^"]+)"/g)].map((m) => m[1] ?? "");
+    expect(imports.length).toBeGreaterThan(0);
+    for (const path of imports) {
+      expect(path, path).toMatch(/^@fontsource\/ibm-plex-(sans|mono)\/latin-\d{3}\.css$/);
+    }
   });
 });
 

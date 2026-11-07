@@ -2,7 +2,7 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "./en.json";
 import es from "./es.json";
-import { getLocale, setLocale, t, useLocale, type MessageKey } from "./index";
+import { getLocale, LOCALE_NAMES, setLocale, t, useLocale, type MessageKey } from "./index";
 
 afterEach(() => {
   setLocale("es");
@@ -29,6 +29,11 @@ describe("message catalogs", () => {
     expect(es["status.uncertified"]).toBe("NO CERTIFICADO");
     expect(en["status.uncertified"]).toBe("NOT CERTIFIED");
     expect(es["status.acFeasible"]).toBe("Factible en AC");
+  });
+
+  it("names each locale in its own language (endonyms are not translated)", () => {
+    expect(LOCALE_NAMES.es).toBe("Español");
+    expect(LOCALE_NAMES.en).toBe("English");
   });
 });
 
@@ -66,6 +71,19 @@ describe("t()", () => {
       setLocale("fr" as never);
     }).toThrow(/locale/i);
     expect(getLocale()).toBe("es");
+  });
+});
+
+describe("<html lang>", () => {
+  it("is set to the default locale when the module loads", () => {
+    expect(document.documentElement.lang).toBe("es");
+  });
+
+  it("follows setLocale so screen readers switch pronunciation", () => {
+    setLocale("en");
+    expect(document.documentElement.lang).toBe("en");
+    setLocale("es");
+    expect(document.documentElement.lang).toBe("es");
   });
 });
 

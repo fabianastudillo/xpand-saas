@@ -21,7 +21,7 @@ export function TabsList({ className, ...props }: ComponentProps<typeof TabsPrim
 }
 
 const TRIGGER =
-  "relative -mb-px inline-flex h-(--row-h) items-center border-b-2 border-transparent px-3 text-sm " +
+  "relative -mb-px inline-flex h-(--control-h) items-center border-b-2 border-transparent px-3 text-sm " +
   "font-medium whitespace-nowrap text-ink-muted transition-colors select-none " +
   "hover:text-ink " +
   "data-[state=active]:border-accent data-[state=active]:text-ink " +

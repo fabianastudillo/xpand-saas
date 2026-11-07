@@ -15,7 +15,7 @@ export function Skeleton({ width, height, className, style, ...props }: Skeleton
     <span
       data-slot="skeleton"
       aria-hidden="true"
-      className={cn("block animate-pulse rounded-sm bg-line", className)}
+      className={cn("block animate-pulse rounded-sm bg-line motion-reduce:animate-none", className)}
       style={{ width, height, ...style }}
       {...props}
     />

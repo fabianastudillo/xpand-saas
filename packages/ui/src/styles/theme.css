@@ -1,10 +1,12 @@
 /*
  * Tailwind 4 theme: maps the raw tokens of tokens.css to utility namespaces.
- * `inline` keeps the var() reference in the generated utilities, so a later theme (dark, compact) only has
- * to redefine the tokens. The default palette is dropped (`--color-*: initial`): the only colors available
- * as utilities are the semantic ones, which is how "color only with meaning" is enforced at build time.
+ * `inline` makes utilities carry the var() reference (so a later theme only redefines tokens) and `reference`
+ * stops Tailwind from emitting these variables itself: tokens.css stays the single place where variables are
+ * declared, and a mapping such as `--font-sans: var(--font-sans)` never becomes a self-referencing cycle.
+ * The default palette is dropped (`--color-*: initial`): the only colors available as utilities are the
+ * semantic ones, which is how "color only with meaning" is enforced at build time.
  */
-@theme inline {
+@theme inline reference {
   --color-*: initial;
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);

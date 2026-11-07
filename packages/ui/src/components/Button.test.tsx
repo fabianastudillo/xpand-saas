@@ -61,4 +61,46 @@ describe("<Button>", () => {
     render(<Button>Foco</Button>);
     expect(screen.getByRole("button").className).toMatch(/focus-visible:outline-accent/);
   });
+
+  describe("disabled with a reason (aria-disabled)", () => {
+    it("stays focusable so a tooltip can explain why, but does not run onClick", async () => {
+      const user = userEvent.setup();
+      const onClick = vi.fn();
+      render(
+        <Button aria-disabled onClick={onClick}>
+          Resolver
+        </Button>,
+      );
+      const button = screen.getByRole("button");
+      await user.tab();
+      expect(button).toHaveFocus();
+      await user.click(button);
+      await user.keyboard("{Enter}");
+      await user.keyboard(" ");
+      expect(onClick).not.toHaveBeenCalled();
+      expect(button.className).not.toMatch(/aria-disabled:pointer-events-none/);
+    });
+
+    it("asChild link with aria-disabled does not navigate on click or Enter", async () => {
+      const user = userEvent.setup();
+      const onClick = vi.fn();
+      render(
+        <Button asChild aria-disabled onClick={onClick}>
+          <a href="/app/casos">Explorar casos</a>
+        </Button>,
+      );
+      const link = screen.getByRole("link");
+      const clickEvent = new MouseEvent("click", { bubbles: true, cancelable: true });
+      link.dispatchEvent(clickEvent);
+      expect(clickEvent.defaultPrevented).toBe(true);
+      await user.tab();
+      await user.keyboard("{Enter}");
+      expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it("keeps the native disabled attribute for the plain case", () => {
+      render(<Button disabled>Ir</Button>);
+      expect(screen.getByRole("button")).toBeDisabled();
+    });
+  });
 });

@@ -2,7 +2,16 @@ import en from "./en.json";
 import es from "./es.json";
 import { getLocale, type Locale } from "./store";
 
-export { LOCALES, getLocale, isLocale, setLocale, subscribeLocale, useLocale, type Locale } from "./store";
+export {
+  LOCALES,
+  LOCALE_NAMES,
+  getLocale,
+  isLocale,
+  setLocale,
+  subscribeLocale,
+  useLocale,
+  type Locale,
+} from "./store";
 export { formatNumber, type FormatNumberOptions } from "./number";
 
 /** Every key of the Spanish catalog; en.json is checked to have the same set. */

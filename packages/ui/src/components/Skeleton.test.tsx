@@ -19,4 +19,11 @@ describe("<Skeleton>", () => {
     render(<Skeleton className="mt-2" />);
     expect(screen.getByTestId("skeleton").className).toMatch(/mt-2/);
   });
+
+  it("stops pulsing when the user prefers reduced motion", () => {
+    render(<Skeleton />);
+    const className = screen.getByTestId("skeleton").className;
+    expect(className).toMatch(/animate-pulse/);
+    expect(className).toMatch(/motion-reduce:animate-none/);
+  });
 });
