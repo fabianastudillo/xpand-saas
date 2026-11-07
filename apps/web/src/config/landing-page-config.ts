@@ -4,7 +4,7 @@ export const landingPageContent = {
     subheadline:
       "Consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
     cta: "Inceptos Gratuit",
-    figureImage: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7",
+    figureImage: "/hero.svg",
   },
   featuresOverview: {
     title: "Ut Enim ad Minima Veniam",

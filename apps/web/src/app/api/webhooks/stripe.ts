@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { buffer } from "micro";
 import Stripe from "stripe";
 
-import { stripe } from "@/libs/stripe/stripe";
+import { getStripe } from "@/libs/stripe/stripe";
 import {
   activeUserByStripeCustomerId,
   desactiveUserByStripeCustomerId,
@@ -28,13 +28,13 @@ export default async function POST(
 
     try {
       // Use the Stripe SDK and request info to verify this Webhook request actually came from Stripe
-      event = stripe.webhooks.constructEvent(
+      event = getStripe().webhooks.constructEvent(
         requestBuffer.toString(), // Stringify the request for the Stripe library
         sig,
         endpointSecret,
       );
-    } catch (err: any) {
-      console.log(`⚠️  Webhook signature verification failed.`, err.message);
+    } catch (err) {
+      console.log(`⚠️  Webhook signature verification failed.`, err instanceof Error ? err.message : err);
       return res.status(400).send(`Webhook signature verification failed.`);
     }
 
@@ -47,11 +47,12 @@ export default async function POST(
         await activeUserByStripeCustomerId(subscription.customer.toString());
         break;
       }
-      case "customer.subscription.deleted":
+      case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription;
 
         await desactiveUserByStripeCustomerId(subscription.customer.toString());
         break;
+      }
 
       // ... handle other event types
       default:

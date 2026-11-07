@@ -6,18 +6,13 @@ import { appAnalyticsConfig } from "@/config/app-analytics-config";
 
 const isProd = process.env.NODE_ENV === "production";
 
+const GoogleAnalytics = dynamic(() => import("./google-analytics"), { ssr: false });
+
+// Google Analytics loads only in production and only with an id configured: otherwise nothing is requested.
 export const Analytics = () => {
-  if (!isProd) {
+  if (!isProd || !appAnalyticsConfig.googleAnalyticsId) {
     return null;
   }
 
-  if (isProd && appAnalyticsConfig.googleAnalyticsId) {
-    const GoogleAnalytics = dynamic(() => import("./google-analytics"), {
-      ssr: false,
-    });
-
-    return <GoogleAnalytics />;
-  }
-
-  return null;
+  return <GoogleAnalytics />;
 };

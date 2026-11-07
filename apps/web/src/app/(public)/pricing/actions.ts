@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 
 import { paymentsConfig } from "@/config/payments-config";
 import { formatAmountForStripe } from "@/libs/stripe/stripe-helpers";
-import { stripe } from "@/libs/stripe/stripe";
+import { getStripe } from "@/libs/stripe/stripe";
 import { getSession } from "@/libs/auth/auth-utils";
 
 interface ReturnData {
@@ -30,10 +30,10 @@ export async function createCheckoutSession(
     "uiMode",
   ) as Stripe.Checkout.SessionCreateParams.UiMode;
 
-  const origin: string = headers().get("origin") as string;
+  const origin: string = (await headers()).get("origin") as string;
 
   const checkoutSession: Stripe.Checkout.Session =
-    await stripe.checkout.sessions.create({
+    await getStripe().checkout.sessions.create({
       mode: "subscription",
       customer: session.user.stripeCustomerId,
       line_items: [
@@ -82,9 +82,9 @@ export async function createPortalSession() {
   }
 
   const portalSession: Stripe.BillingPortal.Session =
-    await stripe.billingPortal.sessions.create({
+    await getStripe().billingPortal.sessions.create({
       customer: session.user.stripeCustomerId,
-      return_url: `${headers().get("origin")}/dashboard`,
+      return_url: `${(await headers()).get("origin")}/dashboard`,
     });
 
   return { url: portalSession.url };
@@ -94,7 +94,7 @@ export async function createPaymentIntent(
   data: FormData,
 ): Promise<{ client_secret: string }> {
   const paymentIntent: Stripe.PaymentIntent =
-    await stripe.paymentIntents.create({
+    await getStripe().paymentIntents.create({
       amount: formatAmountForStripe(
         Number(data.get("amount") as string),
         paymentsConfig.defaultCurrency,

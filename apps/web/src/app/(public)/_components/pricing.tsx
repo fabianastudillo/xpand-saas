@@ -1,5 +1,6 @@
 import { paymentsConfig } from "@/config/payments-config";
 import { formatAmountForDisplay } from "@/libs/stripe/stripe-helpers";
+import { pagosActivos } from "@/libs/stripe/stripe";
 import { SubscribeButton } from "./subscribe-button";
 import { Typography } from "@/components/ui/typography";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,8 @@ import {
 } from "@/components/ui/card";
 
 export const Pricing = () => {
+  const pagos = pagosActivos();
+
   return (
     <>
       <Typography component="h2" className="text-center">
@@ -57,6 +60,7 @@ export const Pricing = () => {
                     planName={plan.name}
                     priceId={plan.priceId}
                     amount={plan.price}
+                    pagosActivos={pagos}
                   >
                     {plan.cta}
                   </SubscribeButton>

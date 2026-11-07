@@ -11,8 +11,9 @@ export interface DecisionConfianzaHost {
  * - With `AUTH_URL` set, next-auth replaces the request origin with it before Auth.js sees the request, so the
  *   Host header is never used and `trustHost` is safe.
  * - Without `AUTH_URL`, trusting the Host header lets whoever controls it (host-header injection) receive a
- *   magic link pointing at their host. That is only acceptable on a developer's machine: in production the app
- *   refuses to start and names the variable.
+ *   magic link pointing at their host. That is only acceptable on a developer's machine: in production the
+ *   host is not trusted (every sign-in fails) and the error names the variable; the start script refuses to
+ *   launch the production server without it.
  */
 export const decidirConfianzaHost = (env: {
   AUTH_URL?: string | undefined;

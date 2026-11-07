@@ -10,7 +10,8 @@ interface FeatureFlagSwitchProps {
   name: string;
 }
 
-export const FeatureFlagSwitch = async ({
+// A client component must not be async (React 19 refuses to render it); the action is awaited in the handler.
+export const FeatureFlagSwitch = ({
   name,
   isEnabled,
 }: FeatureFlagSwitchProps) => {

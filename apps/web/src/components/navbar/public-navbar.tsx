@@ -31,11 +31,12 @@ export const PublicNavbar = () => {
       <NavigationMenuList className="hidden lg:flex flex-grow lg:items-center lg:w-auto">
         {publicNavLinks.map((link) => (
           <NavigationMenuItem key={link.url}>
-            <Link href={link.url} legacyBehavior passHref>
-              <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                {link.title}
-              </NavigationMenuLink>
-            </Link>
+            <NavigationMenuLink
+              asChild
+              className={navigationMenuTriggerStyle()}
+            >
+              <Link href={link.url}>{link.title}</Link>
+            </NavigationMenuLink>
           </NavigationMenuItem>
         ))}
       </NavigationMenuList>

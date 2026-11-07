@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-import { useFormState } from "react-dom";
+import { useTransition } from "react";
 import { toast } from "sonner";
 import { UserRole } from "@prisma/client";
 
@@ -25,20 +24,21 @@ const initialState = {
 };
 
 export const SelectRole = ({ userRoleName, email }: SelectRoleProps) => {
-  const [state, action] = useFormState(updateUserRoleAction, initialState);
+  const [, startTransition] = useTransition();
 
-  const handleChange = async (value: string) => {
+  // The action is called directly and its result shown once: with useActionState + an effect on the state,
+  // React 19 delivered the toast twice.
+  const handleChange = (value: string) => {
     const formData = new FormData();
     formData.append("email", email);
     formData.append("roleToUpdate", value);
-    action(formData);
+    startTransition(async () => {
+      const state = await updateUserRoleAction(initialState, formData);
+      if (state.message) {
+        toast[state.error ? "error" : "success"](state.message);
+      }
+    });
   };
-
-  useEffect(() => {
-    if (state?.message) {
-      toast[state.error ? "error" : "success"](state.message);
-    }
-  }, [state]);
 
   return (
     <Select defaultValue={userRoleName} onValueChange={handleChange}>

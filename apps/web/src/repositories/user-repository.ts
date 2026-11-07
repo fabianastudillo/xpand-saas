@@ -84,7 +84,7 @@ export const updateUserRoleByEmail = async (email: string, role: UserRole) => {
     });
   } catch (error) {
     console.error(error);
-    throw new Error("Failed to update user role");
+    throw new Error("Failed to update user role", { cause: error });
   }
 };
 

@@ -7,13 +7,16 @@ import {
   getUserByEmail,
   updateStripeCustomerIdByEmail,
 } from "@/repositories/user-repository";
-import { stripe } from "@/libs/stripe/stripe";
+import { getStripe, pagosActivos } from "@/libs/stripe/stripe";
 import { decidirConfianzaHost } from "@/libs/auth/host-confianza";
 
 const confianzaHost = decidirConfianzaHost(process.env);
 
 if (confianzaHost.error) {
-  throw new Error(confianzaHost.error);
+  // Not thrown: `next build` also runs with NODE_ENV=production and must work without runtime secrets.
+  // With trustHost false every sign-in fails with UntrustedHost, and scripts/arranque.mjs refuses to start
+  // the production server without AUTH_URL.
+  console.error(confianzaHost.error);
 }
 
 export const {
@@ -73,7 +76,12 @@ export const {
           return;
         }
 
-        const customer = await stripe.customers.create({
+        if (!pagosActivos()) {
+          // Payments are off (no Stripe keys): no customer is created and nothing is sent to Stripe.
+          return;
+        }
+
+        const customer = await getStripe().customers.create({
           email: user.email!,
         });
 

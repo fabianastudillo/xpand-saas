@@ -10,7 +10,6 @@ const prismaClientSingleton = () => {
 // Learn more:
 // https://pris.ly/d/help/next-js-best-practices
 declare global {
-  // eslint-disable-next-line no-unused-vars
   var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
 }
 

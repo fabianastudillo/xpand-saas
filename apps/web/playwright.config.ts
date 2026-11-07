@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import dotenv from "dotenv";
 
 import { adminUser } from "./tests/data/admin-user";
 
@@ -9,7 +10,7 @@ import { adminUser } from "./tests/data/admin-user";
 // load .env.test only if running in local environment,
 // so prisma can use .env.test to connect to the test database
 if (!process.env.CI) {
-  require("dotenv").config({
+  dotenv.config({
     path: "./.env.test",
   });
 }
@@ -51,7 +52,7 @@ export default defineConfig({
   projects: [
     {
       name: "login users - setup",
-      testMatch: /global\-setup.ts/,
+      testMatch: /global-setup.ts/,
       teardown: "cleanup db",
     },
 

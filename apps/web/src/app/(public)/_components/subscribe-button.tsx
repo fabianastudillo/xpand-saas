@@ -11,6 +11,8 @@ interface SubscribeButtonProps {
   priceId: string;
   planName: string;
   amount: number;
+  /** False while Stripe has no keys: the plan is shown but cannot be bought. */
+  pagosActivos: boolean;
   children: React.ReactNode;
 }
 
@@ -18,6 +20,7 @@ export const SubscribeButton = ({
   planName,
   priceId,
   amount,
+  pagosActivos,
   children,
 }: SubscribeButtonProps) => {
   const { status } = useAuth();
@@ -36,6 +39,18 @@ export const SubscribeButton = ({
 
   const isUnauthenticated = status === "unauthenticated";
   const isLoading = status === "loading";
+
+  if (!pagosActivos) {
+    return (
+      <Button
+        variant="outline"
+        disabled
+        title="Payments are not enabled on this server"
+      >
+        Payments not enabled
+      </Button>
+    );
+  }
 
   if (isLoading) {
     return <span className="loading loading-spinner loading-xs" />;

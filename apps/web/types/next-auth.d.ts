@@ -1,8 +1,6 @@
-/* eslint-disable no-unused-vars */
-
-// Docs: https://next-auth.js.org/getting-started/typescript
-import NextAuth, { DefaultSession } from "next-auth";
-import { UserRole } from "@prisma/client";
+// Docs: https://authjs.dev/getting-started/typescript
+import type { DefaultSession } from "next-auth";
+import type { UserRole } from "@prisma/client";
 
 export type ExtendedUser = DefaultSession["user"] & {
   publicId: string;

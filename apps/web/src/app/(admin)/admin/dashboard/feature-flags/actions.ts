@@ -94,7 +94,7 @@ export const toggleFeatureFlagAction = async (
     await updateFeatureFlag(featureFlag.id, !isEnabled);
 
     return { success: true };
-  } catch (error) {
+  } catch {
     return {
       success: false,
       errorMessage: { isEnabled: ["Could not update feature flag"] },
@@ -113,7 +113,7 @@ export const deleteFeatureFlagAction = async (name: string) => {
     await deleteFeatureFlag(name);
     revalidatePath("/admin/dashboard/feature-flags");
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false };
   }
 };

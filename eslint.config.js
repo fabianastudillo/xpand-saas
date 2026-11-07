@@ -1,6 +1,7 @@
 // @ts-check
 import js from "@eslint/js";
 import globals from "globals";
+import nextPlugin from "@next/eslint-plugin-next";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import reactHooks from "eslint-plugin-react-hooks";
 import tseslint from "typescript-eslint";
@@ -41,6 +42,16 @@ export default tseslint.config(
   {
     files: TEMPLATE_PATHS,
     extends: [...tseslint.configs.recommended],
+  },
+  {
+    // Next's own rules (core web vitals) for the Next app only.
+    files: TEMPLATE_PATHS,
+    plugins: { "@next/next": nextPlugin },
+    rules: {
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs["core-web-vitals"].rules,
+    },
+    settings: { next: { rootDir: "apps/web/" } },
   },
   {
     languageOptions: {

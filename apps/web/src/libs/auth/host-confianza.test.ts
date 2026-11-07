@@ -9,7 +9,7 @@ describe("decidirConfianzaHost", () => {
     });
   });
 
-  it("without AUTH_URL in production, refuses to start and names the variable", () => {
+  it("without AUTH_URL in production, does not trust the host and reports the missing variable", () => {
     const decision = decidirConfianzaHost({ NODE_ENV: "production" });
     expect(decision.trustHost).toBe(false);
     expect(decision.error).toMatch(/AUTH_URL/);
