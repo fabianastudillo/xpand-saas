@@ -32,6 +32,18 @@ function SelfClearing(): React.JSX.Element {
 }
 
 describe("<ProblemsList>", () => {
+  it("offers an action that is a link when it carries an href (leaves the app)", () => {
+    const linkProblem: Problem = {
+      id: "sesion-clasica",
+      severity: "error",
+      title: "Sesión requerida",
+      action: { label: "Abrir la interfaz clásica", href: "/" },
+    };
+    render(<ProblemsList problems={[linkProblem]} />);
+    expect(screen.getByRole("link", { name: "Abrir la interfaz clásica" })).toHaveAttribute("href", "/");
+    expect(screen.queryByRole("button", { name: "Abrir la interfaz clásica" })).toBeNull();
+  });
+
   it("groups by severity, errors first, with counts in the headings", () => {
     render(<ProblemsList problems={problems} />);
     const headings = screen.getAllByRole("heading");

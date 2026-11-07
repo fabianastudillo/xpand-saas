@@ -34,6 +34,7 @@ export { BottomPanel, type BottomPanelProps } from "./shell/BottomPanel";
 export { ProblemsAnnouncer, type ProblemsAnnouncerProps } from "./shell/ProblemsAnnouncer";
 export { useShellCommands, type ShellCommandOptions } from "./shell/shellCommands";
 export { useMediaQuery } from "./shell/useMediaQuery";
+export { useWindowedRows, type WindowedRows } from "./shell/windowing";
 export { CaseTree, type CaseTreeProps, type TreeSelection } from "./shell/CaseTree";
 export { CommandPalette, type CommandPaletteProps } from "./shell/CommandPalette";
 export { DocumentTabs, type DocumentTabsProps, type ShellDocument } from "./shell/DocumentTabs";

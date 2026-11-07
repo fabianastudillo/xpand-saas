@@ -12,8 +12,8 @@
   "scripts": {
     "lint": "eslint .",
     "typecheck": "pnpm -r --if-present run typecheck",
-    "test": "vitest run --passWithNoTests && bash scripts/sync-from-xpand.test.sh && pnpm --filter @xpand/api gen:check",
-    "e2e": "echo \"e2e: sin pruebas todavia (Tarea 8)\"",
+    "test": "vitest run && bash scripts/sync-from-xpand.test.sh && pnpm --filter @xpand/api gen:check",
+    "e2e": "pnpm --filter @xpand/local e2e",
     "build": "pnpm -r --if-present run build",
     "sync:contracts": "scripts/sync-from-xpand.sh",
     "check:contracts": "scripts/sync-from-xpand.sh --check",

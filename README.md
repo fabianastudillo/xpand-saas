@@ -25,7 +25,7 @@ pnpm lint                        # ESLint (configuración plana)
 pnpm typecheck                   # TypeScript estricto en cada paquete
 pnpm test                        # Vitest
 pnpm --filter @xpand/api gen    # regenerar los tipos de contracts/api (pnpm test comprueba que no difieren)
-pnpm e2e                         # placeholder hasta la Tarea 8
+pnpm e2e                         # Playwright contra el build de apps/local (API simulada; instalar Chromium antes: pnpm --filter @xpand/local exec playwright install chromium)
 pnpm build                       # build de los paquetes que lo definan
 pnpm test:scripts                # pruebas de scripts/sync-from-xpand.sh (también en pnpm test)
 ```

@@ -143,7 +143,11 @@ function ProblemItem({ problem, titleId, onNavigate, onActivate }: ProblemItemPr
         </span>
         {problem.cause !== undefined ? <span className="text-ink-muted">{problem.cause}</span> : null}
       </div>
-      {action ? (
+      {action === undefined ? null : "href" in action ? (
+        <Button size="sm" asChild aria-describedby={titleId}>
+          <a href={action.href}>{action.label}</a>
+        </Button>
+      ) : (
         <Button
           size="sm"
           aria-describedby={titleId}
@@ -154,7 +158,7 @@ function ProblemItem({ problem, titleId, onNavigate, onActivate }: ProblemItemPr
         >
           {action.label}
         </Button>
-      ) : null}
+      )}
       {target && onNavigate ? (
         <Button
           size="sm"

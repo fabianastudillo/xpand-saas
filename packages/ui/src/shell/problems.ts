@@ -8,10 +8,8 @@ export interface ProblemTarget {
   id: string;
 }
 
-export interface ProblemAction {
-  label: string;
-  run: () => void;
-}
+/** Either runs something in the app, or leaves it for a page (`href`, e.g. the classic interface). */
+export type ProblemAction = { label: string; run: () => void } | { label: string; href: string };
 
 /**
  * One entry of the «Problemas» panel: what is wrong, why, what to do and where it is.

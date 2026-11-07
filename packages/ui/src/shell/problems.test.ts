@@ -50,7 +50,7 @@ describe("createProblemsStore", () => {
     const newRun = (): void => {};
     retry.add({ ...session, action: { label: "Entrar", run: newRun } });
     expect(notify).not.toHaveBeenCalled();
-    expect(retry.getList()[0]?.action?.run).toBe(newRun);
+    expect(retry.getList()[0]?.action).toMatchObject({ run: newRun });
     store.add({ ...reserve, cause: "1200 MW de 1457,8 MW exigidos" });
     expect(listener).toHaveBeenCalledTimes(1);
   });

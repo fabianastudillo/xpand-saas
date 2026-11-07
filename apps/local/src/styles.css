@@ -1,0 +1,7 @@
+/*
+ * Styles of the app. Tailwind generates the utilities of the design system too, so it must scan the sources
+ * of @xpand/ui (the path is relative to this file).
+ */
+@import "tailwindcss";
+@import "@xpand/ui/styles.css";
+@source "../../../packages/ui/src";
