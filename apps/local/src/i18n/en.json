@@ -17,8 +17,7 @@
   "catalog.empty": "No system matches the filters.",
   "catalog.error": "The catalog could not be loaded. Check “Problems”.",
   "catalog.difficulty": "Effort: {value}",
-  "catalog.reference": "Reference value",
-  "difficulty.fast": "fast",
+  "catalog.reference": "Reference value (no unit declared)",
   "unit.buses": "buses",
   "case.error": "The case could not be loaded. Check “Problems”.",
   "case.tree.buses": "Buses",
@@ -36,7 +35,7 @@
   "case.line.s": "Rated power s",
   "case.line.from": "From bus",
   "case.line.to": "To bus",
-  "case.candidate.cost": "Cost",
+  "case.candidate.cost": "Cost (no unit declared)",
   "case.candidate.maxCircuits": "Maximum circuits",
   "case.summary.scheme": "Network scheme",
   "case.summary.basePower": "Base power",
@@ -59,5 +58,10 @@
   "problems.http.title": "The server answered with an error",
   "problems.http.cause": "{route} answered HTTP {status}.",
   "problems.schema.title": "The response does not match the contract",
-  "problems.schema.cause": "{route}: {detail}"
+  "problems.schema.cause": "{route}: {detail}",
+  "difficulty.fast": "fast",
+  "difficulty.medium": "medium",
+  "difficulty.heavy": "heavy",
+  "problems.route.title": "The screen could not be shown",
+  "problems.route.cause": "This screen could not be prepared. Check the notice in “Problems”."
 }

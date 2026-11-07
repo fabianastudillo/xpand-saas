@@ -30,6 +30,19 @@ pnpm build                       # build de los paquetes que lo definan
 pnpm test:scripts                # pruebas de scripts/sync-from-xpand.sh (también en pnpm test)
 ```
 
+## E2E y capturas (`apps/local`)
+
+- `pnpm e2e` construye la app (`vite build`), la sirve con `vite preview` en `127.0.0.1:4173` y ejecuta Playwright
+  contra una API simulada con `contracts/api/examples` (no hace falta el servidor Julia). Antes, instalar Chromium una
+  vez: `pnpm --filter @xpand/local exec playwright install chromium`.
+- Las pruebas de capturas llevan `@visual` en el título. Las líneas base viven en
+  `apps/local/e2e/explorar.spec.ts-snapshots/` y dependen de la máquina y de la versión de Chromium. Por eso CI las
+  excluye (`--grep-invert @visual` cuando existe `CI`) hasta que se generen en una imagen de Playwright fijada.
+- Para regenerar las líneas base, en la imagen oficial con la misma versión de `@playwright/test` (1.65.0):
+  `docker run --rm -v "$PWD":/work -w /work mcr.microsoft.com/playwright:v1.65.0-noble bash -c "npm i -g pnpm@12.14.0 && pnpm install --frozen-lockfile && pnpm --filter @xpand/local exec playwright test --grep @visual --update-snapshots"`
+  y revisar las imágenes antes de comprometerlas. Localmente, `pnpm --filter @xpand/local exec playwright test --grep @visual --update-snapshots`
+  sirve para comprobar, pero no sustituye a la imagen fijada.
+
 > **Por qué TypeScript está fijado a `~5.9.3`:** typescript-eslint 8.x no da soporte a TypeScript 7. Se sube a 7 cuando la versión de typescript-eslint en uso lo declare como compatible en su `peerDependencies` (y el lint y typecheck pasen).
 
 ## Sincronizar el contrato

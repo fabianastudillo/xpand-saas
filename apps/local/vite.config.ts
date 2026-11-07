@@ -6,6 +6,9 @@ import { defineConfig } from "vite";
 export default defineConfig({
   base: "/app/",
   plugins: [react(), tailwindcss()],
+  // ajv is loaded lazily in development (the API client validates there): pre-bundle it, so that Vite does not
+  // discover it mid-session and reload the page.
+  optimizeDeps: { include: ["ajv"] },
   build: {
     outDir: "dist",
     emptyOutDir: true,

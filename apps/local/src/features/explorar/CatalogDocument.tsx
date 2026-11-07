@@ -1,9 +1,10 @@
 import type { Catalogo } from "@xpand/api";
 import { Field, Input, Skeleton, formatNumber, t, useWindowedRows } from "@xpand/ui";
-import type { ReactElement, SyntheticEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactElement, type SyntheticEvent } from "react";
 import { Link } from "react-router";
 import { casePath, FROM_CATALOG } from "../../lib/casePath";
-import { useAppText, type AppMessageKey, type TranslateFn } from "../../i18n/messages";
+import { useAppText, type AppMessageKey } from "../../i18n/messages";
+import { difficultyLabel } from "./difficulty";
 import { SIZE_BANDS, type CatalogEntry, type CatalogFilters, type SizeBand } from "./catalog";
 
 const ROW_HEIGHT_PX = 60;
@@ -13,7 +14,7 @@ const OVERSCAN_ROWS = 6;
 const SKELETON_ROWS = 6;
 const SELECT_CLASS =
   "h-(--control-h) w-full min-w-0 rounded-md border border-line-strong bg-surface-raised px-2 text-sm text-ink";
-const FAST_DIFFICULTY = "rapido";
+const NAVIGATION_KEYS = new Set(["ArrowDown", "ArrowUp", "Home", "End"]);
 
 export interface CatalogDocumentProps {
   catalog: Catalogo | undefined;
@@ -25,11 +26,11 @@ export interface CatalogDocumentProps {
   onSubmit: (first: CatalogEntry) => void;
 }
 
-function sizeKey(size: SizeBand): AppMessageKey {
-  return `catalog.size.${size}`;
+function sizeKey(band: SizeBand): AppMessageKey {
+  return `catalog.size.${band}`;
 }
 
-/** The catalog's search and filters, and the windowed list of systems (the catalog has ~2 900 of them). */
+/** The catalog's search and filters, and the windowed list of systems (about 3 000 of them). */
 export function CatalogDocument({
   catalog,
   failed,
@@ -41,6 +42,12 @@ export function CatalogDocument({
 }: CatalogDocumentProps): ReactElement {
   const translate = useAppText();
   const engines = catalog?.motores ?? [];
+  const searchRef = useRef<HTMLInputElement | null>(null);
+
+  // The search is the primary action of this page: the focus goes there when the page is entered.
+  useEffect(() => {
+    searchRef.current?.focus();
+  }, []);
 
   const handleSubmit = (event: SyntheticEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -54,8 +61,8 @@ export function CatalogDocument({
         <div className="sm:col-span-2 lg:col-span-1">
           <Field label={translate("catalog.search")} hint={translate("catalog.searchHint")}>
             <Input
+              ref={searchRef}
               type="search"
-              autoFocus
               value={filters.text}
               onChange={(event) => {
                 onChange({ ...filters, text: event.target.value });
@@ -100,14 +107,14 @@ export function CatalogDocument({
             className={SELECT_CLASS}
             value={filters.size ?? ""}
             onChange={(event) => {
-              const chosen = SIZE_BANDS.find((size) => size === event.target.value) ?? null;
+              const chosen = SIZE_BANDS.find((band) => band === event.target.value) ?? null;
               onChange({ ...filters, size: chosen });
             }}
           >
             <option value="">{translate("catalog.size.all")}</option>
-            {SIZE_BANDS.map((size) => (
-              <option key={size} value={size}>
-                {translate(sizeKey(size))}
+            {SIZE_BANDS.map((band) => (
+              <option key={band} value={band}>
+                {translate(sizeKey(band))}
               </option>
             ))}
           </select>
@@ -140,7 +147,7 @@ export function CatalogDocument({
 
 function CatalogSkeleton(): ReactElement {
   return (
-    <div aria-busy="true" className="flex flex-col gap-2">
+    <div aria-busy="true" data-slot="catalog-loading" className="flex flex-col gap-2">
       <span className="xp-sr-only">{t("common.loading")}</span>
       {Array.from({ length: SKELETON_ROWS }, (_, index) => (
         <Skeleton key={index} height="3.5rem" />
@@ -154,14 +161,39 @@ interface CatalogListProps {
   label: string;
 }
 
+/**
+ * The list of systems, windowed: only the rows near the viewport are in the DOM. One tab stop (roving focus) moves
+ * with the arrow keys, Home and End, and reveals the row it lands on, so the keyboard reaches every system.
+ */
 function CatalogList({ entries, label }: CatalogListProps): ReactElement {
-  const { scrollRef, measureRowRef, range, windowed, onScroll } = useWindowedRows({
+  const [focusIndex, setFocusIndex] = useState(0);
+  const focusPending = useRef(false);
+  const { scrollRef, measureRowRef, range, windowed, onScroll, reveal } = useWindowedRows({
     count: entries.length,
     threshold: WINDOW_THRESHOLD,
     defaultRowHeight: ROW_HEIGHT_PX,
     defaultViewportHeight: VIEWPORT_FALLBACK_PX,
     overscan: OVERSCAN_ROWS,
   });
+  const current = Math.min(focusIndex, Math.max(0, entries.length - 1));
+
+  // After a key moved the focus, the target row is mounted in the same batch: give it the focus.
+  useEffect(() => {
+    if (!focusPending.current) return;
+    focusPending.current = false;
+    scrollRef.current?.querySelector<HTMLElement>(`[data-index="${String(current)}"] a`)?.focus();
+  }, [current, scrollRef]);
+
+  const moveFocus = (event: KeyboardEvent<HTMLAnchorElement>, from: number): void => {
+    if (!NAVIGATION_KEYS.has(event.key) || event.ctrlKey || event.metaKey || event.altKey) return;
+    const target = pickIndex(event.key, from, entries.length - 1);
+    event.preventDefault();
+    if (target === current) return;
+    focusPending.current = true;
+    reveal(target);
+    setFocusIndex(target);
+  };
+
   const visible = entries.slice(range.start, range.end);
   return (
     <div ref={scrollRef} onScroll={windowed ? onScroll : undefined} className="min-h-0 flex-1 overflow-auto">
@@ -179,6 +211,11 @@ function CatalogList({ entries, label }: CatalogListProps): ReactElement {
                 entry={entry}
                 index={index}
                 total={entries.length}
+                tabbable={index === current}
+                onFocusRow={() => {
+                  setFocusIndex(index);
+                }}
+                onMove={moveFocus}
                 rowRef={offset === 0 ? measureRowRef : undefined}
               />
             );
@@ -189,23 +226,50 @@ function CatalogList({ entries, label }: CatalogListProps): ReactElement {
   );
 }
 
+function pickIndex(key: string, current: number, last: number): number {
+  switch (key) {
+    case "ArrowDown":
+      return Math.min(current + 1, last);
+    case "ArrowUp":
+      return Math.max(current - 1, 0);
+    case "Home":
+      return 0;
+    default:
+      return last;
+  }
+}
+
 interface CatalogRowProps {
   entry: CatalogEntry;
   index: number;
   total: number;
+  tabbable: boolean;
+  onFocusRow: () => void;
+  onMove: (event: KeyboardEvent<HTMLAnchorElement>, from: number) => void;
   rowRef: ((element: HTMLElement | null) => void) | undefined;
 }
 
-function CatalogRow({ entry, index, total, rowRef }: CatalogRowProps): ReactElement {
+function CatalogRow({ entry, index, total, tabbable, onFocusRow, onMove, rowRef }: CatalogRowProps): ReactElement {
   const translate = useAppText();
   const { engine, system } = entry;
-  const difficulty = system.dificultad === undefined ? null : difficultyText(system.dificultad, translate);
+  const difficulty = difficultyLabel(system.dificultad, translate);
   const reference = system.referencias?.[0]?.valor;
   return (
-    <li ref={rowRef} aria-setsize={total} aria-posinset={index + 1} className="border-b border-line">
+    <li
+      ref={rowRef}
+      data-index={index}
+      aria-setsize={total}
+      aria-posinset={index + 1}
+      className="border-b border-line"
+    >
       <Link
         to={casePath(engine.id, system.id)}
         state={FROM_CATALOG}
+        tabIndex={tabbable ? 0 : -1}
+        onFocus={onFocusRow}
+        onKeyDown={(event) => {
+          onMove(event, index);
+        }}
         className="flex flex-col gap-0.5 px-3 py-2 text-ink no-underline hover:bg-surface-sunken focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent"
       >
         <span className="flex items-baseline justify-between gap-3">
@@ -216,14 +280,10 @@ function CatalogRow({ entry, index, total, rowRef }: CatalogRowProps): ReactElem
         </span>
         <span className="text-xs text-ink-muted">
           {engine.nombre}
-          {difficulty === null ? "" : ` · ${difficulty}`}
+          {difficulty === null ? "" : ` · ${translate("catalog.difficulty", { value: difficulty })}`}
           {reference === undefined ? "" : ` · ${translate("catalog.reference")} ${formatNumber(reference, { digits: 2 })}`}
         </span>
       </Link>
     </li>
   );
-}
-
-function difficultyText(value: string, translate: TranslateFn): string {
-  return value === FAST_DIFFICULTY ? translate("catalog.difficulty", { value: translate("difficulty.fast") }) : value;
 }

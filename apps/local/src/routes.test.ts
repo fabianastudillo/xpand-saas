@@ -17,8 +17,8 @@ describe("route table", () => {
     expect(params).toEqual({ motor: engine, sistema: system });
   });
 
-  it("opens the catalog at the root of the app", () => {
+  it("opens the catalog as the index page of the layout", () => {
     const matches = matchRoutes(ROUTE_TABLE, "/") ?? [];
-    expect(matches.at(-1)?.route.path).toBe("/");
+    expect(matches.at(-1)?.route.index).toBe(true);
   });
 });

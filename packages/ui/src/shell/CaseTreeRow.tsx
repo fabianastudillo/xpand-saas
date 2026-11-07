@@ -36,8 +36,9 @@ export function CaseTreeRow({
   onFocus,
   onClick,
 }: CaseTreeRowProps): ReactElement {
-  const ariaState = row.kind === "group" ? { "aria-expanded": row.expanded } : { "aria-selected": selected };
   return (
+    // The keys of the tree are handled by its root (CaseTree onKeyDown, roving tab stop): a row is not a key target itself.
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events -- keyboard activation is on the tree root
     <div
       role="treeitem"
       data-index={index}
@@ -46,7 +47,8 @@ export function CaseTreeRow({
       aria-level={row.level}
       aria-setsize={row.setSize}
       aria-posinset={row.position}
-      {...ariaState}
+      aria-selected={row.kind === "item" ? selected : false}
+      aria-expanded={row.kind === "group" ? row.expanded : undefined}
       style={{ ...style, paddingLeft: row.level * INDENT_PX }}
       className={cn(ROW, row.kind === "group" && "font-medium")}
       onFocus={onFocus}

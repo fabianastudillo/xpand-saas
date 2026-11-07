@@ -40,9 +40,9 @@ export function TopBar({ path = [], actions, onOpenPalette, children }: TopBarPr
       <span className="text-md font-semibold tracking-wide text-ink">XPAND</span>
       {path.length > 0 ? (
         // A labelled list, not a <nav>: the segments are plain text until M1 makes them links.
-        <ol aria-label={t("shell.topbar.path")} className="m-0 flex list-none items-center gap-1 p-0 text-sm text-ink-muted">
+        <ol aria-label={t("shell.topbar.path")} className="m-0 flex min-w-0 list-none flex-wrap items-center gap-1 p-0 text-sm text-ink-muted">
           {path.map((segment, index) => (
-            <li key={`${String(index)}-${segment}`} className="flex items-center gap-1">
+            <li key={`${String(index)}-${segment}`} className="flex min-w-0 items-center gap-1 [overflow-wrap:anywhere]">
               {index > 0 ? <span aria-hidden="true">›</span> : null}
               {segment}
             </li>

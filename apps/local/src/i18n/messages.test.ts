@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import en from "./en.json";
 import es from "./es.json";
-import { appText } from "./messages";
+import { appText, createTranslator } from "./messages";
 
 describe("app messages", () => {
   it("have the same keys in Spanish and English, each with a text", () => {
@@ -11,8 +11,16 @@ describe("app messages", () => {
     }
   });
 
-  it("interpolates named placeholders and keeps unknown ones visible", () => {
+  it("fills the named placeholders from the variables", () => {
     expect(appText("catalog.count", { n: 3 })).toBe("3 sistemas");
-    expect(appText("catalog.count.one")).toBe("1 sistema");
+    expect(createTranslator("en")("catalog.difficulty", { value: "fast" })).toBe("Effort: fast");
+  });
+
+  it("keeps a placeholder visible when no variable names it", () => {
+    expect(createTranslator("es")("catalog.difficulty")).toBe("Esfuerzo: {value}");
+  });
+
+  it("gives a different translator for each locale", () => {
+    expect(createTranslator("es")("catalog.title")).not.toBe(createTranslator("en")("catalog.title"));
   });
 });

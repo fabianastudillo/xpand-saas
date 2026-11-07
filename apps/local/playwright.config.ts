@@ -8,6 +8,8 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: process.env.CI !== undefined,
+  // Visual baselines are produced in a pinned Playwright image (README, «E2E y capturas»): CI skips them until then.
+  ...(process.env.CI === undefined ? {} : { grepInvert: /@visual/ }),
   retries: 0,
   reporter: process.env.CI !== undefined ? [["list"], ["html", { open: "never" }]] : "list",
   use: {

@@ -1,7 +1,7 @@
 import type { Red } from "@xpand/api";
 import { Inspector, InspectorRow, InspectorRows } from "@xpand/ui";
 import type { ReactElement } from "react";
-import { useAppText, type TranslateFn } from "../../i18n/messages";
+import { useAppText, type Translate } from "../../i18n/messages";
 import { figureOf } from "../../lib/values";
 import { selectedElement, type SelectedElement, type Selection } from "./caseTree";
 
@@ -27,7 +27,7 @@ export function CaseInspector({ red, selection }: CaseInspectorProps): ReactElem
   return <Inspector title={titleOf(element, translate)}>{rows(element, translate)}</Inspector>;
 }
 
-function titleOf(element: SelectedElement, translate: TranslateFn): string {
+function titleOf(element: SelectedElement, translate: Translate): string {
   switch (element.kind) {
     case "bus":
       return translate("case.bus", { name: element.bus.nombre });
@@ -38,7 +38,7 @@ function titleOf(element: SelectedElement, translate: TranslateFn): string {
   }
 }
 
-function rows(element: SelectedElement, translate: TranslateFn): ReactElement {
+function rows(element: SelectedElement, translate: Translate): ReactElement {
   switch (element.kind) {
     case "bus": {
       const bus = element.bus;

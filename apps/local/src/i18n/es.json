@@ -17,8 +17,7 @@
   "catalog.empty": "Ningún sistema coincide con los filtros.",
   "catalog.error": "No se pudo cargar el catálogo. Revisa «Problemas».",
   "catalog.difficulty": "Esfuerzo: {value}",
-  "catalog.reference": "Valor de referencia",
-  "difficulty.fast": "rápido",
+  "catalog.reference": "Valor de referencia (sin unidad declarada)",
   "unit.buses": "barras",
   "case.error": "No se pudo cargar el caso. Revisa «Problemas».",
   "case.tree.buses": "Barras",
@@ -36,7 +35,7 @@
   "case.line.s": "Potencia nominal s",
   "case.line.from": "Barra de origen",
   "case.line.to": "Barra de destino",
-  "case.candidate.cost": "Costo",
+  "case.candidate.cost": "Costo (sin unidad declarada)",
   "case.candidate.maxCircuits": "Circuitos máximos",
   "case.summary.scheme": "Esquema de red",
   "case.summary.basePower": "Potencia base",
@@ -59,5 +58,10 @@
   "problems.http.title": "El servidor respondió con error",
   "problems.http.cause": "{route} respondió HTTP {status}.",
   "problems.schema.title": "La respuesta no cumple el contrato",
-  "problems.schema.cause": "{route}: {detail}"
+  "problems.schema.cause": "{route}: {detail}",
+  "difficulty.fast": "rápido",
+  "difficulty.medium": "medio",
+  "difficulty.heavy": "pesado",
+  "problems.route.title": "La pantalla no se pudo mostrar",
+  "problems.route.cause": "Esta pantalla no se pudo preparar. Revisa el aviso en «Problemas»."
 }

@@ -125,8 +125,9 @@ export function DocumentTabs({
           );
         })}
       </TabsList>
+      {/* A bounded column: the document scrolls itself (a long list windows inside it), the tabs stay put. */}
       {activeId !== null ? (
-        <TabsContent value={activeId} className="min-h-0 flex-1 overflow-auto">
+        <TabsContent value={activeId} className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {children}
         </TabsContent>
       ) : null}

@@ -2,13 +2,12 @@ import { useCatalogo, useConfig, useSesion } from "@xpand/api";
 import {
   AppShell,
   BottomPanel,
+  CommandPalette,
   StatusBar,
+  TopBar,
   t,
-  useLocale,
   useProblems,
   useShellCommands,
-  CommandPalette,
-  TopBar,
   type Command,
 } from "@xpand/ui";
 import { useMemo, useState, type ReactElement, type ReactNode } from "react";
@@ -26,34 +25,32 @@ export interface IdeFrameProps {
   left?: ReactNode;
   right?: ReactNode;
   center: ReactNode;
-  /** Query errors of the page itself; the shell reports the catalog, session and version ones. */
+  /** Query errors of the route; the shell reports the catalog, session and version ones. Memoize the list. */
   errors?: readonly unknown[];
   /** Closes the open document (also the palette command). Absent when the document cannot be closed. */
-  onCloseDocument?: () => void;
+  onCloseDocument?: (() => void) | undefined;
 }
 
 /**
- * The IDE frame shared by the pages: top bar, zones, bottom panel and status bar, with the data that every page
- * shares (the catalog count, the session and the version) and the «Problemas» entries of the failed requests.
+ * The IDE frame, rendered once by the layout route: top bar, zones, bottom panel and status bar, with the data that
+ * every route shares (the catalog count, the session and the version) and the «Problemas» entries of the requests.
  */
-export function IdeFrame({
-  title,
-  path,
-  left,
-  right,
-  center,
-  errors = [],
-  onCloseDocument,
-}: IdeFrameProps): ReactElement {
+const NO_ERRORS: readonly unknown[] = [];
+
+export function IdeFrame({ title, path, left, right, center, errors = NO_ERRORS, onCloseDocument }: IdeFrameProps): ReactElement {
   const translate = useAppText();
   const catalog = useCatalogo();
   const session = useSesion();
   const config = useConfig();
-  useApiProblems([catalog.error, session.error, config.error, ...errors]);
+  const shellErrors = useMemo(
+    () => [catalog.error, session.error, config.error, ...errors],
+    [catalog.error, session.error, config.error, errors],
+  );
+  useApiProblems(shellErrors);
   const problems = useProblems().list;
 
   const catalogMessage = catalog.data === undefined ? t("common.loading") : translate("state.catalog", { n: countSystems(catalog.data) });
-  const sesionMessage =
+  const sessionMessage =
     session.data === undefined
       ? null
       : session.data.local
@@ -70,15 +67,10 @@ export function IdeFrame({
       left={left}
       center={center}
       right={right}
-      bottom={
-        <BottomPanel
-          problems={problems}
-          log={<p className="p-3 text-sm text-ink-muted">{translate("log.empty")}</p>}
-        />
-      }
+      bottom={<BottomPanel problems={problems} log={<p className="p-3 text-sm text-ink-muted">{translate("log.empty")}</p>} />}
       status={
         <StatusBar message={catalogMessage} problems={problems}>
-          {sesionMessage === null ? null : <span className="text-xs text-ink-muted">{sesionMessage}</span>}
+          {sessionMessage === null ? null : <span className="text-xs text-ink-muted">{sessionMessage}</span>}
           {versionMessage === null ? null : <span className="font-mono text-xs text-ink-muted">{versionMessage}</span>}
         </StatusBar>
       }
@@ -94,27 +86,21 @@ interface IdeTopProps {
 /** Inside the shell so that the palette sees the zone commands (they need the shell's layout). */
 function IdeTop({ path, onCloseDocument }: IdeTopProps): ReactElement {
   const translate = useAppText();
-  const locale = useLocale();
   const navigate = useNavigate();
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const shellCommands = useShellCommands(
-    onCloseDocument === undefined ? {} : { onCloseActiveDocument: onCloseDocument },
-  );
-  const commands = useMemo<readonly Command[]>(
-    () => [
-      {
-        id: "app.catalog",
-        label: translate("actions.catalog"),
-        group: translate("group.goto"),
-        run: () => {
-          void navigate("/");
-        },
+  const shellCommands = useShellCommands(onCloseDocument === undefined ? {} : { onCloseActiveDocument: onCloseDocument });
+  // Recomputed on every render, as the shell's commands are: the translator changes with the locale.
+  const commands: readonly Command[] = [
+    {
+      id: "app.catalog",
+      label: translate("actions.catalog"),
+      group: translate("group.goto"),
+      run: () => {
+        void navigate("/");
       },
-      ...shellCommands,
-    ],
-    // `locale` re-translates the labels when the language changes.
-    [translate, locale, navigate, shellCommands],
-  );
+    },
+    ...shellCommands,
+  ];
 
   return (
     <>

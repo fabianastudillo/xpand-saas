@@ -10,7 +10,7 @@ function Harness({ bindings }: { bindings: readonly ShortcutBinding[] }): React.
       <button type="button">Foco</button>
       <input aria-label="Nombre" />
       <textarea aria-label="Notas" />
-      <div contentEditable aria-label="Editor" tabIndex={0} />
+      <div contentEditable role="textbox" aria-label="Editor" tabIndex={0} />
     </div>
   );
 }

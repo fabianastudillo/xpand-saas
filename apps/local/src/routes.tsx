@@ -1,12 +1,24 @@
 import { createBrowserRouter, Navigate, type RouteObject } from "react-router";
+import { AppLayout } from "./app/AppLayout";
+import { RouteError } from "./app/RouteError";
 import { CasePage } from "./features/explorar/CasePage";
 import { CatalogPage } from "./features/explorar/CatalogPage";
 
-/** The screens of M0. Every route is read-only: the app never writes to the server. */
+/**
+ * The screens of M0 under one layout route: the shell persists while the pages change. Every route is read-only: the
+ * app never writes to the server.
+ */
 export const ROUTE_TABLE: RouteObject[] = [
-  { path: "/", element: <CatalogPage /> },
-  { path: "/casos/:motor/:sistema", element: <CasePage /> },
-  { path: "*", element: <Navigate to="/" replace /> },
+  {
+    path: "/",
+    element: <AppLayout />,
+    errorElement: <RouteError />,
+    children: [
+      { index: true, element: <CatalogPage /> },
+      { path: "casos/:motor/:sistema", element: <CasePage /> },
+      { path: "*", element: <Navigate to="/" replace /> },
+    ],
+  },
 ];
 
 /** The app is served under /app/ (Vite's base): the router takes that prefix off the paths it matches. */

@@ -1,7 +1,7 @@
 import type { Red } from "@xpand/api";
-import { CaseTree, Skeleton, formatNumber, problemsStore, t, useLocale, type TreeGroup } from "@xpand/ui";
+import { CaseTree, Skeleton, formatNumber, problemsStore, t, type TreeGroup } from "@xpand/ui";
 import { useEffect, useMemo, useRef, type ReactElement } from "react";
-import { useAppText, type TranslateFn } from "../../i18n/messages";
+import { useAppText, type Translate } from "../../i18n/messages";
 import { figureOf, textOf } from "../../lib/values";
 import { caseTreeGroups, type TreeLabels, type Selection } from "./caseTree";
 
@@ -9,7 +9,7 @@ const NOTE_PROBLEM_ID = "case.note";
 const NOTE_PROBLEM_SOURCE = "caso";
 const TREE_TAB_STOP = '[role="treeitem"][tabindex="0"]';
 
-function treeLabels(translate: TranslateFn): TreeLabels {
+function treeLabels(translate: Translate): TreeLabels {
   return {
     bus: (name) => translate("case.bus", { name }),
     buses: translate("case.tree.buses"),
@@ -30,13 +30,11 @@ export interface CaseTreePanelProps {
 /** The case tree of the left zone: buses, existing lines and candidate corridors. */
 export function CaseTreePanel({ red, failed, selected, onSelect, focusOnMount }: CaseTreePanelProps): ReactElement {
   const translate = useAppText();
-  const locale = useLocale();
   const panelRef = useRef<HTMLDivElement | null>(null);
   const focusGiven = useRef(false);
   const groups = useMemo<readonly TreeGroup[]>(
     () => (red === undefined ? [] : caseTreeGroups(red, treeLabels(translate))),
-    // `locale` re-labels the groups when the language changes.
-    [red, translate, locale],
+    [red, translate],
   );
 
   // Once only: a later data refresh must not take the focus back from wherever the user has moved it.
@@ -127,7 +125,6 @@ export function CaseSummary({ red, failed }: CaseSummaryProps): ReactElement {
  */
 export function useCaseNote(nota: string | undefined): void {
   const translate = useAppText();
-  const locale = useLocale();
   useEffect(() => {
     if (nota === undefined) return;
     problemsStore.add({
@@ -140,5 +137,5 @@ export function useCaseNote(nota: string | undefined): void {
     return () => {
       problemsStore.remove(NOTE_PROBLEM_ID);
     };
-  }, [nota, translate, locale]);
+  }, [nota, translate]);
 }

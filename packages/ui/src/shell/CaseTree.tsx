@@ -181,6 +181,7 @@ export function CaseTree({ groups, onSelect, selected, label, defaultExpanded, c
     <>
       <div
         role="tree"
+        tabIndex={-1}
         aria-label={label ?? t("shell.tree.label")}
         data-slot="case-tree"
         ref={scrollRef}

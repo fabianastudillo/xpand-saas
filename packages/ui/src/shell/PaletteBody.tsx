@@ -99,6 +99,9 @@ export function PaletteBody({ commands, onChoose }: PaletteBodyProps): ReactElem
                 {group.group}
               </div>
               {group.commands.map((command) => (
+                // Combobox pattern: the focus stays in the input and aria-activedescendant names this option; the keys
+                // are handled there, so the option is a pointer target only.
+                // eslint-disable-next-line jsx-a11y/interactive-supports-focus, jsx-a11y/click-events-have-key-events -- combobox option
                 <div
                   key={command.id}
                   id={optionId(command)}

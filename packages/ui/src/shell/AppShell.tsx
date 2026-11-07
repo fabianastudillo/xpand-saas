@@ -96,7 +96,7 @@ export function AppShell({
         data-slot="app-shell"
         data-narrow={narrow}
         className={cn(
-          "grid grid-rows-[auto_minmax(0,1fr)_auto_auto] bg-surface text-ink",
+          "grid grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)_auto_auto] bg-surface text-ink",
           narrow ? "min-h-dvh" : "h-dvh",
           className,
         )}
@@ -273,6 +273,7 @@ function useZonesNeedTab(left: ShellZoneHandle, right: ShellZoneHandle, bottom: 
     setNeedsTab((current) =>
       current.left === next.left && current.right === next.right && current.bottom === next.bottom ? current : next,
     );
-  });
+    // The handles are new objects on every render, so this runs after each render, as the content may have changed.
+  }, [left, right, bottom]);
   return needsTab;
 }

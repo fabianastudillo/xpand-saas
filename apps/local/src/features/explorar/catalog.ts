@@ -12,6 +12,8 @@ export type SizeBand = (typeof SIZE_BANDS)[number];
 export interface CatalogEntry {
   engine: Motor;
   system: Sistema;
+  /** Names and identifiers, normalized once when the catalog is read (the text filter runs on every keystroke). */
+  searchText: string;
 }
 
 export interface CatalogFilters {
@@ -32,7 +34,13 @@ export function sizeOf(barras: number): SizeBand {
 }
 
 export function catalogEntries(catalog: Catalogo): CatalogEntry[] {
-  return catalog.motores.flatMap((engine) => engine.sistemas.map((system) => ({ engine, system })));
+  return catalog.motores.flatMap((engine) =>
+    engine.sistemas.map((system) => ({
+      engine,
+      system,
+      searchText: normalizeText(`${system.nombre} ${system.id} ${engine.nombre} ${engine.id}`),
+    })),
+  );
 }
 
 export function familiesOfCatalog(catalog: Catalogo): string[] {
@@ -40,20 +48,19 @@ export function familiesOfCatalog(catalog: Catalogo): string[] {
   return [...new Set(families)];
 }
 
-function matchesText(entry: CatalogEntry, text: string): boolean {
-  const words = normalizeText(text).split(WORD_SEPARATOR).filter((word) => word.length > 0);
-  if (words.length === 0) return true;
-  const haystack = normalizeText(`${entry.system.nombre} ${entry.system.id} ${entry.engine.nombre} ${entry.engine.id}`);
-  return words.every((word) => haystack.includes(word));
+/** The words of a free-text query, normalized: parsed once per filter run, not once per entry. */
+function queryWords(text: string): readonly string[] {
+  return normalizeText(text).split(WORD_SEPARATOR).filter((word) => word.length > 0);
 }
 
 export function filterEntries(entries: readonly CatalogEntry[], filters: CatalogFilters): CatalogEntry[] {
+  const words = queryWords(filters.text);
   return entries.filter(
     (entry) =>
       (filters.engine === null || entry.engine.id === filters.engine) &&
       (filters.family === null || entry.engine.familia === filters.family) &&
       (filters.size === null || sizeOf(entry.system.barras) === filters.size) &&
-      matchesText(entry, filters.text),
+      words.every((word) => entry.searchText.includes(word)),
   );
 }
 

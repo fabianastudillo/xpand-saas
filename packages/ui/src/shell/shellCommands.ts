@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { t, useLocale, type MessageKey } from "../i18n";
 import type { Command } from "./commandFilter";
 import { useShellLayout, type ShellLayout, type ZoneState } from "./shellLayoutContext";
@@ -37,17 +36,16 @@ function zoneCommand(entry: ZoneCommand, zone: ZoneState, group: string): Comman
  * optionally, close the active document. The app concatenates them with its own commands.
  */
 export function useShellCommands({ onCloseActiveDocument }: ShellCommandOptions = {}): readonly Command[] {
-  const locale = useLocale();
+  // Re-renders on a language change, so the labels below are translated again. Computed on every render (cheap):
+  // a memo would need the locale as a dependency it does not read.
+  useLocale();
   const layout = useShellLayout();
-  return useMemo(() => {
-    const group = t("shell.command.group");
-    const zones = ZONE_COMMANDS.filter((entry) => layout[entry.zone].present).map((entry) =>
-      zoneCommand(entry, layout[entry.zone], group),
-    );
-    const close: readonly Command[] = onCloseActiveDocument
-      ? [{ id: "shell.closeDocument", label: t("shell.command.closeDocument"), group, run: onCloseActiveDocument }]
-      : [];
-    return [...zones, ...close];
-    // `locale` re-translates the labels when the language changes.
-  }, [layout, onCloseActiveDocument, locale]);
+  const group = t("shell.command.group");
+  const zones = ZONE_COMMANDS.filter((entry) => layout[entry.zone].present).map((entry) =>
+    zoneCommand(entry, layout[entry.zone], group),
+  );
+  const close: readonly Command[] = onCloseActiveDocument
+    ? [{ id: "shell.closeDocument", label: t("shell.command.closeDocument"), group, run: onCloseActiveDocument }]
+    : [];
+  return [...zones, ...close];
 }
