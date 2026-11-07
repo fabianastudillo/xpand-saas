@@ -114,10 +114,10 @@ Con la base migrada, `ADMIN_EMAIL` en `apps/web/.env` y:
 pnpm --filter @xpand/web script:create:admin
 ```
 
-crea (o asciende) a ese correo como administrador. Entras con un enlace por correo (`EMAIL_SERVER` y `EMAIL_FROM`) o con
+crea a ese correo como administrador o, si ya existe, lo asciende (el correo se pasa a minúsculas). Entras con un enlace por correo (`EMAIL_SERVER` y `EMAIL_FROM`) o con
 Google (`GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`). En un servidor instalado desde el tarball no hay `pnpm`: el
-`README-instalar.md` da la sentencia SQL equivalente. Quien abre la app en su propia máquina no necesita sesión para
-«Explorar casos»; las cuentas y la administración sí necesitan Postgres.
+`README-instalar.md` da la sentencia SQL equivalente. «Explorar casos» solo muestra casos públicos y no pide sesión a nadie;
+las cuentas y la administración necesitan Postgres.
 
 ## Casos públicos e internos
 
@@ -141,7 +141,7 @@ datos).
 | `XPAND_WEB_PORT` | Puerto de la app | `8870` |
 | `HOST` | Dirección de escucha; distinta de `127.0.0.1`/`localhost`/`::1` exige `XPAND_PERMITIR_RED=1` | `127.0.0.1` |
 | `XPAND_PERMITIR_RED` | `1` permite escuchar fuera de esta máquina | sin definir |
-| `XPAND_MODO_LOCAL` | Etiqueta «sesión local» de `/api/sesion`; solo rotula, no autoriza. `0` detrás de un proxy inverso | `1` en bucle local, `0` en red |
+| `XPAND_MODO_LOCAL` | Etiqueta «sesión local» de `/api/sesion`; solo rotula, no autoriza. Con proxy inverso, `0` | `pnpm dev`/`pnpm start`: `1` en bucle local; `server.js` del release: `0` (opt-in con `1`); en red siempre `0` |
 | `AUTH_URL` | URL pública de la app; obligatoria en producción (los enlaces de entrada se montan sobre ella) | ninguno |
 | `NEXTAUTH_SECRET` | Secreto de firma de sesiones (`openssl rand -base64 32`) | ninguno |
 | `DATABASE_URL` | Conexión de Prisma a Postgres | ninguno |

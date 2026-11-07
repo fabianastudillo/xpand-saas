@@ -2,7 +2,8 @@
 // server.js del tarball de release (se copia con ese nombre a la raíz): arranca el server.js autónomo de Next
 // (apps/web/server.js) aplicando las mismas reglas que `pnpm start` (decision-arranque.mjs): escucha en 127.0.0.1 y
 // XPAND_WEB_PORT (8870), otra dirección exige XPAND_PERMITIR_RED=1 y AUTH_URL es obligatoria (si no, código 64).
-// Pasa a Next XPAND_WEB_HOST y XPAND_MODO_LOCAL: sin ellos nadie sería «local».
+// Pasa a Next XPAND_WEB_HOST (sin él nadie sería «local») y XPAND_MODO_LOCAL, que aquí es opt-in: vale 0 salvo que se
+// ponga a 1 (un servidor instalado suele ir detrás de un proxy inverso; en desarrollo, arranque.mjs lo pone a 1).
 //
 // Lee, si existen en esta carpeta, `.env.local` y `.env` (no vienen en el tarball; los crea quien instala). Lo que
 // ya esté en el entorno del shell manda. NODE_ENV es siempre production.
@@ -25,7 +26,7 @@ for (const nombre of [".env.local", ".env"]) {
 }
 process.env.NODE_ENV = "production";
 
-const decision = decidirArranque({ modo: "start", env: process.env });
+const decision = decidirArranque({ modo: "start", env: process.env, modoLocalPorDefecto: "0" });
 if (!decision.ok) {
   console.error(`arranque: ${decision.mensaje}`);
   process.exit(decision.codigo);

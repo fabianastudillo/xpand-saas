@@ -19,7 +19,9 @@ Este paquete es la aplicación ya construida (servidor Node autónomo). No trae 
    cd xpand-plataforma
    ```
 
-2. Crea un fichero `.env` en esta carpeta (el servidor lo lee; lo que ya esté en el entorno del shell manda):
+2. Crea un fichero `.env` en esta carpeta, solo legible por ti (`chmod 600 .env`). Lo leen `server.js` y Prisma como
+   fichero de variables (no como shell: no hace falta entrecomillar, pero tampoco se ejecuta nada). Lo que ya esté en el
+   entorno del shell manda:
 
    ```bash
    DATABASE_URL=postgresql://usuario:clave@127.0.0.1:5432/xpand
@@ -29,12 +31,13 @@ Este paquete es la aplicación ya construida (servidor Node autónomo). No trae 
    ```
 
    `AUTH_URL` es obligatoria: es la URL pública de la app (la que escribe el navegador). El resto de variables
-   (`XPAND_WEB_PORT`, `EMAIL_SERVER`, Google, Stripe...) son opcionales; sin claves de terceros esos servicios quedan apagados.
+   (`XPAND_WEB_PORT`, `XPAND_MODO_LOCAL`, `EMAIL_SERVER`, Google, Stripe...) son opcionales; sin claves de terceros esos servicios quedan apagados.
 
 3. Crea las tablas (antes de arrancar y en cada actualización):
 
+   Prisma lee el `.env` de esta carpeta por sí mismo:
+
    ```bash
-   set -a; . ./.env; set +a
    npx --yes prisma@{{PRISMA}} migrate deploy --schema prisma/schema.prisma
    ```
 
@@ -46,15 +49,20 @@ Este paquete es la aplicación ya construida (servidor Node autónomo). No trae 
 
    Escucha en `127.0.0.1:8870`. Para otro puerto, `XPAND_WEB_PORT`. Escuchar en otra dirección (`HOST=0.0.0.0`) exige
    `XPAND_PERMITIR_RED=1`; sin ello el arranque termina con código 64 y lo explica. Detrás de un proxy inverso pon
-   `XPAND_MODO_LOCAL=0` y `AUTH_URL` con la URL pública.
+   `AUTH_URL` con la URL pública.
+
+   `XPAND_MODO_LOCAL` solo rotula «sesión local» en `/api/sesion`; no autoriza nada. En este paquete vale `0` salvo
+   que pongas `XPAND_MODO_LOCAL=1` (útil si lo usas tú solo en tu máquina; con un proxy inverso déjala en `0`). En
+   la red siempre vale `0`.
 
 ## Primer administrador
 
-Crea (o asciende) a tu correo con SQL, una vez:
+Crea (o asciende) a tu correo con SQL, una vez. El correo va en minúsculas (la sentencia lo hace con `lower`), porque
+Auth.js normaliza el que recibe y una mayúscula nunca coincidiría:
 
 ```sql
 INSERT INTO "User" (id, email, name, role)
-VALUES (gen_random_uuid()::text, 'tu@correo', 'admin', 'ADMIN')
+VALUES (gen_random_uuid()::text, lower('Tu@Correo.org'), 'admin', 'ADMIN')
 ON CONFLICT (email) DO UPDATE SET role = 'ADMIN';
 ```
 

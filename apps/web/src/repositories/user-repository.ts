@@ -45,6 +45,19 @@ export const createOrUpdateUser = async ({
   });
 };
 
+/**
+ * First administrator: creates the user with the ADMIN role or promotes the existing one. The e-mail is lower-cased
+ * because Auth.js normalises the one it receives; an upper-case address would never match the session's.
+ */
+export const createOrPromoteAdmin = async ({ email, name }: { email: string; name: string }) => {
+  const normalized = email.trim().toLowerCase();
+  return prisma.user.upsert({
+    where: { email: normalized },
+    update: { role: UserRole.ADMIN },
+    create: { email: normalized, name, isActive: false, role: UserRole.ADMIN },
+  });
+};
+
 export const getManyUsers = async () => {
   return prisma.user.findMany({
     select: {

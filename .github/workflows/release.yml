@@ -62,6 +62,9 @@ jobs:
         with:
           name: dist
           path: release
+      - name: Verificar el .sha256 del artefacto
+        working-directory: release
+        run: sha256sum -c -- *.tar.gz.sha256
       # El pie de la interfaz muestra la versión de apps/web/package.json: un tag que no coincida publicaría
       # una build que dice otra versión. Se comprueba antes de publicar nada.
       - name: Comprobar que el tag es v<versión de apps/web/package.json>

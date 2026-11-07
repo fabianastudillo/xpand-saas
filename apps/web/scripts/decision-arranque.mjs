@@ -13,10 +13,11 @@ const PUERTO_MAXIMO = 65535;
 
 /**
  * Decide host, puerto y argumentos de Next a partir del modo y el entorno.
- * @param {{ modo: string | undefined, env: Record<string, string | undefined> }} entrada
+ * `modoLocalPorDefecto`: valor de XPAND_MODO_LOCAL en loopback si no viene definida ("1" en desarrollo; el release usa "0").
+ * @param {{ modo: string | undefined, env: Record<string, string | undefined>, modoLocalPorDefecto?: string }} entrada
  * @returns {{ ok: true, host: string, puerto: number, args: string[], entorno: { XPAND_WEB_HOST: string, XPAND_MODO_LOCAL: string } } | { ok: false, codigo: number, mensaje: string }}
  */
-export const decidirArranque = ({ modo, env }) => {
+export const decidirArranque = ({ modo, env, modoLocalPorDefecto = "1" }) => {
   if (modo === undefined || !MODOS.has(modo)) {
     return rechazo(`Uso: arranque.mjs dev|start (recibido: ${modo ?? "nada"})`);
   }
@@ -49,7 +50,7 @@ export const decidirArranque = ({ modo, env }) => {
     host,
     puerto,
     args: [modo, "-H", host, "-p", String(puerto)],
-    entorno: entornoDeNext({ host, env }),
+    entorno: entornoDeNext({ host, env, modoLocalPorDefecto }),
   };
 };
 
@@ -61,7 +62,7 @@ const rechazo = (mensaje) => ({ ok: false, codigo: CODIGO_USO, mensaje });
  * loopback vale 1 salvo que venga ya definida (XPAND_MODO_LOCAL=0 detrás de un proxy inverso en esta máquina);
  * escuchando en la red, 0.
  */
-const entornoDeNext = ({ host, env }) => ({
+const entornoDeNext = ({ host, env, modoLocalPorDefecto }) => ({
   XPAND_WEB_HOST: host,
-  XPAND_MODO_LOCAL: HOSTS_LOCALES.has(host) ? (env.XPAND_MODO_LOCAL?.trim() || "1") : "0",
+  XPAND_MODO_LOCAL: HOSTS_LOCALES.has(host) ? (env.XPAND_MODO_LOCAL?.trim() || modoLocalPorDefecto) : "0",
 });

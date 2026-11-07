@@ -45,16 +45,31 @@ describe("server.js del release", () => {
     expect(r.stdout).toBe("");
   });
 
-  it("por defecto da a Next 127.0.0.1:8870, XPAND_WEB_HOST y XPAND_MODO_LOCAL=1, y fija NODE_ENV=production", () => {
+  it("por defecto da a Next 127.0.0.1:8870, XPAND_WEB_HOST y XPAND_MODO_LOCAL=0 (opt-in, R19), y fija NODE_ENV=production", () => {
     const r = correr({ AUTH_URL: "http://localhost:8870", HOSTNAME: "mi-maquina", NODE_ENV: "development" });
     expect(r.status).toBe(0);
     expect(JSON.parse(r.stdout)).toMatchObject({
       HOSTNAME: "127.0.0.1",
       PORT: "8870",
       XPAND_WEB_HOST: "127.0.0.1",
-      XPAND_MODO_LOCAL: "1",
+      XPAND_MODO_LOCAL: "0",
       NODE_ENV: "production",
     });
+  });
+
+  it("XPAND_MODO_LOCAL=1 explícito se respeta en loopback", () => {
+    const r = correr({ AUTH_URL: "http://localhost:8870", XPAND_MODO_LOCAL: "1" });
+    expect(JSON.parse(r.stdout)).toMatchObject({ XPAND_MODO_LOCAL: "1" });
+  });
+
+  it("en la red XPAND_MODO_LOCAL=1 se ignora y vale 0", () => {
+    const r = correr({
+      AUTH_URL: "https://x.example",
+      HOST: "0.0.0.0",
+      XPAND_PERMITIR_RED: "1",
+      XPAND_MODO_LOCAL: "1",
+    });
+    expect(JSON.parse(r.stdout)).toMatchObject({ XPAND_MODO_LOCAL: "0" });
   });
 
   it("en la red con permiso, XPAND_MODO_LOCAL=0 y el puerto de XPAND_WEB_PORT", () => {
