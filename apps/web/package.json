@@ -1,8 +1,8 @@
 {
-  "name": "@xpand/local",
+  "name": "@xpand/web",
   "version": "0.1.0",
   "private": true,
-  "description": "Aplicacion local de la interfaz nueva de XPAND (M0): se sirve bajo /app/.",
+  "description": "Interfaz web de XPAND (M0): la SPA que sirve apps/server en /.",
   "type": "module",
   "scripts": {
     "dev": "vite",

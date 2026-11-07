@@ -22,7 +22,7 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { browserName: "chromium" } }],
   webServer: {
     command: `vite build && vite preview --port ${String(PORT)} --strictPort`,
-    url: `http://127.0.0.1:${String(PORT)}/app/`,
+    url: `http://127.0.0.1:${String(PORT)}/`,
     reuseExistingServer: process.env.CI === undefined,
     timeout: 180_000,
   },

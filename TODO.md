@@ -4,8 +4,8 @@ Pendientes conocidos que todavía no tienen rama ni PR.
 
 ## Menores aparcados de la revisión final de M0 (2026-11-07, ruling R18)
 
-- **[LOW] 404 de `/api/red` con «Reintentar».** `apps/local/src/app/apiProblems.ts:43` trata todo `http` igual; para
-  `/app/casos/<motor>/<sistema que no existe>` «Problemas» dice «/api/red respondió HTTP 404 · Reintentar», y
+- **[LOW] 404 de `/api/red` con «Reintentar».** `apps/web/src/app/apiProblems.ts:43` trata todo `http` igual; para
+  `/casos/<motor>/<sistema que no existe>` «Problemas» dice «/api/red respondió HTTP 404 · Reintentar», y
   reintentar no sirve. Propuesta: para 400/404/500 de `/api/red` con un caso desconocido, texto «caso no
   encontrado» con enlace al catálogo (comprobar qué código devuelve `api_red` de xpand para un sistema desconocido:
   `error_resp` por defecto es 400).
@@ -14,10 +14,7 @@ Pendientes conocidos que todavía no tienen rama ni PR.
   como artefacto cuando falla.
 - **[LOW] Dependabot solo vigila `github-actions`.** `.github/dependabot.yml:3`; falta `package-ecosystem: npm` para
   las actualizaciones de seguridad del lockfile.
-- **[LOW] `sync-from-xpand.sh` borra `previo` si falla el segundo `mv`.** `scripts/sync-from-xpand.sh:60-75` (el
-  `trap` limpia antes de que termine el intercambio). `contracts/api` está versionado: se recupera con
-  `git checkout contracts/api`.
-- **[LOW] El catálogo no muestra `nota` en la fila.** `apps/local/src/features/explorar/CatalogDocument.tsx`
+- **[LOW] El catálogo no muestra `nota` en la fila.** `apps/web/src/features/explorar/CatalogDocument.tsx`
   (`CatalogRow`): el aviso del sistema solo aparece al abrir el caso, como problema «info» (spec §5.1 no exige más).
   Un indicador textual en la fila avisaría antes de abrir (p. ej. que Garver 6 «no es el Garver clásico»).
 - **[LOW]** `packages/ui/src/styles/fonts.css` apunta a `../../node_modules/@fontsource/...`: depende de cómo pnpm

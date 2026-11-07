@@ -21,7 +21,7 @@ export const ROUTE_TABLE: RouteObject[] = [
   },
 ];
 
-/** The app is served under /app/ (Vite's base): the router takes that prefix off the paths it matches. */
+/** Vite's base is "/" (the XPAND server serves the app at the root): the router takes that empty prefix off the paths. */
 export function createAppRouter() {
   return createBrowserRouter(ROUTE_TABLE, { basename: import.meta.env.BASE_URL.replace(/\/$/, "") });
 }

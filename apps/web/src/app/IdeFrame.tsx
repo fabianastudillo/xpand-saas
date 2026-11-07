@@ -13,7 +13,7 @@ import { useMemo, useState, type ReactElement, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { useAppText } from "../i18n/messages";
 import { catalogStatusMessage } from "./catalogStatus";
-import { UI_VERSION } from "./uiVersion";
+import { UI_VERSION, versionMessage } from "./uiVersion";
 import { LocaleSwitch } from "./LocaleSwitch";
 import { useApiProblems } from "./useApiProblems";
 
@@ -58,8 +58,7 @@ export function IdeFrame({ title, path, left, right, center, errors = NO_ERRORS,
         : session.data.dentro
           ? translate("state.session.of", { name: session.data.nombre })
           : translate("state.session.none");
-  const versionMessage =
-    config.data === undefined ? null : translate("state.versions", { server: config.data.version, ui: UI_VERSION });
+  const versionText = config.data === undefined ? null : versionMessage(config.data.version, UI_VERSION, translate);
 
   return (
     <AppShell
@@ -72,7 +71,7 @@ export function IdeFrame({ title, path, left, right, center, errors = NO_ERRORS,
       status={
         <StatusBar message={catalogMessage} problems={problems}>
           {sessionMessage === null ? null : <span className="text-xs text-ink-muted">{sessionMessage}</span>}
-          {versionMessage === null ? null : <span className="font-mono text-xs text-ink-muted">{versionMessage}</span>}
+          {versionText === null ? null : <span className="font-mono text-xs text-ink-muted">{versionText}</span>}
         </StatusBar>
       }
     />

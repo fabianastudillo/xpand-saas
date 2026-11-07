@@ -3,7 +3,6 @@ import { t, type Problem } from "@xpand/ui";
 import type { Translate } from "../i18n/messages";
 
 const PROBLEM_SOURCE = "api";
-const CLASSIC_INTERFACE_HREF = "/";
 
 /**
  * The «Problemas» entries for the failed requests. Each kind is reported once (a session that is missing blocks
@@ -22,14 +21,12 @@ export function apiProblems(errors: readonly ApiError[], retry: () => void, tran
 function problemFor(error: ApiError, retry: () => void, translate: Translate): Problem {
   switch (error.kind) {
     case "auth":
-      // Sign in happens in the classic interface (another tab); the retry is for when the user comes back.
       return {
         id: "api.auth",
         severity: "error",
         title: translate("problems.auth.title"),
         cause: translate("problems.auth.cause"),
-        action: { label: translate("problems.auth.action"), href: CLASSIC_INTERFACE_HREF },
-        secondaryAction: { label: t("common.retry"), run: retry },
+        action: { label: t("common.retry"), run: retry },
       };
     case "network":
       return {

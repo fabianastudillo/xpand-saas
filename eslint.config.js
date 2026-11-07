@@ -5,7 +5,7 @@ import jsxA11y from "eslint-plugin-jsx-a11y";
 import reactHooks from "eslint-plugin-react-hooks";
 import tseslint from "typescript-eslint";
 
-const BROWSER_PATHS = ["packages/ui/**/*.{ts,tsx}", "apps/local/**/*.{ts,tsx}"];
+const BROWSER_PATHS = ["packages/ui/**/*.{ts,tsx}", "apps/web/**/*.{ts,tsx}"];
 
 export default tseslint.config(
   {

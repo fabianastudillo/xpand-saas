@@ -191,7 +191,7 @@ importers:
         specifier: ^5.1.0
         version: 5.1.0(@types/node@22.20.5)(jsdom@31.0.0)(vite@8.3.6(@types/node@22.20.5)(jiti@2.7.0))
 
-  apps/local:
+  apps/web:
     dependencies:
       '@tanstack/react-query':
         specifier: ^5.106.1

@@ -3,9 +3,9 @@ import { expect, test as base, type Locator, type Page } from "@playwright/test"
 import { mockApi, SPECIAL_SYSTEM_ID, unexpectedFailures } from "./mock-api";
 
 const ORIGIN = "http://127.0.0.1:4173";
-const CATALOG_PATH = "/app/";
-const CASE_PATH = "/app/casos/jump_misocp/tnep_garver6";
-const SPECIAL_CASE_PATH = `/app/casos/jump_misocp/${encodeURIComponent(SPECIAL_SYSTEM_ID)}`;
+const CATALOG_PATH = "/";
+const CASE_PATH = "/casos/jump_misocp/tnep_garver6";
+const SPECIAL_CASE_PATH = `/casos/jump_misocp/${encodeURIComponent(SPECIAL_SYSTEM_ID)}`;
 const VIEWPORT_1024 = { width: 1024, height: 768 };
 const VIEWPORT_1440 = { width: 1440, height: 900 };
 const VIEWPORT_PHONE = { width: 360, height: 640 };
@@ -149,7 +149,7 @@ test.describe("Explore cases", () => {
     await page.keyboard.type("garver");
     await page.keyboard.press("Enter");
 
-    await expect(page).toHaveURL(/\/app\/casos\/jump_misocp\/tnep_garver6$/);
+    await expect(page).toHaveURL(/\/casos\/jump_misocp\/tnep_garver6$/);
     await expect(firstBusItem(page)).toBeFocused();
     await expect(firstBusItem(page)).toContainText("6");
 
@@ -179,14 +179,14 @@ test.describe("Explore cases", () => {
     await expect(page.getByRole("link", { name: /Garver 6/ }).first()).toBeVisible({ timeout: SLOW_LOAD_TIMEOUT_MS });
   });
 
-  test("session missing (401): explains it, links to the classic interface, offers to retry, and the status bar says so", async ({
+  test("session missing (401): explains it, offers to retry, and the status bar says so", async ({
     page,
   }) => {
     const mock = await mockApi(page, "401");
     await page.goto(CATALOG_PATH);
 
     await expect(problemList(page)).toContainText("Sesión requerida");
-    await expect(page.getByRole("link", { name: "Abrir la interfaz clásica" })).toHaveAttribute("href", "/");
+    await expect(problemList(page).getByRole("button", { name: "Reintentar" })).toBeVisible();
     // The live region never says «Cargando…» after a failure.
     await expect(statusMessage(page)).toHaveText("Catálogo no disponible. Revisa «Problemas».");
 
@@ -231,17 +231,17 @@ test.describe("Explore cases", () => {
     await caseTab.focus();
     await page.keyboard.press("ArrowLeft");
     await expect(catalogTab).toBeFocused();
-    await expect(page).toHaveURL(/\/app\/casos\/jump_misocp\/tnep_garver6$/); // moved, not activated
+    await expect(page).toHaveURL(/\/casos\/jump_misocp\/tnep_garver6$/); // moved, not activated
 
     await page.keyboard.press("Enter");
-    await expect(page).toHaveURL(/\/app\/?$/);
+    await expect(page).toHaveURL(/\/$/);
     await expect(page.getByRole("searchbox", { name: "Buscar sistema" })).toBeVisible();
     await expect(catalogTab).toBeFocused(); // the catalog's search does not steal the focus
 
     await page.keyboard.press("ArrowRight");
     await expect(caseTab).toBeFocused();
     await page.keyboard.press("Enter");
-    await expect(page).toHaveURL(/\/app\/casos\/jump_misocp\/tnep_garver6$/);
+    await expect(page).toHaveURL(/\/casos\/jump_misocp\/tnep_garver6$/);
     await expect(caseTab).toBeFocused();
   });
 
@@ -310,10 +310,10 @@ test.describe("Explore cases", () => {
     await expect(page).toHaveTitle(/^Garver 6 — benchmark .* · XPAND$/);
   });
 
-  test("the status bar names the server and the interface versions apart", async ({ page }) => {
+  test("the status bar names the platform and the interface versions apart", async ({ page }) => {
     await mockApi(page);
     await page.goto(CATALOG_PATH);
-    await expect(page.getByText("Servidor 1.0.0 · Interfaz 0.1.0")).toBeVisible();
+    await expect(page.getByText("Plataforma 1.0.0 · Interfaz 0.1.0")).toBeVisible();
   });
 
   test("moving between catalog and case keeps the collapsed panel and does not repeat problems", async ({ page }) => {
@@ -326,7 +326,7 @@ test.describe("Explore cases", () => {
     await expect(problemList(page)).toBeHidden();
 
     await page.getByRole("tab", { name: "Catálogo de casos" }).click();
-    await expect(page).toHaveURL(/\/app\/?$/);
+    await expect(page).toHaveURL(/\/$/);
     await page.getByRole("tab", { name: /Garver 6/ }).click();
     await expect(page).toHaveURL(new RegExp(`${CASE_PATH}$`));
 

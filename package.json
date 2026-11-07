@@ -10,15 +10,13 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "pnpm --filter @xpand/local dev",
+    "dev": "pnpm --filter @xpand/web dev",
     "lint": "eslint .",
     "typecheck": "pnpm -r --if-present run typecheck",
     "test": "vitest run && pnpm test:scripts && pnpm --filter @xpand/api gen:check",
-    "e2e": "pnpm --filter @xpand/local e2e",
+    "e2e": "pnpm --filter @xpand/web e2e",
     "build": "pnpm -r --if-present run build",
-    "sync:contracts": "scripts/sync-from-xpand.sh",
-    "check:contracts": "scripts/sync-from-xpand.sh --check",
-    "test:scripts": "bash scripts/sync-from-xpand.test.sh && bash scripts/package-dist.test.sh"
+    "test:scripts": "bash scripts/package-dist.test.sh"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

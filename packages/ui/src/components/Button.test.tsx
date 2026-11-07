@@ -49,7 +49,7 @@ describe("<Button>", () => {
   it("asChild renders the child element with the button styles", () => {
     render(
       <Button asChild variant="ghost">
-        <a href="/app/casos">Explorar casos</a>
+        <a href="/casos">Explorar casos</a>
       </Button>,
     );
     const link = screen.getByRole("link", { name: "Explorar casos" });
@@ -86,7 +86,7 @@ describe("<Button>", () => {
       const onClick = vi.fn();
       render(
         <Button asChild aria-disabled onClick={onClick}>
-          <a href="/app/casos">Explorar casos</a>
+          <a href="/casos">Explorar casos</a>
         </Button>,
       );
       const link = screen.getByRole("link");
@@ -104,7 +104,7 @@ describe("<Button>", () => {
       const childKeyDown = vi.fn();
       render(
         <Button asChild aria-disabled>
-          <a href="/app/casos" onClick={childClick} onKeyDown={childKeyDown}>
+          <a href="/casos" onClick={childClick} onKeyDown={childKeyDown}>
             Explorar casos
           </a>
         </Button>,
@@ -123,7 +123,7 @@ describe("<Button>", () => {
       });
       render(
         <Button asChild>
-          <a href="/app/casos" onClick={childClick}>
+          <a href="/casos" onClick={childClick}>
             Explorar casos
           </a>
         </Button>,

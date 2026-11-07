@@ -8,7 +8,7 @@ const ES = createTranslator("es");
 const RETRY = vi.fn();
 
 describe("apiProblems", () => {
-  it("reports a missing session once, with a link to the classic interface", () => {
+  it("reports a missing session once, with a retry as its only action", () => {
     // Arrange
     const errors: ApiError[] = [
       { kind: "auth", status: 401, route: "/api/catalogo", message: "x" },
@@ -21,13 +21,8 @@ describe("apiProblems", () => {
     // Assert
     expect(problems.map((problem) => problem.id)).toEqual(["api.auth"]);
     expect(problems[0]?.severity).toBe("error");
-    expect(problems[0]?.action).toEqual({ label: "Abrir la interfaz clásica", href: "/" });
-  });
-
-  it("also offers to retry a missing session: after signing in elsewhere, no reload is needed", () => {
-    const problems = apiProblems([{ kind: "auth", status: 401, route: "/api/catalogo", message: "x" }], RETRY, ES);
-
-    expect(problems[0]?.secondaryAction).toMatchObject({ label: "Reintentar", run: RETRY });
+    expect(problems[0]?.action).toEqual({ label: "Reintentar", run: RETRY });
+    expect(problems[0]?.secondaryAction).toBeUndefined();
   });
 
   it("reports an unreachable server once, with a retry action", () => {

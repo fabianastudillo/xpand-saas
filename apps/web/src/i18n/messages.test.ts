@@ -20,10 +20,15 @@ describe("app messages", () => {
     expect(createTranslator("es")("catalog.difficulty")).toBe("Esfuerzo: {value}");
   });
 
-  it("names the server and the interface versions apart in the status bar", () => {
+  it("names the platform and the interface apart in the status bar", () => {
     const vars = { server: "1.0.0", ui: "0.1.0" };
-    expect(createTranslator("es")("state.versions", vars)).toBe("Servidor 1.0.0 · Interfaz 0.1.0");
-    expect(createTranslator("en")("state.versions", vars)).toBe("Server 1.0.0 · UI 0.1.0");
+    expect(createTranslator("es")("state.versions", vars)).toBe("Plataforma 1.0.0 · Interfaz 0.1.0");
+    expect(createTranslator("en")("state.versions", vars)).toBe("Platform 1.0.0 · UI 0.1.0");
+  });
+
+  it("shows one version in the status bar when both are equal", () => {
+    expect(createTranslator("es")("state.version", { version: "0.1.0" })).toBe("Versión 0.1.0");
+    expect(createTranslator("en")("state.version", { version: "0.1.0" })).toBe("Version 0.1.0");
   });
 
   it("gives a different translator for each locale", () => {
