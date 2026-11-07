@@ -55,6 +55,15 @@ jobs:
         with:
           name: dist
           path: release
+      # El pie de la interfaz muestra la versión de apps/local/package.json: un tag que no coincida publicaría
+      # una build que dice otra versión. Se comprueba antes de publicar nada.
+      - name: Comprobar que el tag es v<versión de apps/local/package.json>
+        run: |
+          version="$(jq -r .version apps/local/package.json)"
+          if [ "$TAG" != "v$version" ]; then
+            echo "::error::El tag $TAG no coincide con la versión de apps/local/package.json (v$version)"
+            exit 1
+          fi
       - name: Extraer las notas de la versión de CHANGELOG.md
         run: |
           awk -v cabecera="## $TAG" '
