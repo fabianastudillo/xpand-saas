@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Los paquetes del monorepo exportan su TypeScript fuente: Next los compila con la app.
+  transpilePackages: ["@xpand/api", "@xpand/casos", "@xpand/core"],
   // The root `pnpm lint` (ESLint flat config of the monorepo) lints this app; `next build` must not lint it again
   // with a configuration it does not fully understand.
   eslint: { ignoreDuringBuilds: true },

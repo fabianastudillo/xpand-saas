@@ -1,5 +1,5 @@
 {
-  "motor": { "id": "jump_misocp", "nombre": "MISOCP AC/DC", "esquema_red": "misocp" },
+  "motor": { "id": "jump_misocp", "nombre": "MISOCP AC/DC", "familia": "convexo", "formulacion": "La MISMA relajación cónica (Jabr) de los .mod de misocp_tnep y misocp_gtep, escrita en JuMP: Pajarito (HiGHS + SCS) para el MISOCP y certificacion NLP AC exacta con Ipopt", "esquema_red": "misocp" },
   "sistema": { "id": "tnep_truncado", "nombre": "Garver 6 truncado (prueba de lector)", "barras": 6 },
   "archivos": { "base": "base.dat" },
   "visibilidad": "publico",

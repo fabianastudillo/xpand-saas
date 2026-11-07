@@ -299,6 +299,15 @@ importers:
       '@radix-ui/react-switch':
         specifier: ^1.4.1
         version: 1.4.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@xpand/api':
+        specifier: workspace:*
+        version: link:../../packages/api
+      '@xpand/casos':
+        specifier: workspace:*
+        version: link:../../packages/casos
+      '@xpand/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -445,6 +454,9 @@ importers:
 
   packages/casos:
     dependencies:
+      '@xpand/api':
+        specifier: workspace:*
+        version: link:../api
       '@xpand/core':
         specifier: workspace:*
         version: link:../core

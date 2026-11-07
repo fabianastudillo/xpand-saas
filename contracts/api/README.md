@@ -1,7 +1,7 @@
 # Contrato de la API (M0)
 
 Esquemas JSON Schema de las cuatro rutas de solo lectura que usa la interfaz en `/`, servidas bajo `/api` por
-`apps/server`:
+`apps/web` (route handlers de Next):
 
 | Ruta | Esquema |
 |---|---|
@@ -65,7 +65,7 @@ respuesta real y se valida con las pruebas. No hay datos de SNI, CENACE ni SDDP 
 
 - `packages/api`: `gen:check` (los tipos generados coinciden con los esquemas) y las pruebas del validador, que
   comprueban que cada esquema acepta su ejemplo.
-- `apps/server` (Task 5): las rutas validan sus respuestas contra estos esquemas.
+- `apps/web` (Task 5): las rutas validan sus respuestas contra estos esquemas (`src/server/rutas-*.test.ts`).
 
 ## Cómo cambiar un contrato
 

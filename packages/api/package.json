@@ -5,7 +5,9 @@
   "description": "Cliente tipado de la API de XPAND (solo lectura en M0).",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./validate": "./src/validate.ts",
+    "./red-wire": "./src/generated/red.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

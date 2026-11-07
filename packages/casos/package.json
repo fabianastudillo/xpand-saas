@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@xpand/api": "workspace:*",
     "@xpand/core": "workspace:*",
     "ajv": "^8.20.0"
   },

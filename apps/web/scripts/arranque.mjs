@@ -108,8 +108,11 @@ const ejecutar = () => {
   }
 
   const nextBin = fileURLToPath(import.meta.resolve("next/dist/bin/next"));
+  // XPAND_WEB_HOST: la dirección en la que escucha Next. /api/sesion decide con ella si toda petición es de esta
+  // máquina (src/server/local.ts); pisa cualquier valor de los .env, que no saben con qué -H se arrancó.
   const hijo = spawn(process.execPath, [nextBin, ...decision.args], {
     stdio: "inherit",
+    env: { ...process.env, XPAND_WEB_HOST: decision.host },
   });
   hijo.on("error", (error) => {
     console.error(`arranque: no se pudo ejecutar next (${error.message})`);
