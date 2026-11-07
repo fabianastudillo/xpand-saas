@@ -1,4 +1,4 @@
-import { responderSesion } from "@/server/rutas";
+import { responderSesion } from "@/server/sesion";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

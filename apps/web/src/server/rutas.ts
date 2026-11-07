@@ -1,10 +1,8 @@
-// Logica de las rutas /api de solo lectura (catalogo, red, config, sesion). Los route handlers de src/app/api solo
-// la llaman, asi que se prueba invocandola con objetos Request.
+// Logica de las rutas /api de casos y config. Los route handlers de src/app/api solo la llaman, asi que se prueba
+// invocandola con objetos Request. /api/sesion vive en sesion.ts: asi estas rutas no cargan la pila de next-auth.
 import { LectorError } from "@xpand/casos";
-import { getSession } from "@/libs/auth/auth-utils";
 import paquete from "../../package.json";
 import { catalogoVigente, redVigente } from "./casos";
-import { decidirLocal } from "./local";
 import { error, json } from "./respuestas";
 
 const TEC_SOPORTADA = "ac";
@@ -41,21 +39,4 @@ export async function responderRed(request: Request): Promise<Response> {
 
 export function responderConfig(): Response {
   return json({ version: paquete.version });
-}
-
-export async function responderSesion(): Promise<Response> {
-  let sesion: Awaited<ReturnType<typeof getSession>> = null;
-  try {
-    sesion = await getSession();
-  } catch (e) {
-    // Sin Postgres la sesion no se puede leer: la zona IDE publica sigue funcionando, como sin sesion.
-    console.error("[api/sesion] no se pudo leer la sesion; se responde como sin sesion:", e instanceof Error ? e.message : e);
-  }
-  const usuario = sesion?.user;
-  return json({
-    dentro: Boolean(usuario),
-    local: decidirLocal(process.env),
-    nombre: usuario?.name || usuario?.email || "",
-    exigida: false,
-  });
 }
