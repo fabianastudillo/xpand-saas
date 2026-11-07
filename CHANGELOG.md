@@ -19,7 +19,8 @@ de casos, en un solo servidor Next. Solo lectura: no escribe nada en el motor ni
   `config/casos-publicos.json` (hoy IEEE-24 e IEEE-118 clásicos) son públicos; un caso interno responde como uno
   inexistente. Errores con la forma única `{ error: { codigo, mensaje } }`.
 - **Importador y comparador:** `pnpm importar-casos` llena el almacén desde un checkout de xpand (que solo se lee);
-  `pnpm comparar-con-xpand` compara la red de la plataforma con la de un xpand en marcha, con igualdad exacta.
+  `pnpm comparar-con-xpand` compara la red y la fila pública del catálogo de cada caso con las de un xpand en marcha,
+  con igualdad exacta.
 - **Zona IDE «Explorar casos»** (`/casos`, `/casos/<motor>/<sistema>`): layout propio, ES/EN, WCAG 2.2 AA, insignias de
   honestidad y «Problemas» que explica un catálogo vacío, un caso inexistente o ilegible y un almacén no disponible.
   Sigue funcionando sin Postgres.

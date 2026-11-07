@@ -1,13 +1,17 @@
 // pnpm comparar-con-xpand --xpand-url <url> --plataforma-url <url> [--guardar-esperado <dir>]
 //
 // Compara, campo a campo y con igualdad exacta, la red que sirve /api/red de la plataforma con la de un servidor
-// xpand en marcha (solo lectura: GET a /api/catalogo y /api/red con tec=ac).
+// xpand en marcha (solo lectura: GET a /api/catalogo y /api/red con tec=ac), y la fila pública del catálogo de cada
+// caso (`nombre`, `barras`, `referencias[].valor` y `.tecnologias`: lo que la interfaz enseña de un sistema).
 //
 // El conjunto público es explícito: un caso de xpand es público solo si figura en --publicos <fichero> (por defecto
 // config/casos-publicos.json, mismo formato y cargador que el importador) con su id y su carpeta de datos. Solo esos
 // casos se comparan, se imprimen con sus valores y se escriben. Un caso que la plataforma sirve y no está en ese
 // conjunto se informa solo por id, sin valores, y no se escribe. Si no se compara ningún caso, el resultado es 1.
-// Solo se comparan los campos del contrato (contracts/api/red.schema.json); ids y `de`/`a` se pasan a cadena.
+// De la red solo se comparan los campos del contrato (contracts/api/red.schema.json: sus colecciones y, si los hubiera,
+// sus campos de nivel superior); ids y `de`/`a` se pasan a cadena. De la fila del catálogo, la misma proyección en los
+// dos lados: una referencia sin `valor` numérico queda fuera (el contrato lo exige; el importador y el servidor la
+// quitan) y `fuente` no se compara (el importador la sustituye por la de la lista blanca si viene vacía).
 //
 // Códigos de salida: 0 sin diferencias, 1 con diferencias (o sin casos que comparar), 64 uso incorrecto o servidor
 // inalcanzable. Con --guardar-esperado escribe <dir>/<motor>/<sistema>/esperado-red.json (la red de xpand, en el
@@ -41,20 +45,31 @@ const COLECCIONES: readonly (readonly [Coleccion, string])[] = [
 const CAMPOS_DE_BARRA = new Set(["id", "de", "a"]);
 const CODIGO_SIN_CASOS = 1;
 
+interface SchemaRed {
+  properties: Record<string, unknown>;
+  definitions: Record<string, { properties: Record<string, unknown> }>;
+}
+const SCHEMA_RED = JSON.parse(readFileSync(RUTA_SCHEMA_RED, "utf8")) as SchemaRed;
+
 /** Campos del contrato por colección, leídos del schema (no una lista a mano). */
 function camposDelContrato(): Record<Coleccion, readonly string[]> {
-  const schema = JSON.parse(readFileSync(RUTA_SCHEMA_RED, "utf8")) as {
-    definitions: Record<string, { properties: Record<string, unknown> }>;
-  };
   const campos = {} as Record<Coleccion, readonly string[]>;
   for (const [coleccion, definicion] of COLECCIONES) {
-    const propiedades = schema.definitions[definicion]?.properties;
+    const propiedades = SCHEMA_RED.definitions[definicion]?.properties;
     if (propiedades === undefined) throw new Error(`red.schema.json no define «${definicion}»`);
     campos[coleccion] = Object.keys(propiedades);
   }
   return campos;
 }
 const CAMPOS = camposDelContrato();
+/** Campos de nivel superior de la red en el contrato, aparte de las colecciones (hoy ninguno). */
+const CAMPOS_RAIZ_RED: readonly string[] = Object.keys(SCHEMA_RED.properties).filter(
+  (campo) => !COLECCIONES.some(([coleccion]) => coleccion === campo),
+);
+
+/** Campos de la fila pública de un sistema que se comparan, y de cada una de sus referencias. */
+const CAMPOS_FILA = ["nombre", "barras"] as const;
+const CAMPOS_REFERENCIA = ["valor", "tecnologias"] as const;
 
 export type Proyeccion = Record<Coleccion, Record<string, unknown>[]>;
 export interface Par {
@@ -196,6 +211,56 @@ export function diferenciasRed(xpand: Proyeccion, plataforma: Proyeccion): Halla
   return hallazgos;
 }
 
+/** Los campos de nivel superior del contrato (fuera de las colecciones), con su nombre como ruta. */
+function diferenciasRaizRed(xpand: Registro, plataforma: Registro): Hallazgo[] {
+  const hallazgos: Hallazgo[] = [];
+  for (const campo of CAMPOS_RAIZ_RED) compararValores(xpand[campo], plataforma[campo], campo, hallazgos);
+  return hallazgos;
+}
+
+// ---------- Proyección y comparación de la fila del catálogo ----------
+
+export interface FilaCatalogo {
+  readonly campos: Registro;
+  readonly referencias: readonly Registro[];
+}
+
+const soloCamposDe = (registro: Registro, campos: readonly string[]): Registro =>
+  Object.fromEntries(campos.filter((campo) => registro[campo] !== undefined).map((campo) => [campo, registro[campo]]));
+
+const tieneValorNumerico = (referencia: Registro): boolean => typeof referencia.valor === "number" && Number.isFinite(referencia.valor);
+
+/** La fila pública de un sistema del catálogo: nombre, barras y, de cada referencia con valor numérico, valor y tecnologías. */
+export function proyectarFila(sistema: Registro): FilaCatalogo {
+  const referencias = Array.isArray(sistema.referencias) ? sistema.referencias.filter(esObjeto).filter(tieneValorNumerico) : [];
+  return {
+    campos: soloCamposDe(sistema, CAMPOS_FILA),
+    referencias: referencias.map((referencia) => soloCamposDe(referencia, CAMPOS_REFERENCIA)),
+  };
+}
+
+const RUTA_FILA = "catalogo";
+
+/** Diferencias entre las filas de un caso; sin fila en la plataforma, una sola línea. Referencias por posición. */
+export function diferenciasFila(xpand: Registro | undefined, plataforma: Registro | undefined): Hallazgo[] {
+  if (xpand === undefined || plataforma === undefined) {
+    if (xpand === plataforma) return [];
+    return [{ ruta: RUTA_FILA, xpand: xpand ? "presente" : "(ausente)", plataforma: plataforma ? "presente" : "(ausente)" }];
+  }
+  const hallazgos: Hallazgo[] = [];
+  const fx = proyectarFila(xpand);
+  const fp = proyectarFila(plataforma);
+  compararValores(fx.campos, fp.campos, RUTA_FILA, hallazgos);
+  for (let i = 0; i < Math.max(fx.referencias.length, fp.referencias.length); i++) {
+    const ruta = `${RUTA_FILA}.referencias[${String(i)}]`;
+    const rx = fx.referencias[i];
+    const rp = fp.referencias[i];
+    if (rx !== undefined && rp !== undefined) compararValores(rx, rp, ruta, hallazgos);
+    else hallazgos.push({ ruta, xpand: rx ? "presente" : "(ausente)", plataforma: rp ? "presente" : "(ausente)" });
+  }
+  return hallazgos;
+}
+
 // ---------- Peticiones ----------
 
 function sinBarraFinal(url: string): string {
@@ -287,12 +352,24 @@ function describirRespuesta(respuesta: RespuestaApi): string {
   return typeof codigo === "string" ? `HTTP ${String(respuesta.estado)} ${codigo}` : `HTTP ${String(respuesta.estado)}`;
 }
 
-/** Diferencias de un caso: o bien una respuesta que no es una red válida, o bien las redes campo a campo. */
+/** Diferencias de la red de un caso: o bien una respuesta que no es una red válida, o bien las redes campo a campo. */
 function hallazgosDelCaso(xpand: RespuestaApi, plataforma: RespuestaApi): Hallazgo[] {
   if (!esRedValida(xpand.cuerpo) || !esRedValida(plataforma.cuerpo) || xpand.estado !== 200 || plataforma.estado !== 200) {
     return [{ ruta: "(respuesta)", xpand: describirRespuesta(xpand), plataforma: describirRespuesta(plataforma) }];
   }
-  return diferenciasRed(proyectarRed(xpand.cuerpo), proyectarRed(plataforma.cuerpo));
+  return [
+    ...diferenciasRaizRed(xpand.cuerpo, plataforma.cuerpo),
+    ...diferenciasRed(proyectarRed(xpand.cuerpo), proyectarRed(plataforma.cuerpo)),
+  ];
+}
+
+/** Cada sistema del catálogo por su par motor/sistema (el objeto entero; la proyección elige los campos). */
+function filasDe(catalogo: unknown): Map<string, Registro> {
+  const filas = new Map<string, Registro>();
+  for (const motor of motoresDe(catalogo)) {
+    for (const sistema of motor.sistemas) filas.set(clave({ motor: motor.id, sistema: sistema.id }), sistema as unknown as Registro);
+  }
+  return filas;
 }
 
 const ordenar = (pares: readonly Par[]): Par[] => [...pares].sort((a, b) => (clave(a) < clave(b) ? -1 : 1));
@@ -308,10 +385,15 @@ export async function compararConXpand(xpandUrl: string, plataformaUrl: string, 
   const clavesPublicas = new Set(publicos.map(clave));
   const enPlataforma = paresDe(catalogoPlataforma, () => true);
   const servidosPorPlataforma = new Set(enPlataforma.map(clave));
+  const filasXpand = filasDe(catalogoXpand);
+  const filasPlataforma = filasDe(catalogoPlataforma);
 
   const diferencias: Diferencia[] = [];
   const esperados: Esperado[] = [];
   for (const par of publicos) {
+    for (const hallazgo of diferenciasFila(filasXpand.get(clave(par)), filasPlataforma.get(clave(par)))) {
+      diferencias.push({ ...par, ...hallazgo });
+    }
     const redXpand = await pedirRed(xpandUrl, par);
     const redPlataforma = await pedirRed(plataformaUrl, par);
     for (const hallazgo of hallazgosDelCaso(redXpand, redPlataforma)) diferencias.push({ ...par, ...hallazgo });

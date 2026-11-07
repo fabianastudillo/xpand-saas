@@ -34,7 +34,9 @@ function red(pdBarra2 = 291, s = 200): unknown {
   };
 }
 
-const catalogo = (motores: Record<string, { sistemas: { id: string; archivos?: Record<string, string>; disponible?: boolean }[] }>) => ({
+type SistemaFalso = { id: string; archivos?: Record<string, string>; disponible?: boolean } & Record<string, unknown>;
+
+const catalogo = (motores: Record<string, { sistemas: SistemaFalso[] }>) => ({
   motores: Object.entries(motores).map(([id, m]) => ({ id, ...m })),
 });
 
@@ -274,6 +276,118 @@ describe("comparar-con-xpand: contrato del comparador", () => {
     // Assert
     expect(salida.codigo).toBe(CODIGO_USO);
     expect(salida.texto).toContain("--plataforma-url");
+  });
+});
+
+/** Fila pública del catálogo de un IEEE-24 clásico: lo que la plataforma enseña de él (nombre, barras, referencias). */
+function filaIeee24(cambios: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    nombre: "IEEE 24 barras clásico",
+    barras: 24,
+    referencias: [
+      { tecnologias: "ac", valor: 86, fuente: "https://doi.org/10.1109/TPWRS.2023.3305431" },
+      { tecnologias: "ac+caps", valor: 59.8 },
+    ],
+    ...cambios,
+  };
+}
+
+/** xpand y plataforma con el mismo caso público y la misma red; solo cambia la fila del catálogo de cada lado. */
+async function servidoresConFilas(filaXpand: Record<string, unknown>, filaPlataforma: Record<string, unknown> | undefined) {
+  const xpand = await arrancar(
+    catalogo({
+      jump_misocp: {
+        sistemas: [
+          { id: "tnep_ieee24_clasico", archivos: ARCHIVOS_PUBLICOS, ...filaXpand },
+          { id: "tnep_secreto", archivos: ARCHIVOS_INTERNOS, nombre: "Sistema secreto", barras: 999 },
+        ],
+      },
+    }),
+    { "jump_misocp/tnep_ieee24_clasico": ok(red()) },
+  );
+  const sistemasPlataforma = filaPlataforma === undefined ? [] : [{ id: "tnep_ieee24_clasico", ...filaPlataforma }];
+  const plataforma = await arrancar(catalogo({ jump_misocp: { sistemas: sistemasPlataforma } }), {
+    "jump_misocp/tnep_ieee24_clasico": ok(red()),
+  });
+  return { xpand, plataforma };
+}
+
+describe("comparar-con-xpand: la fila pública del catálogo", () => {
+  it("devuelve 0 con la misma fila; «fuente» no se compara (el importador la sustituye)", async () => {
+    // Arrange
+    const plataforma = filaIeee24({
+      referencias: [
+        { tecnologias: "ac", valor: 86, fuente: "otra fuente" },
+        { tecnologias: "ac+caps", valor: 59.8 },
+      ],
+    });
+    const servidores = await servidoresConFilas(filaIeee24(), plataforma);
+
+    // Act
+    const salida = await ejecutar(argv(servidores.xpand, servidores.plataforma), OPCIONES);
+
+    // Assert
+    expect(salida.codigo).toBe(CODIGO_OK);
+    expect(salida.texto).toContain("Diferencias: 0");
+  });
+
+  it("nombra un nombre distinto con ambos valores", async () => {
+    const servidores = await servidoresConFilas(filaIeee24(), filaIeee24({ nombre: "IEEE-24" }));
+
+    const salida = await ejecutar(argv(servidores.xpand, servidores.plataforma), OPCIONES);
+
+    expect(salida.codigo).toBe(CODIGO_DIFERENCIAS);
+    expect(salida.texto).toContain('jump_misocp/tnep_ieee24_clasico catalogo.nombre: xpand="IEEE 24 barras clásico" plataforma="IEEE-24"');
+  });
+
+  it("nombra un número de barras distinto", async () => {
+    const servidores = await servidoresConFilas(filaIeee24(), filaIeee24({ barras: 23 }));
+
+    const salida = await ejecutar(argv(servidores.xpand, servidores.plataforma), OPCIONES);
+
+    expect(salida.codigo).toBe(CODIGO_DIFERENCIAS);
+    expect(salida.texto).toContain("catalogo.barras: xpand=24 plataforma=23");
+  });
+
+  it("compara el valor de referencia con igualdad exacta", async () => {
+    const plataforma = filaIeee24({ referencias: [{ tecnologias: "ac", valor: 86.00000000000001 }, { tecnologias: "ac+caps", valor: 59.8 }] });
+    const servidores = await servidoresConFilas(filaIeee24(), plataforma);
+
+    const salida = await ejecutar(argv(servidores.xpand, servidores.plataforma), OPCIONES);
+
+    expect(salida.codigo).toBe(CODIGO_DIFERENCIAS);
+    expect(salida.texto).toContain("catalogo.referencias[0].valor: xpand=86 plataforma=86.00000000000001");
+  });
+
+  it("nombra las tecnologías de una referencia y una referencia que falta", async () => {
+    const plataforma = filaIeee24({ referencias: [{ tecnologias: "ac+bancos", valor: 86 }] });
+    const servidores = await servidoresConFilas(filaIeee24(), plataforma);
+
+    const salida = await ejecutar(argv(servidores.xpand, servidores.plataforma), OPCIONES);
+
+    expect(salida.codigo).toBe(CODIGO_DIFERENCIAS);
+    expect(salida.texto).toContain('catalogo.referencias[0].tecnologias: xpand="ac" plataforma="ac+bancos"');
+    expect(salida.texto).toContain("catalogo.referencias[1]: xpand=presente plataforma=(ausente)");
+  });
+
+  it("una referencia sin valor numérico queda fuera, como en el importador y el servidor (contrato: valor exigido)", async () => {
+    const xpand = filaIeee24({ referencias: [{ tecnologias: "ac", valor: 86 }, { tecnologias: "ac+caps", valor: "n/d" }] });
+    const servidores = await servidoresConFilas(xpand, filaIeee24({ referencias: [{ tecnologias: "ac", valor: 86 }] }));
+
+    const salida = await ejecutar(argv(servidores.xpand, servidores.plataforma), OPCIONES);
+
+    expect(salida.codigo).toBe(CODIGO_OK);
+  });
+
+  it("un caso público que falta en el catálogo de la plataforma se nombra; nada del interno sale", async () => {
+    const servidores = await servidoresConFilas(filaIeee24(), undefined);
+
+    const salida = await ejecutar(argv(servidores.xpand, servidores.plataforma), OPCIONES);
+
+    expect(salida.codigo).toBe(CODIGO_DIFERENCIAS);
+    expect(salida.texto).toContain("jump_misocp/tnep_ieee24_clasico catalogo: xpand=presente plataforma=(ausente)");
+    expect(salida.texto).not.toContain("secreto");
+    expect(salida.texto).not.toContain("999");
   });
 });
 
