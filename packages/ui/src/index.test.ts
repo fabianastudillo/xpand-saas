@@ -25,6 +25,25 @@ const PUBLIC_EXPORTS = [
   "formatNumber",
   "cn",
   "DENSITY_ATTRIBUTE",
+  // Shell
+  "AppShell",
+  "useShellLayout",
+  "TopBar",
+  "CaseTree",
+  "DocumentTabs",
+  "Inspector",
+  "InspectorRow",
+  "InspectorRows",
+  "BottomPanel",
+  "ProblemsList",
+  "CommandPalette",
+  "StatusBar",
+  "useProblems",
+  "createProblemsStore",
+  "problemsStore",
+  "countBySeverity",
+  "useShortcuts",
+  "shortcutLabel",
 ] as const;
 
 describe("@xpand/ui", () => {

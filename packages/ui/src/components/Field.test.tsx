@@ -77,6 +77,18 @@ describe("<Field>", () => {
     expect(screen.getByText("Required")).toBeTruthy();
   });
 
+  it("keeps aria-invalid and aria-required the control already carries when the Field says nothing", () => {
+    render(
+      <Field label="Demanda">
+        <Input aria-invalid aria-required />
+      </Field>,
+    );
+    const input = screen.getByLabelText("Demanda");
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(input).toHaveAttribute("aria-required", "true");
+    expect(input).not.toHaveAttribute("aria-describedby");
+  });
+
   it("honours an explicit id on the Field and one the control already has", () => {
     const { unmount } = render(
       <Field label="Horizonte" id="horizonte">

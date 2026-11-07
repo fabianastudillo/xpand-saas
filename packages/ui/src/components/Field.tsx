@@ -47,11 +47,12 @@ export function Field({
     .filter((value): value is string => value !== null)
     .join(" ");
 
+  // Only keys with a value: cloneElement would otherwise overwrite what the control declared with undefined.
   const overrides: ControlProps = {
     id: controlId,
-    "aria-describedby": describedBy || undefined,
-    "aria-invalid": error ? true : undefined,
-    "aria-required": required || undefined,
+    ...(describedBy ? { "aria-describedby": describedBy } : {}),
+    ...(error ? { "aria-invalid": true } : {}),
+    ...(required ? { "aria-required": true } : {}),
   };
   const control = isValidElement<ControlProps>(children) ? cloneElement(children, overrides) : children;
 

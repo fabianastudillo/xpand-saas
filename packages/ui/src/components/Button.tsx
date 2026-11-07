@@ -1,5 +1,13 @@
 import { Slot } from "@radix-ui/react-slot";
-import type { ComponentProps, KeyboardEvent, MouseEvent, ReactElement } from "react";
+import {
+  cloneElement,
+  isValidElement,
+  type ComponentProps,
+  type KeyboardEvent,
+  type MouseEvent,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import { cn } from "../lib/cn";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
@@ -44,6 +52,15 @@ function isAriaDisabled(value: ButtonProps["aria-disabled"]): boolean {
   return value === true || value === "true";
 }
 
+/**
+ * Slot merges handlers child-first, so a soft-disabled `asChild` link would still run its own onClick before
+ * ours could stop it. Strip the child's activation handlers; ours then swallow the event.
+ */
+function silenceChildHandlers(children: ReactNode): ReactNode {
+  if (!isValidElement<{ onClick?: unknown; onKeyDown?: unknown }>(children)) return children;
+  return cloneElement(children, { onClick: undefined, onKeyDown: undefined });
+}
+
 export function Button({
   variant = "secondary",
   size = "md",
@@ -53,12 +70,14 @@ export function Button({
   onClick,
   onKeyDown,
   "aria-disabled": ariaDisabled,
+  children,
   ...props
 }: ButtonProps): ReactElement {
   const Component = asChild ? Slot : "button";
   const softDisabled = isAriaDisabled(ariaDisabled);
   // A <button> defaults to type="submit" in forms; here it is a plain button unless told otherwise.
   const typeProps = asChild ? {} : { type: type ?? "button" };
+  const content = asChild && softDisabled ? silenceChildHandlers(children) : children;
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>): void => {
     if (softDisabled) {
@@ -88,6 +107,8 @@ export function Button({
       onKeyDown={handleKeyDown}
       {...typeProps}
       {...props}
-    />
+    >
+      {content}
+    </Component>
   );
 }

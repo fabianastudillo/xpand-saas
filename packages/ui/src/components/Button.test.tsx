@@ -98,6 +98,40 @@ describe("<Button>", () => {
       expect(onClick).not.toHaveBeenCalled();
     });
 
+    it("asChild with aria-disabled also silences the child's own onClick and onKeyDown", async () => {
+      const user = userEvent.setup();
+      const childClick = vi.fn();
+      const childKeyDown = vi.fn();
+      render(
+        <Button asChild aria-disabled>
+          <a href="/app/casos" onClick={childClick} onKeyDown={childKeyDown}>
+            Explorar casos
+          </a>
+        </Button>,
+      );
+      await user.click(screen.getByRole("link"));
+      await user.tab();
+      await user.keyboard("{Enter}");
+      expect(childClick).not.toHaveBeenCalled();
+      expect(childKeyDown).not.toHaveBeenCalled();
+    });
+
+    it("asChild without aria-disabled still runs the child's own onClick", async () => {
+      const user = userEvent.setup();
+      const childClick = vi.fn((event: React.MouseEvent) => {
+        event.preventDefault();
+      });
+      render(
+        <Button asChild>
+          <a href="/app/casos" onClick={childClick}>
+            Explorar casos
+          </a>
+        </Button>,
+      );
+      await user.click(screen.getByRole("link"));
+      expect(childClick).toHaveBeenCalledTimes(1);
+    });
+
     it("keeps the native disabled attribute for the plain case", () => {
       render(<Button disabled>Ir</Button>);
       expect(screen.getByRole("button")).toBeDisabled();

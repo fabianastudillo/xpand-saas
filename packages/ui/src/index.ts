@@ -27,6 +27,39 @@ export {
   type TranslationVars,
 } from "./i18n";
 
+// Shell (IDE frame)
+export { AppShell, useShellLayout, type AppShellProps, type ShellLayout, type ZoneState } from "./shell/AppShell";
+export { BottomPanel, type BottomPanelProps, type BottomTab } from "./shell/BottomPanel";
+export { CaseTree, type CaseTreeProps, type TreeSelection } from "./shell/CaseTree";
+export { CommandPalette, type CommandPaletteProps } from "./shell/CommandPalette";
+export { DocumentTabs, type DocumentTabsProps, type ShellDocument } from "./shell/DocumentTabs";
+export { Inspector, InspectorRow, InspectorRows, type InspectorProps, type InspectorRowProps } from "./shell/Inspector";
+export { ProblemsList, type ProblemsListProps } from "./shell/ProblemsList";
+export { StatusBar, type StatusBarProps } from "./shell/StatusBar";
+export { TopBar, type TopBarProps } from "./shell/TopBar";
+export { filterCommands, groupCommands, normalizeText, type Command, type CommandGroup } from "./shell/commandFilter";
+export {
+  countBySeverity,
+  createProblemsStore,
+  problemsStore,
+  useProblems,
+  type Problem,
+  type ProblemAction,
+  type ProblemSeverity,
+  type ProblemTarget,
+  type ProblemTargetKind,
+  type ProblemsStore,
+  type UseProblems,
+} from "./shell/problems";
+export {
+  isTypingTarget,
+  shortcutAriaKeys,
+  shortcutLabel,
+  useShortcuts,
+  type ShortcutBinding,
+} from "./shell/shortcuts";
+export type { TreeGroup, TreeItem } from "./shell/treeModel";
+
 // Density and helpers
 export { DENSITY_ATTRIBUTE, applyDensity, type Density } from "./density";
 export { cn } from "./lib/cn";
