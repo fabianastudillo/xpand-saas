@@ -12,7 +12,12 @@ import {
 import { getIsAdmin } from "@/libs/auth/auth-utils";
 import { featureFlagSchema } from "./schemas";
 
+// Server actions are public endpoints: every action checks the session's role itself.
 export const getFeatureFlagsAction = async () => {
+  if (!(await getIsAdmin())) {
+    return [];
+  }
+
   const featureFlags = await getFeatureFlags();
   return featureFlags;
 };
