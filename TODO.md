@@ -25,6 +25,10 @@ menores aparcados de la revisión final.
 
 ## Para M1, de la revisión final de rama de M0 (2026-11-07)
 
+- **[MEDIUM] `next dev` queda en 500 tras pedir una URL sin ruta.** Next 15.5 informa «not-found.tsx doesn't have a
+  root layout» porque `apps/web` tiene dos layouts raíz (`(ide)` y `(site)`, Tarea 6); desde esa petición todas las
+  páginas devuelven 500 hasta reiniciar `pnpm dev`. El build de producción no se ve afectado (Playwright `CI=1` 172/172).
+  Arreglo: un layout raíz compartido o `global-not-found`.
 - **[MEDIUM] Defensa en profundidad: que el servidor exija también la lista blanca.** Hoy la lista blanca
   (`config/casos-publicos.json`) solo actúa en el importador; el servidor sirve lo que el manifiesto marca `publico`. Un
   manifiesto editado a mano (o un almacén importado por otra versión) bastaría para publicar un caso. Que

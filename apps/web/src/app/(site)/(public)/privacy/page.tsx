@@ -26,7 +26,7 @@ export default function PrivacyPage() {
           enlace de entrada y para reconocerte.
         </li>
         <li>
-          Tu sesión mientras estás dentro: una cookie firmada en tu navegador.
+          Tu sesión mientras estás dentro: una cookie cifrada en tu navegador.
         </li>
         <li>
           Si el servidor tiene activada la entrada con Google y la usas, el
