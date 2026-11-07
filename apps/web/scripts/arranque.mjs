@@ -3,9 +3,15 @@
 // Escuchar en otra dirección (HOST=0.0.0.0, una IP de la red) exige XPAND_PERMITIR_RED=1; sin ella, el arranque
 // aborta con código 64 (EX_USAGE) y lo explica. `start` (servidor de producción) exige además AUTH_URL
 // (ver src/libs/auth/host-confianza.ts). La decisión está en `decidirArranque`, probada en arranque.test.mjs.
+//
+// Antes de decidir carga apps/web/.env y apps/web/.env.local (los mismos que lee Next), sin pisar lo que ya
+// venga del shell: así `pnpm start` ve el AUTH_URL o el XPAND_WEB_PORT escritos en .env.
 
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
+
+const FICHEROS_ENV = [".env", ".env.local"];
 
 export const CODIGO_USO = 64;
 export const HOST_POR_DEFECTO = "127.0.0.1";
@@ -51,7 +57,18 @@ export const decidirArranque = ({ modo, env }) => {
 
 const rechazo = (mensaje) => ({ ok: false, codigo: CODIGO_USO, mensaje });
 
+/** Loads the app's env files into process.env; variables already set in the environment are kept. */
+const cargarEnv = () => {
+  for (const nombre of FICHEROS_ENV) {
+    const ruta = fileURLToPath(new URL(`../${nombre}`, import.meta.url));
+    if (existsSync(ruta)) {
+      process.loadEnvFile(ruta);
+    }
+  }
+};
+
 const ejecutar = () => {
+  cargarEnv();
   const decision = decidirArranque({ modo: process.argv[2], env: process.env });
   if (!decision.ok) {
     console.error(`arranque: ${decision.mensaje}`);

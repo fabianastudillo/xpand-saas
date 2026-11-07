@@ -1,15 +1,9 @@
+// Only routes that exist: the template also linked /features and /contact, which have no page (404 and, in
+// production, prefetches from the navbar that never settle).
 export const publicNavLinks = [
   {
     title: "Pricing",
     url: "/pricing",
-  },
-  {
-    title: "Features",
-    url: "/features",
-  },
-  {
-    title: "Contact",
-    url: "/contact",
   },
 ];
 

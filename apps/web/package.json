@@ -5,7 +5,7 @@
   "description": "App Next de la plataforma XPAND: plantilla open-micro-saas (saas-plantilla 43e65a1) con público, cuentas y administración.",
   "scripts": {
     "dev": "node scripts/arranque.mjs dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "node scripts/arranque.mjs start",
     "typecheck": "prisma generate && next typegen && tsc --noEmit",
     "format": "prettier --write --ignore-path .gitignore .",
