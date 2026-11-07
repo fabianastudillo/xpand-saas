@@ -8,12 +8,15 @@ import { esIdValido, esNombreArchivoValido } from "@xpand/casos";
  */
 export const PATRON_INTERNO = /ecuador|sni|sddp|cenace|celec/i;
 
+/** Un DOI (10.NNNN/...) o una URL http(s): la fuente publica tiene que poder comprobarse. */
+const REFERENCIA_VERIFICABLE = /\b10\.\d{4,9}\/\S+|https?:\/\/\S+/;
+
 export interface EntradaLista {
   /** Id del sistema en el catalogo de xpand (el mismo en todos los motores que lo ofrecen). */
   readonly sistema: string;
   /** Carpeta de sus datos, relativa a la raiz del checkout (la del primer fichero `base`). */
   readonly datos: string;
-  /** Fuente publica de los datos. */
+  /** Fuente publica de los datos, con al menos un DOI o URL. */
   readonly fuente: string;
 }
 
@@ -29,6 +32,9 @@ function entrada(valor: unknown, i: number): EntradaLista {
     throw new Error(`entrada ${String(i)} (${sistema}): «datos» debe ser una ruta relativa al checkout, sin «..» ni «.»`);
   }
   if (typeof fuente !== "string" || fuente.trim() === "") throw new Error(`entrada ${String(i)} (${sistema}): falta la «fuente» publica`);
+  if (!REFERENCIA_VERIFICABLE.test(fuente)) {
+    throw new Error(`entrada ${String(i)} (${sistema}): la «fuente» tiene que citar un DOI o URL verificable`);
+  }
   return { sistema, datos, fuente };
 }
 

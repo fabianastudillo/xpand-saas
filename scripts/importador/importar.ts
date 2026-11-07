@@ -3,11 +3,24 @@
 // que reimportar da el mismo arbol y un caso que sale de la lista blanca deja de servirse.
 //
 // Nunca escribe dentro del checkout de xpand: solo lo lee (realpath, stat y copia de los ficheros del caso).
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  renameSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 import { abrirAlmacen, type Manifiesto, type Visibilidad } from "@xpand/casos";
 import { anadirVecinos, Copias, dentroDe, FicheroNoValido, NOMBRE_MANIFIESTO, resolverEnCheckout } from "./ficheros";
 import { buscarEnLista, PATRON_INTERNO, type ListaBlanca } from "./lista-blanca";
+import { registrarTemporal } from "./temporales";
 import {
   archivosDelVolcado,
   ficheroPrincipal,
@@ -29,7 +42,8 @@ export type Motivo =
   | "no_disponible"
   | "metadatos_incompletos"
   | "archivo_no_valido"
-  | "fuera_de_carpeta_publica";
+  | "fuera_de_carpeta_publica"
+  | "enlace_duro";
 
 export interface OpcionesImportar {
   readonly xpand: string;
@@ -134,6 +148,11 @@ function planificar(ctx: Contexto, motor: MotorVolcado, bloqueMotor: Manifiesto[
   if (entrada !== undefined && [...ficheros.copias.porNombre.values()].some((real) => !dentroDe(dirDatos, real))) {
     return { motivo: "fuera_de_carpeta_publica" };
   }
+  // Un fichero con mas de un enlace duro comparte inodo con otra ruta que puede ser interna: no se puede probar que
+  // sea solo de la carpeta aprobada.
+  if (entrada !== undefined && [...ficheros.copias.porNombre.values()].some((real) => statSync(real).nlink > 1)) {
+    return { motivo: "enlace_duro" };
+  }
   const manifiesto: Manifiesto = {
     motor: bloqueMotor,
     sistema,
@@ -187,15 +206,17 @@ async function verificar(dir: string, esperados: number): Promise<void> {
   }
 }
 
+/** Carpeta hermana de `final` con nombre impredecible (mkdtemp, modo 0700). */
+const hermanaTemporal = (final: string, sufijo: string) => mkdtempSync(path.join(path.dirname(final), `.${path.basename(final)}.${sufijo}-`));
+
 /** Sustituye `final` por `preparado` (las dos en la misma carpeta padre) y borra la version anterior. */
 function sustituir(preparado: string, final: string): void {
   if (!existsSync(final)) {
     renameSync(preparado, final);
     return;
   }
-  const anterior = path.join(path.dirname(final), `.${path.basename(final)}.anterior-${String(process.pid)}`);
-  rmSync(anterior, { recursive: true, force: true });
-  renameSync(final, anterior);
+  const anterior = hermanaTemporal(final, "anterior");
+  renameSync(final, path.join(anterior, "almacen"));
   renameSync(preparado, final);
   rmSync(anterior, { recursive: true, force: true });
 }
@@ -224,9 +245,9 @@ export async function importarCasos(opts: OpcionesImportar): Promise<Informe> {
   const claves = planes.map((p) => `${p.manifiesto.motor.id}/${p.manifiesto.sistema.id}`);
   if (new Set(claves).size !== claves.length) throw new Error("el volcado trae dos veces el mismo motor/sistema");
 
-  const preparado = path.join(path.dirname(final), `.${path.basename(final)}.importando-${String(process.pid)}`);
-  rmSync(preparado, { recursive: true, force: true });
-  mkdirSync(preparado, { recursive: true });
+  mkdirSync(path.dirname(final), { recursive: true });
+  const preparado = hermanaTemporal(final, "importando");
+  const liberar = registrarTemporal(preparado);
   try {
     const ficheros = planes.reduce((n, p) => n + escribirCaso(preparado, p), 0);
     writeFileSync(path.join(preparado, MARCA), CONTENIDO_MARCA);
@@ -239,5 +260,6 @@ export async function importarCasos(opts: OpcionesImportar): Promise<Informe> {
     };
   } finally {
     rmSync(preparado, { recursive: true, force: true });
+    liberar();
   }
 }

@@ -12,7 +12,18 @@
 // - En M0 los casos `interno` no se sirven nunca: todo se pide con incluirInternos false.
 import os from "node:os";
 import path from "node:path";
-import { abrirAlmacen, construirRed, LectorError, type Almacen, type Manifiesto, type Tec } from "@xpand/casos";
+import {
+  abrirAlmacen,
+  CAMPOS_MOTOR_PUBLICOS,
+  CAMPOS_REFERENCIA_PUBLICOS,
+  CAMPOS_SISTEMA_PUBLICOS,
+  construirRed,
+  LectorError,
+  soloCampos,
+  type Almacen,
+  type Manifiesto,
+  type Tec,
+} from "@xpand/casos";
 import type { Catalogo, Motor, RedWire, Referencia, Sistema } from "@xpand/api";
 
 const TTL_POR_DEFECTO_S = 30;
@@ -60,13 +71,14 @@ function esReferencia(r: unknown): r is Referencia {
 }
 
 /**
- * Sistema del catalogo desde su manifiesto. El esquema del manifiesto no valida `referencias`; el contrato exige un
- * `valor` numerico en cada una: las que no lo traen se quitan y se registran (el resto del sistema se sirve).
+ * Sistema del catalogo desde su manifiesto, con solo los campos publicos (CAMPOS_SISTEMA_PUBLICOS; el importador ya
+ * escribe solo esos, pero un manifiesto escrito a mano podria traer rutas). El esquema del manifiesto no valida
+ * `referencias`; el contrato exige un `valor` numerico en cada una: las que no lo traen se quitan y se registran.
  */
 function sistemaDelCatalogo(motorId: string, sistema: Manifiesto["sistema"]): Sistema {
-  const { referencias, ...resto } = sistema;
+  const { referencias, ...resto } = soloCampos(sistema, CAMPOS_SISTEMA_PUBLICOS) as Manifiesto["sistema"];
   if (referencias === undefined) return { ...resto };
-  const validas = referencias.filter(esReferencia);
+  const validas = referencias.filter(esReferencia).map((r) => soloCampos(r, CAMPOS_REFERENCIA_PUBLICOS) as Referencia);
   if (validas.length < referencias.length) {
     console.warn(
       `[almacen de casos] ${motorId}/${sistema.id}: ${String(referencias.length - validas.length)} referencias sin valor numerico; no se sirven`,
@@ -80,7 +92,7 @@ function construirCatalogo(almacen: Almacen): Catalogo {
   const motores = new Map<string, Motor>();
   for (const caso of almacen.casos(SIN_INTERNOS)) {
     const { motor, sistema } = caso.manifiesto;
-    const previo = motores.get(motor.id) ?? { ...motor, sistemas: [] };
+    const previo = motores.get(motor.id) ?? { ...(soloCampos(motor, CAMPOS_MOTOR_PUBLICOS) as Manifiesto["motor"]), sistemas: [] };
     motores.set(motor.id, { ...previo, sistemas: [...previo.sistemas, sistemaDelCatalogo(motor.id, sistema)] });
   }
   const aviso = almacen.aviso;

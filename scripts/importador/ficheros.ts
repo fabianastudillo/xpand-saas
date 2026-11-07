@@ -13,6 +13,11 @@ const COORDS = "coords.json";
 
 export class FicheroNoValido extends Error {}
 
+/** `.git` (y todo lo que cuelga de ella) y `.env*` nunca se copian, ni con --incluir-internos ni con un volcado a mano. */
+export function esProhibido(segmento: string): boolean {
+  return segmento === ".git" || segmento.startsWith(".env");
+}
+
 export function dentroDe(raiz: string, destino: string): boolean {
   return destino.startsWith(raiz + path.sep);
 }
@@ -26,6 +31,7 @@ export function resolverEnCheckout(checkoutReal: string, ruta: string): string {
     throw new FicheroNoValido("no existe o no se puede resolver");
   }
   if (!dentroDe(checkoutReal, real)) throw new FicheroNoValido("cae fuera del checkout");
+  if (path.relative(checkoutReal, real).split(path.sep).some(esProhibido)) throw new FicheroNoValido("ruta prohibida (.git o .env)");
   const st = statSync(real);
   if (!st.isFile()) throw new FicheroNoValido("no es un fichero regular");
   if (st.size > MAX_BYTES_FICHERO) throw new FicheroNoValido("supera el tamano maximo");
@@ -46,7 +52,7 @@ export class Copias {
   readonly porNombre = new Map<string, string>();
 
   anadir(nombre: string, real: string): void {
-    if (!esNombreArchivoValido(nombre) || nombre === NOMBRE_MANIFIESTO) throw new FicheroNoValido("nombre no permitido");
+    if (!esNombreArchivoValido(nombre) || nombre === NOMBRE_MANIFIESTO || esProhibido(nombre)) throw new FicheroNoValido("nombre no permitido");
     const previo = this.porNombre.get(nombre);
     if (previo !== undefined && previo !== real) throw new FicheroNoValido("dos ficheros distintos con el mismo nombre");
     this.porNombre.set(nombre, real);

@@ -8,7 +8,7 @@
 //    el resto, como `interno` (la plataforma no los sirve en M0).
 //
 // Lo que se imprime son ids de casos publicos y cuentas: nunca rutas ni nombres de casos internos.
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { mkdtempSync, readFileSync, realpathSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -16,6 +16,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { importarCasos, type Informe } from "./importador/importar";
 import { leerListaBlanca } from "./importador/lista-blanca";
 import { leerVolcado, type Volcado } from "./importador/metadatos";
+import { instalarLimpiezaEnSenales, registrarLimpieza, registrarTemporal } from "./importador/temporales";
 
 export { importarCasos, MARCA, type Informe, type Motivo, type OpcionesImportar } from "./importador/importar";
 export { leerListaBlanca, PATRON_INTERNO, type ListaBlanca } from "./importador/lista-blanca";
@@ -63,9 +64,30 @@ function commitDe(checkout: string): string {
   return execFileSync("git", ["--no-optional-locks", "-C", checkout, "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 }
 
-/** Ejecuta el volcador del catalogo con todas las salidas de xpand en una carpeta temporal que se borra al acabar. */
-function volcarCatalogo(checkout: string): Volcado {
+/** Codigo de salida de un proceso hijo (o la senal que lo mato); rechaza si no se pudo lanzar. */
+function esperar(orden: string, args: readonly string[], opciones: Parameters<typeof spawn>[2]): Promise<number | string> {
+  return new Promise((resolve, reject) => {
+    const hijo = spawn(orden, args, opciones);
+    // Ante una senal se mata al hijo antes de borrar su carpeta (si no, Julia podria volver a crearla).
+    const liberar = registrarLimpieza(() => hijo.kill("SIGKILL"));
+    hijo.on("error", (e) => {
+      liberar();
+      reject(e);
+    });
+    hijo.on("close", (codigo, senal) => {
+      liberar();
+      resolve(codigo ?? senal ?? "desconocido");
+    });
+  });
+}
+
+/**
+ * Ejecuta el volcador del catalogo con todas las salidas de xpand en una carpeta temporal (mkdtemp) que se borra al
+ * acabar, tambien si falla o si el proceso recibe SIGINT/SIGTERM (ver temporales.ts).
+ */
+export async function volcarCatalogo(checkout: string): Promise<Volcado> {
   const tmp = mkdtempSync(path.join(os.tmpdir(), "xpand-volcado-"));
+  const liberar = registrarTemporal(tmp);
   try {
     const salida = path.join(tmp, "catalogo.json");
     const env = {
@@ -77,12 +99,17 @@ function volcarCatalogo(checkout: string): Volcado {
       GTNEP_SIN_WORKLOAD: "1",
     };
     const julia = process.env.XPAND_JULIA?.trim() || "julia";
-    const r = spawnSync(julia, [`--project=${checkout}`, VOLCADOR, salida], { cwd: tmp, env, stdio: ["ignore", "inherit", "inherit"] });
-    if (r.error) throw new Error(`no se pudo ejecutar ${julia}: ${r.error.message}`);
-    if (r.status !== 0) throw new Error(`el volcado del catalogo fallo (codigo ${String(r.status)})`);
+    let codigo: number | string;
+    try {
+      codigo = await esperar(julia, [`--project=${checkout}`, VOLCADOR, salida], { cwd: tmp, env, stdio: ["ignore", "inherit", "inherit"] });
+    } catch (e) {
+      throw new Error(`no se pudo ejecutar ${julia}: ${e instanceof Error ? e.message : String(e)}`, { cause: e });
+    }
+    if (codigo !== 0) throw new Error(`el volcado del catalogo fallo (codigo ${String(codigo)})`);
     return leerVolcado(readFileSync(salida, "utf8"));
   } finally {
     rmSync(tmp, { recursive: true, force: true });
+    liberar();
   }
 }
 
@@ -112,7 +139,7 @@ export async function main(argv: readonly string[]): Promise<void> {
   const checkout = realpathSync(args.xpand);
   const listaBlanca = leerListaBlanca(readFileSync(LISTA_BLANCA, "utf8"));
   const antes = estadoGit(checkout);
-  const volcado = args.volcado === undefined ? volcarCatalogo(checkout) : leerVolcado(readFileSync(args.volcado, "utf8"));
+  const volcado = args.volcado === undefined ? await volcarCatalogo(checkout) : leerVolcado(readFileSync(args.volcado, "utf8"));
   comprobarIntacto(checkout, antes, "durante el volcado del catalogo");
   const almacen = path.resolve(args.almacen);
   const informe = await importarCasos({
@@ -128,6 +155,7 @@ export async function main(argv: readonly string[]): Promise<void> {
 }
 
 if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  instalarLimpiezaEnSenales();
   main(process.argv.slice(2)).catch((e: unknown) => {
     console.error(`importar-casos: ${e instanceof Error ? e.message : String(e)}`);
     process.exitCode = 1;

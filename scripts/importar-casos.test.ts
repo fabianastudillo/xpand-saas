@@ -1,13 +1,14 @@
 // Pruebas del importador de casos sin Julia ni datos de xpand: un volcado del catalogo escrito aqui y un checkout
 // falso en una carpeta temporal, con los .dat publicos del Garver 6 de packages/casos/test/almacen.
 import { createHash } from "node:crypto";
-import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, linkSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { abrirAlmacen, construirRed, type Caso, type Manifiesto } from "@xpand/casos";
-import { importarCasos, leerListaBlanca, parsearArgs, type ListaBlanca, type Volcado } from "./importar-casos";
+import { importarCasos, leerListaBlanca, parsearArgs, volcarCatalogo, type ListaBlanca, type Volcado } from "./importar-casos";
+import { instalarLimpiezaEnSenales, registrarTemporal } from "./importador/temporales";
 
 const GARVER = fileURLToPath(new URL("../packages/casos/test/almacen/jump_misocp/tnep_garver6", import.meta.url));
 const FICHEROS_GARVER = ["base.dat", "candidates_ac.dat", "caps.dat", "dc.dat", "facts.dat", "svc.dat", "tcsc.dat"];
@@ -94,7 +95,7 @@ function volcado(sistemas: SistemaPrueba[], motor: Record<string, unknown> = {})
 
 const LISTA: ListaBlanca = leerListaBlanca(
   JSON.stringify({
-    sistemas: [{ sistema: "tnep_garver6", datos: "data/casos/misocp_tnep/garver6", fuente: "Garver (1970), IEEE Trans. PAS 89(7)" }],
+    sistemas: [{ sistema: "tnep_garver6", datos: "data/casos/misocp_tnep/garver6", fuente: "Garver (1970), https://example.org/garver-1970" }],
   }),
 );
 
@@ -343,6 +344,68 @@ describe("importarCasos: rutas", () => {
   });
 });
 
+describe("importarCasos: ficheros que nunca se copian", () => {
+  it("rechaza un caso publico con un fichero con enlace duro (no se puede saber donde mas vive ese inodo)", async () => {
+    const otro = path.join(xpand, "data/casos/misocp_tnep/otro");
+    linkSync(path.join(dirGarver(), "caps.dat"), path.join(otro, "caps.dat"));
+    const informe = await importar(volcado([sistema("tnep_garver6", archivosGarver())]));
+
+    expect(informe.importados).toEqual([]);
+    expect(informe.omitidos).toEqual([{ motivo: "enlace_duro", cuantos: 1 }]);
+  });
+
+  it("nunca copia .git ni .env*, ni con --incluir-internos", async () => {
+    mkdirSync(path.join(xpand, ".git"), { recursive: true });
+    writeFileSync(path.join(xpand, ".git", "config"), "[core]\n");
+    writeFileSync(path.join(xpand, ".env"), "SECRETO=1\n");
+    writeFileSync(path.join(xpand, "data/casos/misocp_tnep/otro/.env.local"), "SECRETO=2\n");
+    const otro = path.join(xpand, "data/casos/misocp_tnep/otro/base.dat");
+    for (const declarado of [path.join(xpand, ".git", "config"), path.join(xpand, ".env"), path.join(xpand, "data/casos/misocp_tnep/otro/.env.local")]) {
+      const informe = await importar(volcado([sistema("tnep_otro", { base: otro, extra: declarado })]), { incluirInternos: true });
+
+      expect(informe.importados).toEqual([]);
+      expect(informe.omitidos).toEqual([{ motivo: "archivo_no_valido", cuantos: 1 }]);
+    }
+    // Ni como fichero principal (la carpeta .git no es una carpeta de datos).
+    const informe = await importar(volcado([sistema("tnep_otro", { base: path.join(xpand, ".git", "config") })]), { incluirInternos: true });
+    expect(informe.omitidos).toEqual([{ motivo: "archivo_no_valido", cuantos: 1 }]);
+  });
+});
+
+describe("temporales", () => {
+  it("una senal borra las carpetas temporales registradas y sale con 128 + senal", () => {
+    const dir = mkdtempSync(path.join(tmp, "volcado-"));
+    const liberar = registrarTemporal(dir);
+    const salidas: number[] = [];
+    const desinstalar = instalarLimpiezaEnSenales((codigo) => salidas.push(codigo));
+    try {
+      process.emit("SIGTERM");
+      expect(existsSync(dir)).toBe(false);
+      expect(salidas).toEqual([143]);
+    } finally {
+      desinstalar();
+      liberar();
+    }
+  });
+
+  it("el volcado borra su carpeta temporal aunque Julia falle", async () => {
+    const tmpdir = path.join(tmp, "t");
+    mkdirSync(tmpdir);
+    const antes = { TMPDIR: process.env.TMPDIR, XPAND_JULIA: process.env.XPAND_JULIA };
+    process.env.TMPDIR = tmpdir;
+    process.env.XPAND_JULIA = "false";
+    try {
+      await expect(volcarCatalogo(xpand)).rejects.toThrow(/volcado del catalogo fallo/);
+      expect(readdirSync(tmpdir)).toEqual([]);
+    } finally {
+      for (const [k, v] of Object.entries(antes)) {
+        if (v === undefined) Reflect.deleteProperty(process.env, k);
+        else process.env[k] = v;
+      }
+    }
+  });
+});
+
 describe("importarCasos: reimportar", () => {
   it("es idempotente", async () => {
     const v = volcado([sistema("tnep_garver6", archivosGarver())]);
@@ -372,9 +435,11 @@ describe("leerListaBlanca", () => {
   it("rechaza entradas sin fuente, con rutas que salen o repetidas", () => {
     const con = (e: unknown[]) => JSON.stringify({ sistemas: e });
     expect(() => leerListaBlanca(con([{ sistema: "a", datos: "data/a", fuente: "" }]))).toThrow(/fuente/);
+    expect(() => leerListaBlanca(con([{ sistema: "a", datos: "data/a", fuente: "Garver (1970), IEEE Trans. PAS" }]))).toThrow(/DOI o URL/);
+    expect(leerListaBlanca(con([{ sistema: "a", datos: "data/a", fuente: "Articulo, DOI 10.1109/TPWRS.2023.3305431" }])).sistemas).toHaveLength(1);
     expect(() => leerListaBlanca(con([{ sistema: "a", datos: "../a", fuente: "f" }]))).toThrow(/datos/);
     expect(() => leerListaBlanca(con([{ sistema: "a", datos: "/a", fuente: "f" }]))).toThrow(/datos/);
-    const e = { sistema: "a", datos: "data/a", fuente: "f" };
+    const e = { sistema: "a", datos: "data/a", fuente: "https://example.org/a" };
     expect(() => leerListaBlanca(con([e, e]))).toThrow(/repetid/);
   });
 

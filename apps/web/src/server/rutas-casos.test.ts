@@ -161,6 +161,36 @@ describe("GET /api/red", () => {
   });
 });
 
+describe("catalogo: solo campos publicos del manifiesto", () => {
+  it("nunca sirve origen, visibilidad, archivos ni claves fuera de la lista de campos publicos", async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "xpand-almacen-"));
+    try {
+      const destino = path.join(dir, "jump_misocp", "tnep_garver6");
+      cpSync(path.join(ALMACEN, "jump_misocp", "tnep_garver6"), destino, { recursive: true });
+      const m = JSON.parse(readFileSync(path.join(destino, "manifiesto.json"), "utf8")) as Record<string, Record<string, unknown>>;
+      m.motor = { ...m.motor, raiz: "/disco/motor-secreto", codigo: [["a", "b"]] };
+      m.sistema = {
+        ...m.sistema,
+        raiz: "/disco/sistema-secreto",
+        extra: { datos_motor: "carpeta-secreta" },
+        referencias: [{ valor: 1, tecnologias: "ac", ruta_interna: "/disco/ref-secreta" }],
+      };
+      m.clave_suelta = { nota: "campo-suelto-secreto" };
+      writeFileSync(path.join(destino, "manifiesto.json"), JSON.stringify(m));
+      usarAlmacen(dir);
+      const c = (await cuerpo(await getCatalogo())) as { motores: { sistemas: { referencias?: unknown[] }[] }[] };
+      expect(validador.check("catalogo", c)).toBeUndefined();
+      const texto = JSON.stringify(c);
+      for (const prohibido of ["origen", "visibilidad", "archivos", "raiz", "codigo", "extra", "ruta_interna", "secret", "XPAND-PLEXSYS", "b4c853fe"]) {
+        expect(texto).not.toContain(prohibido);
+      }
+      expect(c.motores[0]?.sistemas[0]?.referencias).toStrictEqual([{ valor: 1, tecnologias: "ac" }]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
 describe("catalogo: referencias del manifiesto", () => {
   it("una referencia sin valor numerico no se sirve (el contrato lo exige) y se registra; las demas si", async () => {
     const dir = mkdtempSync(path.join(tmpdir(), "xpand-almacen-"));
