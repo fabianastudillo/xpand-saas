@@ -56,12 +56,7 @@ export const Pricing = () => {
                   </ul>
                 </CardContent>
                 <CardFooter className="flex justify-center">
-                  <SubscribeButton
-                    planName={plan.name}
-                    priceId={plan.priceId}
-                    amount={plan.price}
-                    pagosActivos={pagos}
-                  >
+                  <SubscribeButton planId={plan.id} pagosActivos={pagos}>
                     {plan.cta}
                   </SubscribeButton>
                 </CardFooter>

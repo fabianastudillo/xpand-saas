@@ -8,18 +8,15 @@ import { createCheckoutSession } from "@/app/(public)/pricing/actions";
 import { Button } from "@/components/ui/button";
 
 interface SubscribeButtonProps {
-  priceId: string;
-  planName: string;
-  amount: number;
+  /** Id of the plan in paymentsConfig; the server looks up name and price, the client never sends them. */
+  planId: number;
   /** False while Stripe has no keys: the plan is shown but cannot be bought. */
   pagosActivos: boolean;
   children: React.ReactNode;
 }
 
 export const SubscribeButton = ({
-  planName,
-  priceId,
-  amount,
+  planId,
   pagosActivos,
   children,
 }: SubscribeButtonProps) => {
@@ -27,10 +24,8 @@ export const SubscribeButton = ({
 
   const handleCheckout = async () => {
     const formData = new FormData();
-    formData.append("priceId", priceId);
+    formData.append("planId", String(planId));
     formData.append("uiMode", "hosted");
-    formData.append("planName", planName);
-    formData.append("amount", amount.toString());
 
     const { url } = await createCheckoutSession(formData);
 
