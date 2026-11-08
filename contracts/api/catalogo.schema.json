@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://xpand.local/contracts/api/catalogo.schema.json",
+  "title": "Catalogo",
+  "description": "Respuesta de GET /api/catalogo. Solo se exigen los campos que lee la interfaz de M0; ver contracts/api/README.md.",
+  "type": "object",
+  "required": ["motores"],
+  "additionalProperties": true,
+  "properties": {
+    "motores": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/motor" }
+    },
+    "aviso": {
+      "type": "string",
+      "description": "Aviso público del almacén de casos (texto del servidor, en español). Solo cuando hay algo que avisar."
+    },
+    "codigo_aviso": {
+      "type": "string",
+      "description": "Código estable de «aviso»: vacio, relectura o descartados. La interfaz muestra su propio texto por código; uno que no conoce recibe el texto genérico."
+    }
+  },
+  "definitions": {
+    "motor": {
+      "type": "object",
+      "required": ["id", "nombre", "sistemas"],
+      "anyOf": [
+        { "required": ["formulacion"] },
+        { "required": ["familia"] }
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "nombre": { "type": "string" },
+        "formulacion": { "type": "string" },
+        "familia": { "type": "string" },
+        "sistemas": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/sistema" }
+        }
+      }
+    },
+    "sistema": {
+      "type": "object",
+      "required": ["id", "nombre", "barras"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "nombre": { "type": "string" },
+        "barras": { "type": "integer", "minimum": 0 },
+        "dificultad": { "type": "string" },
+        "nota": { "type": "string" },
+        "referencias": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/referencia" }
+        }
+      }
+    },
+    "referencia": {
+      "type": "object",
+      "required": ["valor"],
+      "additionalProperties": true,
+      "properties": {
+        "valor": { "type": "number" }
+      }
+    }
+  }
+}

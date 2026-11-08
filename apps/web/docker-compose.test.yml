@@ -1,0 +1,16 @@
+# Postgres de las pruebas Playwright de apps/web. Credenciales de .env.test (solo locales).
+name: xpand-saas-web-test
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    ports:
+      - "127.0.0.1:5433:5432"
+    environment:
+      POSTGRES_USER: xpand_test
+      POSTGRES_PASSWORD: 19c89d09846f4e5e0da75cda
+      POSTGRES_DB: xpand_test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U xpand_test -d xpand_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 15

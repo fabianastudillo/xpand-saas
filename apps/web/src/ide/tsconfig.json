@@ -1,0 +1,10 @@
+{
+  // The IDE zone is written to the strict standard of the monorepo (tsconfig.base.json), unlike the template around
+  // it: this project is the one ESLint and `pnpm typecheck` use for these files. Next compiles them with ../../tsconfig.json.
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "types": ["node"]
+  },
+  "include": ["./**/*.ts", "./**/*.tsx", "../../types/import-meta.d.ts"]
+}

@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://xpand.local/contracts/almacen/manifiesto.schema.json",
+  "title": "Manifiesto",
+  "description": "manifiesto.json de un caso del almacen: <almacen>/<motor>/<sistema>/manifiesto.json. Los nombres de archivos son relativos a la carpeta del caso.",
+  "type": "object",
+  "required": ["motor", "sistema", "archivos", "visibilidad", "origen"],
+  "additionalProperties": true,
+  "properties": {
+    "motor": {
+      "type": "object",
+      "required": ["id", "nombre", "esquema_red"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "nombre": { "type": "string", "minLength": 1 },
+        "formulacion": { "type": "string" },
+        "familia": { "type": "string" },
+        "esquema_red": { "type": "string", "minLength": 1 }
+      }
+    },
+    "sistema": {
+      "type": "object",
+      "required": ["id", "nombre", "barras"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "nombre": { "type": "string", "minLength": 1 },
+        "barras": { "type": "integer", "minimum": 0 },
+        "dificultad": { "type": "string" },
+        "nota": { "type": "string" },
+        "referencias": { "type": "array" }
+      }
+    },
+    "archivos": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          { "$ref": "#/definitions/nombreArchivo" },
+          { "type": "array", "items": { "$ref": "#/definitions/nombreArchivo" } }
+        ]
+      }
+    },
+    "visibilidad": { "enum": ["publico", "interno"] },
+    "origen": {
+      "type": "object",
+      "required": ["repo", "commit", "ruta"],
+      "additionalProperties": true,
+      "properties": {
+        "repo": { "type": "string", "minLength": 1 },
+        "commit": { "type": "string", "minLength": 1 },
+        "ruta": { "type": "string", "minLength": 1 }
+      }
+    }
+  },
+  "definitions": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+$" },
+    "nombreArchivo": { "type": "string", "minLength": 1 }
+  }
+}

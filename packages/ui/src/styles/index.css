@@ -1,0 +1,12 @@
+/*
+ * Entry point of the @xpand/ui styles. The consuming app imports it after Tailwind and points Tailwind at
+ * this package's sources so the component utilities are generated:
+ *
+ *   @import "tailwindcss";
+ *   @import "@xpand/ui/styles.css";
+ *   @source "../../../packages/ui/src";
+ */
+@import "./fonts.css";
+@import "./tokens.css";
+@import "./theme.css";
+@import "./base.css";

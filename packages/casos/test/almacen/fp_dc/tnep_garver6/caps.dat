@@ -1,0 +1,16 @@
+# ============================================================================
+#  garver6/caps.dat  ---  BENCHMARK CONGELADO (articulo MISOCP TNEP, Zenodo)
+#  Convencion PUBLICADA: equipo + bahia POR MODULO. NO usa el criterio de casos reales de la GUI
+#  (sitios por analisis modal, Scc minima, bahia una vez por sitio). Si se quiere este Garver con el criterio real,
+#  se crea un caso aparte (07/10/2026, decision de GUI Laptop; perdida en la importacion confirmada por MISOCP TNEP).
+#  Modulos de 100 MVAr (qmod = 1,0 pu a V = 1) en las barras PQ 2, 4 y 5; Hmax 3.
+#  Costo por modulo = 1,19 MUSD de equipo (100 MVAr x 11 873 USD/MVAr, MISO MTEP24 T2.3-8) + 2,20 MUSD de bahia de
+#  230 kV (MTEP24 T4.2-1) = 3,39 MUSD, el mismo valor de usuario/garver6_articulo y test_systems/garver6_A1_ac_bancos.
+#  Con el motor del 07/10 (bahia por sitio + equipo por modulo) se reproduce la convencion publicada con
+#  bc_cbay = 0 y bc_cvar = 3,39 (la bahia queda dentro del costo de cada modulo, como en el articulo).
+#  Antes de este fichero cobraba 1,19 por modulo SIN bahia (perdida en la importacion).
+# ============================================================================
+param: NBC: bc_bus bc_Hmax bc_qmod bc_cbay bc_cvar :=
+  B2   2   3   1.0   0   3.39
+  B4   4   3   1.0   0   3.39
+  B5   5   3   1.0   0   3.39 ;

@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://xpand.local/contracts/api/config.schema.json",
+  "title": "Config",
+  "description": "Respuesta de GET /api/config. Solo se exige la version; los solvers disponibles viven en GET /api/catalogo (motores[].solvers). Ver contracts/api/README.md.",
+  "type": "object",
+  "required": ["version"],
+  "additionalProperties": true,
+  "properties": {
+    "version": { "type": "string", "minLength": 1 },
+    "cupo": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "max_corridas": { "type": "integer", "minimum": 0 },
+        "en_curso": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "buses": [],
+  "completo": true,
+  "gens": [
+    {
+      "bus": 1.0,
+      "id": "G1",
+      "pg": 148.2,
+      "qg": 41.55
+    }
+  ],
+  "hay_plan": true,
+  "items": [
+    {
+      "copia": 1.0,
+      "costo": 823.17,
+      "id": "C1_2_1",
+      "n": 1.0,
+      "tipo": "ac"
+    },
+    {
+      "copia": 2.0,
+      "costo": 12.5,
+      "id": "B2",
+      "n": 2.0,
+      "tipo": "bc"
+    }
+  ],
+  "kv": {
+    "estado": "solved"
+  }
+}

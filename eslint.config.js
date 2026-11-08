@@ -1,0 +1,110 @@
+// @ts-check
+import js from "@eslint/js";
+import globals from "globals";
+import nextPlugin from "@next/eslint-plugin-next";
+import jsxA11y from "eslint-plugin-jsx-a11y";
+import reactHooks from "eslint-plugin-react-hooks";
+import tseslint from "typescript-eslint";
+
+// The M0 code (design system, API client, IDE zone) is linted with the strict type-checked rules.
+const IDE_ZONE_PATHS = ["apps/web/src/ide/**/*.{ts,tsx}", "apps/web/tests/ide/**/*.ts"];
+const STRICT_BROWSER_PATHS = ["packages/ui/**/*.{ts,tsx}", ...IDE_ZONE_PATHS];
+// The Next app is the open-micro-saas template: it keeps the recommended (non type-checked) rules so the
+// template's code is not rewritten to satisfy rules it was not written for. New XPAND code under it should
+// still be written to the strict standard.
+const TEMPLATE_PATHS = ["apps/web/**/*.{ts,tsx,mjs}"];
+const BROWSER_PATHS = [...STRICT_BROWSER_PATHS, ...TEMPLATE_PATHS];
+
+export default tseslint.config(
+  {
+    ignores: [
+      "**/dist/**",
+      "**/coverage/**",
+      "**/node_modules/**",
+      "contracts/**",
+      "**/test-results/**",
+      "**/playwright-report/**",
+      "apps/web/.next*/**",
+      "apps/web/next-env.d.ts",
+    ],
+  },
+  js.configs.recommended,
+  {
+    // Strict rules for everything but the template; the IDE zone, which lives inside the template's app, gets them
+    // back in the next block.
+    files: ["**/*.{ts,tsx,mts,cts}"],
+    ignores: TEMPLATE_PATHS,
+    extends: [...tseslint.configs.strictTypeChecked],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+  {
+    files: IDE_ZONE_PATHS,
+    extends: [...tseslint.configs.strictTypeChecked],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+  {
+    files: TEMPLATE_PATHS,
+    extends: [...tseslint.configs.recommended],
+  },
+  {
+    // Next's own rules (core web vitals) for the Next app only.
+    files: TEMPLATE_PATHS,
+    plugins: { "@next/next": nextPlugin },
+    rules: {
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs["core-web-vitals"].rules,
+    },
+    settings: { next: { rootDir: "apps/web/" } },
+  },
+  {
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
+  {
+    // The React packages run in the browser (document, ResizeObserver, Intl…); the rest is Node tooling.
+    files: BROWSER_PATHS,
+    languageOptions: {
+      globals: { ...globals.browser },
+    },
+  },
+  {
+    // Rules of hooks and exhaustive deps for every component and hook in the React packages and the apps.
+    files: BROWSER_PATHS,
+    plugins: { "react-hooks": reactHooks },
+    rules: {
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "error",
+    },
+  },
+  {
+    files: BROWSER_PATHS,
+    ...jsxA11y.flatConfigs.recommended,
+  },
+  {
+    files: ["**/*.js"],
+    ...tseslint.configs.disableTypeChecked,
+  },
+  {
+    // packages/core: lectores TS portados de Julia (003) y copiados tal cual. Solo se relajan las reglas que
+    // fallan en su código: el resto del estándar estricto sigue activo. Los lectores no se reescriben por lint.
+    files: ["packages/core/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-non-null-assertion": "off",
+      "@typescript-eslint/no-base-to-string": "off",
+      "@typescript-eslint/restrict-template-expressions": "off",
+      "@typescript-eslint/no-unnecessary-type-conversion": "off",
+      "@typescript-eslint/no-misused-spread": "off",
+    },
+  },
+);

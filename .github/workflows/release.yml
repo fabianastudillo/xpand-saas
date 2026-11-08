@@ -1,0 +1,95 @@
+name: release
+
+# Un tag v* (p. ej. v0.1.0) construye la app Next (salida standalone) y publica xpand-plataforma-vX.Y.Z.tar.gz y su
+# .sha256 como release de GitHub. Se instala con README-instalar.md, que va dentro del tarball.
+on:
+  push:
+    tags:
+      - "v*"
+
+# Minimo privilegio: por defecto el token solo lee el repositorio.
+permissions:
+  contents: read
+
+# Todas las acciones de terceros van fijadas a un SHA de commit; la version queda en el comentario.
+jobs:
+  # Construye y empaqueta sin token de escritura: el código de dependencias no ve permisos para publicar.
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      # Sin caché de pnpm a propósito: un release no debe leer una caché que otro workflow (p. ej. un PR) haya podido escribir.
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+      - run: pnpm install --frozen-lockfile
+      - name: Pruebas del empaquetado
+        run: bash scripts/package-dist.test.sh
+      - name: Construir apps/web (salida standalone)
+        run: pnpm --filter @xpand/web build
+      # TAG llega por entorno (nunca interpolado en el script); package-dist.sh exige que sea v<versión de apps/web/package.json>.
+      - name: Empaquetar
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/release"
+          bash scripts/package-dist.sh . "$RUNNER_TEMP/release"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: dist
+          path: |
+            ${{ runner.temp }}/release/xpand-plataforma-v*.tar.gz
+            ${{ runner.temp }}/release/xpand-plataforma-v*.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 1
+
+  # Único job con permiso de escritura: solo publica lo que ya construyó el job anterior.
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: dist
+          path: release
+      - name: Verificar el .sha256 del artefacto
+        working-directory: release
+        run: sha256sum -c -- *.tar.gz.sha256
+      # El pie de la interfaz muestra la versión de apps/web/package.json: un tag que no coincida publicaría
+      # una build que dice otra versión. Se comprueba antes de publicar nada.
+      - name: Comprobar que el tag es v<versión de apps/web/package.json>
+        run: |
+          version="$(jq -r .version apps/web/package.json)"
+          if [ "$TAG" != "v$version" ]; then
+            echo "::error::El tag $TAG no coincide con la versión de apps/web/package.json (v$version)"
+            exit 1
+          fi
+      - name: Extraer las notas de la versión de CHANGELOG.md
+        run: |
+          awk -v cabecera="## $TAG" '
+            $0 == cabecera { dentro = 1; next }
+            dentro && /^## / { exit }
+            dentro { print }
+          ' CHANGELOG.md > "$RUNNER_TEMP/notas.md"
+          if [ ! -s "$RUNNER_TEMP/notas.md" ]; then
+            echo "::error::CHANGELOG.md no tiene una sección «## $TAG» con contenido"
+            exit 1
+          fi
+      - name: Publicar el release
+        working-directory: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release create "$TAG" "xpand-plataforma-$TAG.tar.gz" "xpand-plataforma-$TAG.tar.gz.sha256" \
+            --verify-tag --notes-file "$RUNNER_TEMP/notas.md"

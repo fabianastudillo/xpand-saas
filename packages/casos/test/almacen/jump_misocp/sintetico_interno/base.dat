@@ -1,0 +1,6 @@
+# Red sintetica de prueba (nombres e identificadores inventados; no es un caso real).
+param Sbase := 100;
+param refbus := 1;
+param: BUS: bus_type Pd Qd :=
+  1  3  0   0
+  2  1  50  10 ;

@@ -1,0 +1,17 @@
+# Datos dinamicos por generador (escritos para la prueba, forma de dinamica.dat).
+param gen_h :=
+g1 4.5
+g2 3.2
+;
+param gen_sn :=
+g1 150
+g2 80
+;
+param gen_xdpp :=
+g1 0.2
+g2 0.25
+;
+param gen_ngnum :=
+g1 1
+g2 2
+;

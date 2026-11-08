@@ -1,0 +1,15 @@
+Engine log before the plan (outside any block, must be ignored)
+##KV## outside=1
+##PLAN_INI##
+##KV## estado=solved
+##KV## gap   =   0.01
+##KV## costo_total=823.17
+##KV## tiempo=12.5
+##IT## tipo=ac|id=C1_2_1|copia=1|n=1|de=1|a=2|costo=823.17
+##IT## tipo=ac|sinvalor|id=C1_3_1|copia=1|n=1|de=1|a=3|costo=410
+##IT## tipo=gen|id=G3|n=3|copia=2|bus=3|costo=40
+##BUS## id=1|v=1.0231|pd=180.0|qd=54.0
+##BUS## id=2|v=0.98|pd=0|qd=0
+##GEN## id=G1|bus=1|pg=148.20|qg=41.55
+##PLAN_FIN##
+trailing line after the block (ignored)

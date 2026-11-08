@@ -1,0 +1,7 @@
+{
+  "motor": { "id": "jump_misocp", "nombre": "MISOCP AC/DC", "esquema_red": "misocp" },
+  "sistema": { "id": "sintetico_interno", "nombre": "Sistema sintetico interno", "barras": 2 },
+  "archivos": { "base": "base.dat" },
+  "visibilidad": "interno",
+  "origen": { "repo": "XPAND-PLEXSYS/xpand", "commit": "b4c853fe63c05eee1d562a5177738df202500da6", "ruta": "sintetico/ninguna" }
+}

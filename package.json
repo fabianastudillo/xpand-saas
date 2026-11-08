@@ -1,0 +1,39 @@
+{
+  "name": "xpand-saas",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Interfaz nueva de XPAND (M0): monorepo pnpm con paquetes y aplicaciones.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "packageManager": "pnpm@12.14.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @xpand/web dev",
+    "lint": "eslint .",
+    "typecheck": "pnpm -r --if-present run typecheck && tsc -p scripts/tsconfig.json",
+    "test": "vitest run && pnpm test:scripts && pnpm --filter @xpand/api gen:check",
+    "e2e": "pnpm --filter @xpand/web e2e",
+    "build": "pnpm -r --if-present run build",
+    "db:start": "pnpm --filter @xpand/web db:start",
+    "test:scripts": "bash scripts/package-dist.test.sh",
+    "importar-casos": "tsx scripts/importar-casos.ts",
+    "comparar-con-xpand": "tsx scripts/comparar-con-xpand.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@next/eslint-plugin-next": "^15.5.29",
+    "@types/node": "^22.20.5",
+    "@xpand/casos": "workspace:*",
+    "@xpand/core": "workspace:*",
+    "eslint": "^10.14.0",
+    "eslint-plugin-jsx-a11y": "6.10.2",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "^17.14.0",
+    "tsx": "4.23.15",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^5.1.0"
+  }
+}

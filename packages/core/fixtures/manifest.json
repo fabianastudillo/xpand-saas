@@ -1,0 +1,73 @@
+{
+  "ampl/formas": {
+    "fuente": "sintetico, escrito para la prueba",
+    "md5": "386c7d544a63e2be134c4d6920a22e3d"
+  },
+  "plan/completo": {
+    "fuente": "sintetico, escrito para la prueba",
+    "md5": "a643f8920044061a97ea7fe33efaaf4c"
+  },
+  "plan/truncado": {
+    "fuente": "sintetico, escrito para la prueba",
+    "md5": "71f8299c9edb544fbf2ae38b16c40cfc"
+  },
+  "plan/multiples_bloques": {
+    "fuente": "sintetico, escrito para la prueba",
+    "md5": "61c59da66908879d277a8baa94275bd4"
+  },
+  "matpower/case118": {
+    "fuente": "https://raw.githubusercontent.com/MATPOWER/matpower/1a828c7af590714499284e36ee9c81273388c594/data/case118.m (distribucion oficial de MATPOWER, tag 8.1, commit 1a828c7af590714499284e36ee9c81273388c594, repositorio github.com/MATPOWER/matpower)",
+    "md5": "6f6d21eddb1bf5e5be0d20bd799d3518",
+    "licencia": "Codigo de MATPOWER: BSD de 3 clausulas (PSERC, 1996-2025). Segun el LICENSE de la distribucion, los archivos de caso NO estan cubiertos por la BSD: son datos incluidos con permiso o convertidos de una fuente publica (aqui, IEEE 118 bus desde UW PSTCA). Aviso completo: LICENSE-MATPOWER.txt, junto al archivo."
+  },
+  "matpower/garver6_hvdc_pm": {
+    "fuente": "repositorio: test/fixtures/garver6_hvdc_pm.m (exportado por el Planificador GTNEP el 2026-09-27; fuente admitida por la spec, Assumptions)",
+    "md5": "01f5b369d60846addbf9e06263f8cba8"
+  },
+  "red/misocp/solo_base": {
+    "fuente": "sintetico, escrito para la prueba",
+    "md5": "b6e526119c201e43e7880d012e07453b"
+  },
+  "red/misocp/base_mas_tecnologia": {
+    "fuente": "sintetico, escrito para la prueba",
+    "md5": "3c19941b2c2bfb68cf56fd41d7ddba52"
+  },
+  "red/misocp/base_dinamica_econ": {
+    "fuente": "sintetico, escrito para la prueba",
+    "md5": "8e2c27753745fc31869406bdf92862cd"
+  },
+  "red/gfmgfl/sintetico": {
+    "fuente": "sintetico, escrito para la prueba",
+    "md5": "3a0c9d5ef169bc627b6c32b77a3c5ea3"
+  },
+  "red/matpower/case118": {
+    "fuente": "la de matpower/case118 (entrada referenciada, sin copia; FR-018)",
+    "md5": "6f6d21eddb1bf5e5be0d20bd799d3518",
+    "entrada": "matpower/case118/input.m"
+  },
+  "red/matpower/garver6_hvdc_pm": {
+    "fuente": "la de matpower/garver6_hvdc_pm (entrada referenciada, sin copia; FR-018)",
+    "md5": "01f5b369d60846addbf9e06263f8cba8",
+    "entrada": "matpower/garver6_hvdc_pm/input.m"
+  },
+  "red/matpower/sintetico_extensiones": {
+    "fuente": "sintetico, escrito para la prueba",
+    "md5": "11457e70906d8e0700fa05abccfb27b6"
+  },
+  "red/sitios/sintetico": {
+    "fuente": "sintetico, escrito para la prueba",
+    "md5": "346a1c52239a7b6b04398c14483cba06"
+  },
+  "red/sitios/suma_larga": {
+    "fuente": "sintetico, escrito para la prueba",
+    "md5": "20aa2824980b58930f26d8299066020a"
+  },
+  "red/real/sintetico": {
+    "fuente": "sintetico, escrito para la prueba",
+    "md5": "b8e2530c30cadcfc2cc0879096747e00"
+  },
+  "red/hidro/sintetico": {
+    "fuente": "sintetico, escrito para la prueba",
+    "md5": "23b8977255daa63d25ab42b62a23d481"
+  }
+}

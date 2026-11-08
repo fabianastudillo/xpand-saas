@@ -1,0 +1,7 @@
+{
+  "motor": { "id": "fp_dc", "nombre": "FlexPlan · DC con almacenamiento", "familia": "convexo", "formulacion": "TNEP de FlexPlan sobre flujo DC, con inversion en lineas AC, enlaces DC y almacenamiento; MILP con HiGHS.", "esquema_red": "matpower" },
+  "sistema": { "id": "tnep_garver6", "nombre": "Garver 6 — benchmark MISOCP AC/DC FACTS (Zenodo)", "barras": 6 },
+  "archivos": { "base": "base.dat", "ac": "candidates_ac.dat", "hvdc": "dc.dat", "bancos": "caps.dat", "facts": "facts.dat", "tcsc": "tcsc.dat", "svc": "svc.dat" },
+  "visibilidad": "publico",
+  "origen": { "repo": "XPAND-PLEXSYS/xpand", "commit": "b4c853fe63c05eee1d562a5177738df202500da6", "ruta": "data/casos/misocp_tnep/garver6" }
+}

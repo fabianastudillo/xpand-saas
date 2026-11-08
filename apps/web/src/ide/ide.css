@@ -1,0 +1,10 @@
+/*
+ * Stylesheet of the IDE zone («Explorar casos»), the only one its document loads: the zone is its own root layout
+ * (app/(ide)), so the design system's tokens, `html`/`body` rules and `--color-*: initial` cannot reach the template's
+ * pages, and the template's theme cannot reach the zone.
+ * Tailwind generates the utilities of the zone and of @xpand/ui only (`source(none)` turns the automatic scan off).
+ */
+@import "tailwindcss" source(none);
+@import "@xpand/ui/styles.css";
+@source "./";
+@source "../../../../packages/ui/src";

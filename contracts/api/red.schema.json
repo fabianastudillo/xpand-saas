@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://xpand.local/contracts/api/red.schema.json",
+  "title": "Red",
+  "description": "Respuesta de GET /api/red?motor=&sistema=&tec=. Solo se exigen los campos de la ficha que lee la interfaz de M0; ver contracts/api/README.md.",
+  "type": "object",
+  "required": ["barras", "ac_existentes", "ac_candidatos"],
+  "additionalProperties": true,
+  "properties": {
+    "barras": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/barra" }
+    },
+    "ac_existentes": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/lineaExistente" }
+    },
+    "ac_candidatos": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/lineaCandidata" }
+    }
+  },
+  "definitions": {
+    "idBarra": {
+      "description": "Identificador de barra (en la barra y en los extremos de una línea): cadena en los casos .dat/.m, entero en el motor «real» (red.jl, red_real). La interfaz lo normaliza a cadena.",
+      "type": ["string", "integer"],
+      "minLength": 1
+    },
+    "barra": {
+      "type": "object",
+      "required": ["id", "etiqueta", "kv", "pd", "qd", "vmin", "vmax"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "$ref": "#/definitions/idBarra" },
+        "etiqueta": {
+          "type": "string",
+          "description": "Rótulo de la barra; lo emiten los cinco constructores de red.jl. Puede ser el propio id."
+        },
+        "nombre": {
+          "type": "string",
+          "description": "Nombre del operador. Solo existe cuando el caso trae fichero de nombres; la interfaz usa nombre ?? etiqueta ?? id."
+        },
+        "kv": { "type": "number" },
+        "pd": { "type": "number" },
+        "qd": { "type": "number" },
+        "vmin": { "type": "number" },
+        "vmax": { "type": "number" }
+      }
+    },
+    "lineaExistente": {
+      "type": "object",
+      "required": ["id", "de", "a", "r", "x", "s"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "de": { "$ref": "#/definitions/idBarra" },
+        "a": { "$ref": "#/definitions/idBarra" },
+        "r": { "type": "number" },
+        "x": { "type": "number" },
+        "s": { "type": "number" }
+      }
+    },
+    "lineaCandidata": {
+      "type": "object",
+      "required": ["id", "de", "a", "r", "x", "s", "costo", "nmax"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "de": { "$ref": "#/definitions/idBarra" },
+        "a": { "$ref": "#/definitions/idBarra" },
+        "r": { "type": "number" },
+        "x": { "type": "number" },
+        "s": { "type": "number" },
+        "costo": { "type": "number", "minimum": 0 },
+        "nmax": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

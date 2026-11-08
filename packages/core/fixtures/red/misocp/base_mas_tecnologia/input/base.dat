@@ -1,0 +1,109 @@
+# Caso sintetico escrito para la prueba (feature 003, MISOCP). No describe ningun sistema real.
+param Sbase := 100;
+param refbus := 1;
+param theta_max_rad := 1.5708;
+param : BUS : bus_type Pd Qd Vmin Vmax kV :=
+1 3 0 0 0.95 1.05 138
+2 1 0.6 0.2 0.95 1.05 138
+3 1 0.4 0.1 0.95 1.05 69
+;
+set GEN := g1 g2;
+param gen_bus :=
+g1 1
+g2 2
+;
+param Pgmax :=
+g1 1.5
+g2 0.8
+;
+param Pgmin :=
+g1 0
+g2 0
+;
+param Qgmax :=
+g1 0.9
+g2 0.6
+;
+param Qgmin :=
+g1 -0.6
+g2 -0.4
+;
+param cg2 :=
+g1 0.01
+g2 0.02
+;
+param cg1 :=
+g1 20
+g2 25
+;
+param cg0 :=
+g1 0
+g2 0
+;
+set ELINE := l12 l13 l23;
+param el_f :=
+l12 1
+l13 1
+l23 2
+;
+param el_t :=
+l12 2
+l13 3
+l23 3
+;
+param el_r :=
+l12 0.01
+l13 0.02
+l23 0.015
+;
+param el_x :=
+l12 0.1
+l13 0.2
+l23 0.12
+;
+param el_bch :=
+l12 0.02
+l13 0.03
+l23 0.025
+;
+param el_S :=
+l12 2
+l13 1.5
+l23 1.2
+;
+param el_tap :=
+l12 1
+l13 1
+l23 1.02
+;
+set LCAN := c23;
+param lc_f :=
+c23 2
+;
+param lc_t :=
+c23 3
+;
+param lc_r :=
+c23 0.03
+;
+param lc_x :=
+c23 0.25
+;
+param lc_bch :=
+c23 0.01
+;
+param lc_S :=
+c23 1
+;
+param lc_Nmax :=
+c23 2
+;
+param lc_cost :=
+c23 1.5
+;
+param lc_af :=
+c23 1
+;
+param lc_at :=
+c23 0.97
+;

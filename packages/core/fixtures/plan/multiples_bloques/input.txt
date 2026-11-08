@@ -1,0 +1,11 @@
+##PLAN_INI##
+##KV## estado=timeout
+##IT## tipo=ac|id=L9|copia=1|n=1|costo=1
+##PLAN_FIN##
+partial output between two blocks
+##PLAN_INI##
+##KV## estado=solved
+##IT## tipo=ac|id=C1_2_1|copia=1|n=1|costo=823.17
+##IT## tipo=bc|id=B2|copia=2|n=2|costo=12.5
+##GEN## id=G1|bus=1|pg=148.20|qg=41.55
+##PLAN_FIN##
