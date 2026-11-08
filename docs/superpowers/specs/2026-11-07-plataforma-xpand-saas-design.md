@@ -1,7 +1,7 @@
 # Diseño: plataforma XPAND en xpand-saas
 
 **Fecha:** 2026-11-07 · **Estado:** aprobado; enmendado el 2026-11-07 (P7, plantilla open-micro-saas) · **Autor:** Fabián Astudillo-Salinas (con Claude)
-**Sustituye a:** `2026-11-06-migracion-gui-design.md` (rama local `fabian/plan-migracion-gui` de xpand, sin publicar)
+**Sustituye a:** `2026-11-06-migracion-gui-design.md` (rama local `fabian/plan-migracion-gui` de xpand, nunca publicada y borrada el 2026-11-07)
 en todo lo que ponía código en xpand. Conserva de ese spec las decisiones de interfaz (§4).
 
 ## 1. Objetivo
