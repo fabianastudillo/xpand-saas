@@ -1,7 +1,7 @@
 # Diseño: plataforma XPAND en xpand-saas
 
 **Fecha:** 2026-11-07 · **Estado:** aprobado; enmendado el 2026-11-07 (P7, plantilla open-micro-saas) · **Autor:** Fabián Astudillo-Salinas (con Claude)
-**Sustituye a:** `2026-11-06-migracion-gui-design.md` (rama local `fabian/plan-migracion-gui` de xpand, nunca publicada y borrada el 2026-11-07)
+**Sustituye a:** [`2026-11-06-migracion-gui-design.md`](2026-11-06-migracion-gui-design.md) (copia histórica; venía de la rama local `fabian/plan-migracion-gui` de xpand, nunca publicada y borrada el 2026-11-07)
 en todo lo que ponía código en xpand. Conserva de ese spec las decisiones de interfaz (§4).
 
 ## 1. Objetivo
@@ -99,7 +99,7 @@ workers, trabajos y resultados.
 - **Honestidad de resultados:** *NO CERTIFICADO* y *Factible en AC* siempre visibles; nunca se presenta un dato
   como más de lo que es (demanda «dato del caso», referencias con su tecnología).
 - **i18n por claves ES/EN; WCAG 2.2 AA;** estado del servidor en TanStack Query, estado de interfaz en la URL.
-- Las pantallas de §3.2 del spec anterior (Estudio, Plan, Unifilar, Análisis, Reportes…) se reparten en M3+.
+- Las pantallas de §3.2 del [spec anterior](2026-11-06-migracion-gui-design.md) (Estudio, Plan, Unifilar, Análisis, Reportes…) se reparten en M3+.
 
 ## 5. Entregas
 
@@ -144,7 +144,7 @@ traducción de las páginas de la plantilla (siguen en su idioma hasta M1), nube
 - Caso inexistente → 404 con forma única; la interfaz lo muestra como «caso no encontrado» con enlace al catálogo.
 - Lector que falla con un caso → la ruta responde 500 con el código del error del lector, la interfaz lo lleva a
   «Problemas»; el resto del catálogo sigue funcionando.
-- Se mantiene §5.3 del spec anterior en la interfaz: nada mudo, validación de esquema también en producción.
+- Se mantiene §5.3 del [spec anterior](2026-11-06-migracion-gui-design.md) en la interfaz: nada mudo, validación de esquema también en producción.
 
 ### 6.4 Pruebas
 
