@@ -9,8 +9,10 @@ import {
 } from "@/repositories/user-repository";
 import { getStripe, pagosActivos } from "@/libs/stripe/stripe";
 import { decidirConfianzaHost } from "@/libs/auth/host-confianza";
+import { cookiesAuth, usarCookiesSeguras } from "@/libs/auth/cookies";
 
 const confianzaHost = decidirConfianzaHost(process.env);
+const cookiesSeguras = usarCookiesSeguras(process.env);
 
 if (confianzaHost.error) {
   // Not thrown: `next build` also runs with NODE_ENV=production and must work without runtime secrets.
@@ -26,6 +28,9 @@ export const {
   // Host header trusted only with AUTH_URL set (then it is not used) or outside production: see host-confianza.ts.
   trustHost: confianzaHost.trustHost,
   secret: process.env.NEXTAUTH_SECRET,
+  // Own cookie names, so other Auth.js apps on localhost do not collide: see cookies.ts.
+  useSecureCookies: cookiesSeguras,
+  cookies: cookiesAuth(cookiesSeguras),
   adapter: PrismaAdapter(prisma),
   providers,
   pages: {
