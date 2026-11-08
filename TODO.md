@@ -38,6 +38,10 @@ menores aparcados de la revisión final.
   manifiesto interno defectuoso deja su id y su ruta en el registro del servidor (`almacen.ts` `detalles` +
   `casos.ts` `registrarDetalles`). En `detalles`, redactar el id de los casos cuya visibilidad sea `interno` o no se
   pueda saber, con una prueba de registros como pide la entrega M1 (hallazgo M5; P6: nada interno en registros).
+- **[LOW] Errores de entrada con mensaje propio y en español.** `/login?error=Verification` (enlace mágico ya usado o
+  caducado) muestra el genérico «An error occurred. Please try again.»; debería decir que el enlace ya se usó o caducó
+  y que se pida otro. Lo mismo para los demás códigos de Auth.js que llegan a `/login?error=`. Va con la traducción
+  de la pantalla de entrada y de la zona pública (probado en local el 2026-11-07).
 
 ## Menores aparcados de la revisión final de M0 (2026-11-07, ruling R18)
 
